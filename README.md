@@ -1,6 +1,6 @@
 # KJRJMCMCMC
 
-# Plan
+## Plan
 ```mermaid
 flowchart TD
     NBody[N-body Simulation] --> SimData[Obtain Data]
@@ -11,6 +11,11 @@ flowchart TD
 ```
 
 
+## Test Cases
+- Single Planet
+- 2 Planet Stable
+- Resonant 2 Planets
+- Real Data with Params
 
 
 ## Development Management
