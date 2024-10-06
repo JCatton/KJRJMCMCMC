@@ -1,0 +1,30 @@
+repos:
+  - repo: https://github.com/psf/black
+    rev: 24.8.0  # Use the latest release or lock to a specific version
+    hooks:
+      - id: black
+        name: Black Formatter
+        language_version: python3.11  # Use your project's Python version
+
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.11.2  # Update to the latest mypy version
+    hooks:
+      - id: mypy
+        name: Mypy Type Checker
+        language_version: python3.11
+
+  - repo: https://github.com/pycqa/flake8
+    rev: 7.1.1  # Update to the latest flake8 version
+    hooks:
+      - id: flake8
+        name: Flake8 Linter
+        language_version: python3.11
+        additional_dependencies:
+          - flake8-bugbear  # Optional: additional flake8 plugins
+
+  - repo: https://github.com/pre-commit/mirrors-isort
+    rev: v5.10.1 # Update to the latest isort version
+    hooks:
+      - id: isort
+        name: Isort
+        language_version: python3.11
