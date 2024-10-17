@@ -1,6 +1,8 @@
+from typing import Tuple
+
 import numpy as np
 from numpy.random import normal
-from typing import Tuple
+
 
 def generate_linear_data(
     x: np.ndarray,
@@ -24,13 +26,15 @@ def generate_linear_data(
     y = m_sim * x + c_sim
     return x, y
 
+
 def generate_sinusoidal_data(
     x: np.ndarray,
     params: np.ndarray,
     noise: np.ndarray,
 ) -> Tuple[np.ndarray, np.ndarray]:
     """
-    Generate synthetic data for a sinusoidal model y = A sin(b x + c) with Gaussian noise.
+    Generate synthetic data for a sinusoidal model y = A sin(b x + c) with
+     Gaussian noise.
 
     Args:
         x (np.ndarray): Independent variable values.
@@ -49,4 +53,3 @@ def generate_sinusoidal_data(
     d_sim = normal(d[0], d[1], len(x))
     y = a_sim * np.sin(b_sim * x + c_sim) + d_sim
     return x, y
-

@@ -1,5 +1,8 @@
+from typing import Callable, List, Tuple
+
 import numpy as np
-from typing import Callable, Tuple, List
+from numpy.random import normal
+
 
 def metropolis_hastings(
     x: np.ndarray,
@@ -8,7 +11,7 @@ def metropolis_hastings(
     param_bounds: List[Tuple[float, float]],
     likelihood_fn: Callable[[np.ndarray, np.ndarray, np.ndarray], float],
     proposal_std: np.ndarray,
-    num_iterations: int
+    num_iterations: int,
 ) -> np.ndarray:
     """
     Performs Metropolis-Hastings MCMC sampling.
@@ -31,10 +34,8 @@ def metropolis_hastings(
     current_likelihood = likelihood_fn(x, y, current_params)
 
     for i in range(num_iterations):
-        # Propose new parameters
-        proposal = current_params + np.random.normal(0, proposal_std, size=num_params)
+        proposal = current_params + normal(0, proposal_std, size=num_params)
 
-        # Enforce parameter bounds
         for j, (lower, upper) in enumerate(param_bounds):
             proposal[j] = np.clip(proposal[j], lower, upper)
 
@@ -52,3 +53,31 @@ def metropolis_hastings(
         chain[i] = current_params
 
     return chain
+
+
+def determine_burn_in_index(chain: np.ndarray) -> int:
+    """
+    Determines the burn-in cutoff index for an MCMC chain.
+
+    Args:
+        chain (np.ndarray): The MCMC chain with shape (num_samples, num_params).
+
+    Returns:
+        int: The burn-in cutoff index.
+    """
+    num_params = chain.shape[1]
+    indices = []
+
+    for i in range(num_params):
+        samples = chain[:, i]
+        mean = np.mean(samples)
+        std = np.std(samples)
+        indices_param = np.where(np.abs(samples - mean) < std)[0]
+        if len(indices_param) > 0:
+            index_param = indices_param[0]
+        else:
+            index_param = len(samples)
+        indices.append(index_param)
+
+    burn_in_index = max(indices)
+    return burn_in_index
