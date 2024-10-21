@@ -94,16 +94,18 @@ def combined_delta_flux(
 
     if saveloc:
         full_saveloc = fc.check_and_create_folder(saveloc)
-        np.save(os.path.join(full_saveloc, "combined_flux.npy"), combined_flux)
+        timeseries_flux = np.array([times, combined_flux], dtype=np.float64)
+        np.save(os.path.join(full_saveloc, "timeseries_flux.npy"), timeseries_flux)
 
     if plot:
         plt.figure(figsize=(10, 6))
-        plt.set_xlabel("Time (days)")
-        plt.set_ylabel("Relative Brightness")
-        plt.set_title("Light Curve")
+        plt.xlabel("Time (days)")
+        plt.ylabel("Relative Brightness")
+        plt.title("Light Curve")
         plt.plot(
             np.linspace(0, len(combined_flux) - 1, len(combined_flux)), combined_flux
         )
-        plt.savefig(os.path.join(full_saveloc, "combined_flux_plot.pdf"))
+        if saveloc:
+            plt.savefig(os.path.join(full_saveloc, "combined_flux_plot.pdf"))
         plt.close()
     return combined_flux
