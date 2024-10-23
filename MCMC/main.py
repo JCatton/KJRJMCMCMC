@@ -1,6 +1,6 @@
 # main.py
 
-from typing import Tuple
+from typing import Tuple, Callable
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -51,6 +51,14 @@ def linear_likelihood(
     log_likelihood = -0.5 * np.sum(residuals**2 / sigma2 + np.log(2 * np.pi * sigma2))
     return log_likelihood
 
+def gaussian_error_ln_likelihood(observed: np.array, prior_funcs: list[Callable[..., float]],
+                                 analytic_func: Callable[..., float],  params: np.array,
+                                 sigma_n: float) -> float:
+    log_prior = np.sum(np.log([prior_funcs[i](params[i]) for i in range(len(params))]))
+    deviation_lh = 1/2 * np.log(sigma_n)
+    observed_lh = np.power(observed - analytic_func(params), 2) / (2 * sigma_n ** 2)
+    ln_likelihood = log_prior - deviation_lh - np.sum(observed_lh)
+    return ln_likelihood
 
 def chain_to_plot_and_estimate(chain: np.ndarray):
     m_samples = chain[:, 0]
