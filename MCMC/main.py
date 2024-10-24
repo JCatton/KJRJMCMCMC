@@ -7,6 +7,7 @@ import numpy as np
 from corner import corner
 from data_generator import generate_linear_data
 from metropolis_hastings import determine_burn_in_index, metropolis_hastings
+from sim.FluxCalculation import delta_flux_from_cartesian
 
 # Global Configuration
 # Linear
@@ -54,13 +55,25 @@ def linear_likelihood(
 def gaussian_error_ln_likelihood(observed: np.array, prior_funcs: list[Callable[..., float]],
                                  analytic_func: Callable[..., float],  params: np.array,
                                  sigma_n: float) -> float:
-    log_prior = np.sum(np.log([prior_funcs[i](params[i]) for i in range(len(params))]))
+    if prior_funcs is not None:
+        log_prior = np.sum(np.log([prior_funcs[i](params[i]) for i in range(len(params))]))
+    else:
+        log_prior = 0
     deviation_lh = 1/2 * np.log(sigma_n)
-    observed_lh = np.power(observed - analytic_func(params), 2) / (2 * sigma_n ** 2)
+    observed_lh = np.power(observed - analytic_func(*params), 2) / (2 * sigma_n ** 2)
     ln_likelihood = log_prior - deviation_lh - np.sum(observed_lh)
     return ln_likelihood
 
-def chain_to_plot_and_estimate(chain: np.ndarray):
+def extract_timeseries_data(file_location: str) -> (np.ndarray, np.ndarray):
+    """
+    Returns the times and the values at those times of the data.
+    :param file_location: str
+    :return: Tuple(np.ndarray, np.ndarray)
+    """
+    timeseries = np.load(file_location, allow_pickle=True)
+    return timeseries[0], timeseries[1]
+
+def chain_to_plot_and_estimate(chain: np.ndarray, likelihoods: np.ndarray):
     m_samples = chain[:, 0]
     c_samples = chain[:, 1]
     m_noise_samples = np.exp(chain[:, 2])
@@ -133,19 +146,30 @@ def mcmc_initialisation(bounded: bool = False):
     num_iterations = 50000
     return initial_params, num_iterations, param_bounds, proposal_std
 
+def circular_delta_flux_function(x, eta, a, omega, phi):
+    x = a * np.sin(omega * x + phi)
+    y = a * np.cos(omega * x + phi)
+    z = np.zeros(len(x))
+    return delta_flux_from_cartesian(x, y, z, 1, eta)
+
 
 def main():
 
     # Generate synthetic data
-    x_data, y_data = synthetic_data()
+    times, fluxes = extract_timeseries_data(r"C:\Users\jonte\PycharmProjects\KJRJMCMCMC\sim\Outputs\Example\timeseries_flux.npy")
 
     # Initial parameter guesses
-    initial_params, num_iterations, param_bounds, proposal_std = mcmc_initialisation(
-        bounded=True
-    )
+    initial_params = [1e-4, 0.01, 1, 1] # eta, A, omega, phi
+    sigma_n = 1e-2
+    num_iterations = 80000
+    param_bounds = [(0,1), (1, 1e8), (0, 1), (-np.pi, np.pi)]
+    proposal_std = np.array([1e-5, 1e-3, 1e-3, 1e-2])
+
 
     def likelihood_fn(x, y, params):
-        return linear_likelihood(x, y, params)
+        return gaussian_error_ln_likelihood(fluxes, None,
+                                            lambda eta, a,o,p: circular_delta_flux_function(times, eta, a, o, p),
+                                            params, sigma_n)
 
     # Run MCMC
     chain, likelihoods = metropolis_hastings(
