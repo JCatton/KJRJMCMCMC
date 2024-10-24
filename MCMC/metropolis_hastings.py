@@ -1,4 +1,7 @@
-from typing import Callable, List, Tuple
+from typing import Callable, List, Tuple, Any
+
+from numpy import ndarray, dtype, floating
+from numpy._typing import _64Bit
 from tqdm import trange
 import numpy as np
 from numpy.random import normal
@@ -12,7 +15,7 @@ def metropolis_hastings(
     likelihood_fn: Callable[[np.ndarray, np.ndarray, np.ndarray], float],
     proposal_std: np.ndarray,
     num_iterations: int,
-) -> np.ndarray:
+) -> tuple[ndarray[Any, dtype[np.float64]], ndarray[Any, dtype[np.float64]]]:
     """
     Performs Metropolis-Hastings MCMC sampling.
 
@@ -32,6 +35,7 @@ def metropolis_hastings(
     chain = np.zeros((num_iterations, num_params))
     current_params = initial_params.copy()
     current_likelihood = likelihood_fn(x, y, current_params)
+    likelihoods = np.full(num_iterations, current_likelihood)
 
     for i in trange(num_iterations):
         proposal = current_params + normal(0, proposal_std, size=num_params)
@@ -51,8 +55,9 @@ def metropolis_hastings(
             current_likelihood = proposal_likelihood
 
         chain[i] = current_params
+        likelihoods[i] = current_likelihood
 
-    return chain
+    return chain, likelihoods
 
 
 def determine_burn_in_index(chain: np.ndarray) -> int:

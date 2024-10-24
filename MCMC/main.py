@@ -83,13 +83,15 @@ def chain_to_plot_and_estimate(chain: np.ndarray):
     x = np.arange(len(chain))
     fig.suptitle("Parameter Iterations")
     axs[0].plot(x, m_samples)
-    axs[0].set_ylabel("m")
+    axs[0].set_ylabel("eta")
     axs[1].plot(x, c_samples)
-    axs[1].set_ylabel("c")
+    axs[1].set_ylabel("a")
     axs[2].plot(x, m_noise_samples)
-    axs[2].set_ylabel(r"$\sigma_m$")
+    axs[2].set_ylabel(r"$\omega$")
     axs[3].plot(x, c_noise_samples)
-    axs[3].set_ylabel(r"$\sigma_c$")
+    axs[3].set_ylabel(r"$\phi$")
+    axs[4].plot(x, likelihoods)
+    axs[4].set_ylabel(r"Log Likelihoods")
     plt.xlabel("Iteration")
     plt.tight_layout()
     plt.show()
@@ -146,9 +148,9 @@ def main():
         return linear_likelihood(x, y, params)
 
     # Run MCMC
-    chain = metropolis_hastings(
-        x=x_data,
-        y=y_data,
+    chain, likelihoods = metropolis_hastings(
+        x=times,
+        y=fluxes,
         initial_params=initial_params,
         param_bounds=param_bounds,
         likelihood_fn=likelihood_fn,
@@ -170,10 +172,10 @@ def main():
     fig = corner(
         chain[burn_in_index:],
         labels=[
-            r"$m$",
-            r"$c$",
-            r"$\sigma_m$",
-            r"$\sigma_c$",
+            r"$eta$",
+            r"$a$",
+            r"$omega$",
+            r"$phi$",
         ],
         truths=[m_true, c_true, m_noise_true, c_noise_true],
         show_titles=True,
@@ -187,6 +189,63 @@ def main():
 
     print("After Burn-in")
     chain_to_plot_and_estimate(chain[burn_in_index:])
+
+
+# def main():
+#
+#     # Generate synthetic data
+#     x_data, y_data = synthetic_data()
+#
+#     # Initial parameter guesses
+#     initial_params, num_iterations, param_bounds, proposal_std = mcmc_initialisation(
+#         bounded=True
+#     )
+#
+#     def likelihood_fn(x, y, params):
+#         return linear_likelihood(x, y, params)
+#
+#     # Run MCMC
+#     chain = metropolis_hastings(
+#         x=x_data,
+#         y=y_data,
+#         initial_params=initial_params,
+#         param_bounds=param_bounds,
+#         likelihood_fn=likelihood_fn,
+#         proposal_std=proposal_std,
+#         num_iterations=num_iterations,
+#     )
+#
+#     # Save chain
+#     np.save("mcmc_chain.npy", chain)
+#
+#     # Extract samples
+#     chain_to_plot_and_estimate(chain)
+#
+#     burn_in_index = determine_burn_in_index(chain)
+#     print(
+#         f"\n\nBurn-in burn_in_index: {burn_in_index} "
+#         f"or {burn_in_index/chain.shape[0] * 100:.2f}% of the chain"
+#     )
+#     fig = corner(
+#         chain[burn_in_index:],
+#         labels=[
+#             r"$m$",
+#             r"$c$",
+#             r"$\sigma_m$",
+#             r"$\sigma_c$",
+#         ],
+#         truths=[m_true, c_true, m_noise_true, c_noise_true],
+#         show_titles=True,
+#         title_kwargs={"fontsize": 18},
+#     )
+#     fig.suptitle(
+#         f"A plot of y=mx + c,\nFor m~N({m_true}, {m_noise_true}),"
+#         f" and c~N({c_true}, {c_noise_true})"
+#     )
+#     plt.show()
+#
+#     print("After Burn-in")
+#     chain_to_plot_and_estimate(chain[burn_in_index:])
 
 
 if __name__ == "__main__":
