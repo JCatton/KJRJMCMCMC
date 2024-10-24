@@ -1,5 +1,5 @@
 import numpy as np
-import FileCheck as fc
+from sim import FileCheck as fc
 from tqdm import tqdm
 import os
 import matplotlib.pyplot as plt
@@ -20,41 +20,52 @@ def delta_flux_from_cartesian(x, y, z, radius_star, radius_planet):
     """
     # Center to center distance
     d = np.sqrt(x**2 + z**2)
-
+    eta_sq = radius_planet / radius_star * radius_planet / radius_star
     # Initialize delta flux array with all values set to 1 (no blocking)
     delta_flux = np.ones_like(d)
+    behind_star = np.nonzero(y >= 0)
+    near_star = np.nonzero((d <= radius_star - radius_planet))
+    mid_and_near_star = np.nonzero((d <= radius_star + radius_planet))
+    mid_star = np.setdiff1d(mid_and_near_star, near_star)
+    in_front_near = np.setdiff1d(near_star, behind_star)
+    infront_mid = np.setdiff1d(mid_star, behind_star)
+    delta_flux[in_front_near] = 1 - eta_sq
+    delta_flux[infront_mid] = overlap_calc(d, radius_planet, radius_star, infront_mid)
+    # # Iterate through each point and calculate the delta flux
+    # for i in range(0, len(x)):
+    #     if d[i] >= (radius_star + radius_planet):  # No overlap
+    #         continue
+    #     elif y[i] >= 0:  # If the planet is behind the star, no overlap
+    #         continue
+    #     elif (
+    #         d[i] <= radius_star - radius_planet
+    #     ):  # If the planet is completely infront of the star, full overlap
+    #         delta_flux[i] = (
+    #             1 - eta_sq
+    #         )
+    #         continue
+    #     elif (
+    #         abs(radius_star - radius_planet) < d[i]
+    #         and d[i] < radius_star + radius_planet
+    #     ):  # Partial overlap
 
-    # Iterate through each point and calculate the delta flux
-    for i in tqdm(range(0, len(x)), total=len(x)):
-        if d[i] >= (radius_star + radius_planet):  # No overlap
-            continue
-        elif y[i] >= 0:  # If the planet is behind the star, no overlap
-            continue
-        elif (
-            d[i] <= radius_star - radius_planet
-        ):  # If the planet is completely infront of the star, full overlap
-            delta_flux[i] = (
-                1 - radius_planet / radius_star * radius_planet / radius_star
-            )
-            continue
-        elif (
-            abs(radius_star - radius_planet) < d[i]
-            and d[i] < radius_star + radius_planet
-        ):  # Partial overlap
 
-            # Derivation of the overlap area based on Mulcock (2024, Imperial College London, unpublished Literature Review)
-            r1, r2 = radius_star, radius_planet
-            phi = np.arccos((d[i] ** 2 + r1**2 - r2**2) / (2 * d[i] * r1))
-            psi = np.arccos((d[i] ** 2 + r2**2 - r1**2) / (2 * d[i] * r2))
-            area1 = r1**2 * phi
-            area2 = r2**2 * psi
-            area3 = d[i] * r1 * np.sin(phi)
 
-            overlap_area = area1 + area2 - area3
-            star_area = np.pi * r1**2
-            delta_flux[i] = 1 - overlap_area / (star_area)
 
     return delta_flux
+
+
+def overlap_calc(d, radius_planet, radius_star, slice):
+    # Derivation of the overlap area based on Mulcock (2024, Imperial College London, unpublished Literature Review)
+    r1, r2 = radius_star, radius_planet
+    phi = np.arccos((d[slice] ** 2 + r1 ** 2 - r2 ** 2) / (2 * d[slice] * r1))
+    psi = np.arccos((d[slice] ** 2 + r2 ** 2 - r1 ** 2) / (2 * d[slice] * r2))
+    area1 = r1 ** 2 * phi
+    area2 = r2 ** 2 * psi
+    area3 = d[slice] * r1 * np.sin(phi)
+    overlap_area = area1 + area2 - area3
+    star_area = np.pi * r1 ** 2
+    return 1 - overlap_area / star_area
 
 
 def combined_delta_flux(
