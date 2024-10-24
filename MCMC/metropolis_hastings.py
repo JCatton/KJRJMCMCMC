@@ -1,5 +1,5 @@
 from typing import Callable, List, Tuple
-
+from tqdm import trange
 import numpy as np
 from numpy.random import normal
 
@@ -33,7 +33,7 @@ def metropolis_hastings(
     current_params = initial_params.copy()
     current_likelihood = likelihood_fn(x, y, current_params)
 
-    for i in range(num_iterations):
+    for i in trange(num_iterations):
         proposal = current_params + normal(0, proposal_std, size=num_params)
 
         for j, (lower, upper) in enumerate(param_bounds):
