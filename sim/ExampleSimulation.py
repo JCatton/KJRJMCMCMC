@@ -16,9 +16,9 @@ Stellar_params = [100 * 4.2635e-5, 333000 * 1.12]
 
 # Planet parameters: [radius, mass, orbital radius, eccentricity, omega (phase)]
 planet_params = [
-    [1 * 4.2635e-5, 90.26, 0.045, 0.001, 0],
-    [0.5 * 4.2635e-5, 66, 0.078, 0.021, 90],
-    [2 * 4.2635e-5, 70, 0.1, 0.000, 45],
+    [1 * 4.2635e-5, 90.26, 0.045, 0.000, 0],
+    # [0.5 * 4.2635e-5, 66, 0.078, 0.021, 90],
+    # [2 * 4.2635e-5, 70, 0.1, 0.000, 45],
 ]
 
 # Run N-body simulation
