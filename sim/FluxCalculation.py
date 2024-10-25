@@ -1,5 +1,5 @@
 import numpy as np
-from sim import FileCheck as fc
+import FileCheck as fc
 from tqdm import tqdm
 import os
 import matplotlib.pyplot as plt
@@ -114,9 +114,10 @@ def combined_delta_flux(
         plt.ylabel("Relative Brightness")
         plt.title("Light Curve")
         plt.plot(
-            np.linspace(0, len(combined_flux) - 1, len(combined_flux)), combined_flux
+            times, combined_flux
         )
         if saveloc:
             plt.savefig(os.path.join(full_saveloc, "combined_flux_plot.pdf"))
         plt.close()
     return combined_flux
+
