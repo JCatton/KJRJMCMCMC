@@ -92,7 +92,7 @@ def chain_to_plot_and_estimate(chain: np.ndarray, likelihoods: np.ndarray):
         f" true c_noise: {c_noise_true}"
     )
 
-    fig, axs = plt.subplots(nrows=4, ncols=1, figsize=(10, 8))
+    fig, axs = plt.subplots(nrows=5, ncols=1, figsize=(10, 8))
     x = np.arange(len(chain))
     fig.suptitle("Parameter Iterations")
     axs[0].plot(x, m_samples)
@@ -143,7 +143,7 @@ def mcmc_initialisation(bounded: bool = False):
     else:
         param_bounds = [(-np.inf, np.inf) for _ in initial_params]
     proposal_std = np.array([0.5, 0.5, 0.1, 0.1])
-    num_iterations = 50000
+    num_iterations = 20000
     return initial_params, num_iterations, param_bounds, proposal_std
 
 def circular_delta_flux_function(x, eta, a, omega, phi):
@@ -156,12 +156,12 @@ def circular_delta_flux_function(x, eta, a, omega, phi):
 def main():
 
     # Generate synthetic data
-    times, fluxes = extract_timeseries_data(r"C:\Users\jonte\PycharmProjects\KJRJMCMCMC\sim\Outputs\Example\timeseries_flux.npy")
+    times, fluxes = extract_timeseries_data(r"C:\Users\jonte\Documents\Coding\Python\KJRJMCMCMC\sim\Outputs\Example\timeseries_flux.npy")
 
     # Initial parameter guesses
-    initial_params = [1e-4, 0.01, 1, 1] # eta, A, omega, phi
+    initial_params = [1e-2, 0.01, 1, 1] # eta, A, omega, phi
     sigma_n = 1e-2
-    num_iterations = 80000
+    num_iterations = 20000
     param_bounds = [(0,1), (1, 1e8), (0, 1), (-np.pi, np.pi)]
     proposal_std = np.array([1e-5, 1e-3, 1e-3, 1e-2])
 
@@ -186,7 +186,7 @@ def main():
     np.save("mcmc_chain.npy", chain)
 
     # Extract samples
-    chain_to_plot_and_estimate(chain)
+    chain_to_plot_and_estimate(chain, likelihoods)
 
     burn_in_index = determine_burn_in_index(chain)
     print(
