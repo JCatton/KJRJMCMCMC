@@ -91,4 +91,46 @@ def N_Body_sim(
 
     return x_pos, y_pos, orbits_x, orbits_y, times
 
+def n_body_sim_api(
+    stellar_mass: float, planet_params: list[np.ndarray],
+    times: np.ndarray[np.float64]
+) -> (np.ndarray, np.ndarray):
+    """
+    Simulate the N-body system of a star and multiple planets over time.
 
+    Parameters:
+    - stellar_mass: Mass of the star
+    - planet_params: List of array planet parameters
+                    [radius, mass, orbital radius, eccentricity, omega (phase)]
+
+    Returns:
+    - Arrays of x, y, and z positions of the star and planets over time
+    """
+    sim = rebound.Simulation()
+    sim.units = ["mearth", "day", "AU"]  # Set units to Earth masses, days, and AU
+
+    planet_num = len(planet_params)
+    sample_num = len(times)
+
+    sim.add(m=stellar_mass)
+
+    ShortestPeriod = np.inf
+    for i, params in enumerate(planet_params):
+        radius, mass, semi_major_axis, eccentricity, omega = params
+
+        sim.add(
+            m=mass, a=semi_major_axis, e=eccentricity, omega=omega
+        )
+
+        period = sim.particles[-1].P
+        ShortestPeriod = min(ShortestPeriod, period)
+
+    # +1 to include the star (particle 0)
+    pos = np.empty((sample_num, planet_num + 1, 3), dtype=np.float64)
+
+    for time_idx, time in enumerate(tqdm(times)):
+        sim.integrate(time)
+        for j in range(planet_num + 1):  # Including the star (particle 0)
+            pos[time_idx, :, :] = [[p.x, p.y, p.z] for p in sim.particles]
+
+    return pos
