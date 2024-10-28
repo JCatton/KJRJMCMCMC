@@ -3,6 +3,8 @@ import sim.FileCheck as fc
 from tqdm import tqdm
 import os
 import matplotlib.pyplot as plt
+from numba import jit
+
 
 
 def delta_flux_from_cartesian(x, y, z, radius_star, radius_planet):
@@ -54,7 +56,7 @@ def delta_flux_from_cartesian(x, y, z, radius_star, radius_planet):
 
     return delta_flux
 
-
+@jit
 def overlap_calc(d, radius_planet, radius_star, slice):
     # Derivation of the overlap area based on Mulcock (2024, Imperial College London, unpublished Literature Review)
     r1, r2 = radius_star, radius_planet

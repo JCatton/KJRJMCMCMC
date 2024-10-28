@@ -10,9 +10,9 @@ python = "^3.12"
 pre-commit = "^4.0.0"
 pillow = "^11.0.0"
 rebound = "^4.4.3"
-numpy = "^2.1.2"
 corner = "^2.2.2"
 scipy = "^1.14.1"
+numba = "0.59.1"
 
 
 [build-system]
