@@ -7,8 +7,9 @@ import os
 
 from sim.N_body_sim import N_Body_sim, n_body_sim_api
 from sim.FluxCalculation import combined_delta_flux
+from Decorators import TimeMeasure
 
-
+@TimeMeasure
 def simulate_and_interpolate_flux_vectorized(
     Stellar_params,
     planet_params,
