@@ -93,7 +93,8 @@ def N_Body_sim(
 
 def n_body_sim_api(
     stellar_mass: float, planet_params: np.ndarray,
-    times: np.ndarray
+    times: np.ndarray,
+    no_loading_bar: bool = True
 ) -> (np.ndarray, np.ndarray):
     """
     Simulate the N-body system of a star and multiple planets over time.
@@ -128,7 +129,7 @@ def n_body_sim_api(
     # +1 to include the star (particle 0)
     pos = np.empty((sample_num, planet_num + 1, 3), dtype=np.float64)
 
-    for time_idx, time in enumerate(tqdm(times)):
+    for time_idx, time in enumerate(tqdm(times, disable=no_loading_bar)):
         sim.integrate(time)
         for j in range(planet_num + 1):  # Including the star (particle 0)
             pos[time_idx, :, :] = [[p.x, p.y, p.z] for p in sim.particles]

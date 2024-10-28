@@ -91,11 +91,14 @@ def simulate_and_interpolate_flux_vectorized(
 
 def flux_data_from_params(stellar_params: np.ndarray,
     planet_params: np.ndarray,
-    times: np.ndarray):
+    times: np.ndarray,
+    no_loading_bar: bool = True):
+
     positions = n_body_sim_api(
         stellar_mass=stellar_params[1],
         planet_params=planet_params,
-        times=times
+        times=times,
+        no_loading_bar=no_loading_bar
     )
 
     flux_values = combined_delta_flux(
