@@ -114,8 +114,8 @@ def n_body_sim_api(
 
     sim.add(m=stellar_mass)
 
-    ShortestPeriod = np.inf
-    for i, params in enumerate(planet_params):
+    shortest_period = np.inf
+    for params in planet_params:
         radius, mass, semi_major_axis, eccentricity, omega = params
 
         sim.add(
@@ -123,7 +123,7 @@ def n_body_sim_api(
         )
 
         period = sim.particles[-1].P
-        ShortestPeriod = min(ShortestPeriod, period)
+        shortest_period = min(shortest_period, period)
 
     # +1 to include the star (particle 0)
     pos = np.empty((sample_num, planet_num + 1, 3), dtype=np.float64)
