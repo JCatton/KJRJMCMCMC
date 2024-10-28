@@ -2,11 +2,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.interpolate import interp1d
 import time
-import FileCheck as fc
+import sim.FileCheck as fc
 import os
 
-from N_body_sim import N_Body_sim, n_body_sim_api
-from FluxCalculation import combined_delta_flux
+from sim.N_body_sim import N_Body_sim, n_body_sim_api
+from sim.FluxCalculation import combined_delta_flux
 
 
 def simulate_and_interpolate_flux_vectorized(

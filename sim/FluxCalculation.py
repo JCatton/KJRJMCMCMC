@@ -1,5 +1,5 @@
 import numpy as np
-import FileCheck as fc
+import sim.FileCheck as fc
 from tqdm import tqdm
 import os
 import matplotlib.pyplot as plt

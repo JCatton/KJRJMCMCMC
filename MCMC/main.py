@@ -8,6 +8,7 @@ from corner import corner
 from data_generator import generate_linear_data
 from metropolis_hastings import determine_burn_in_index, metropolis_hastings
 from sim.FluxCalculation import delta_flux_from_cartesian
+from sim.SimulateAndFlux import flux_data_from_params
 
 # Global Configuration
 # Linear

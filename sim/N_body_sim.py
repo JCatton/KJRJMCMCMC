@@ -1,5 +1,5 @@
 import rebound
-import FileCheck as fc
+import sim.FileCheck as fc
 import numpy as np
 from tqdm import tqdm
 import os
