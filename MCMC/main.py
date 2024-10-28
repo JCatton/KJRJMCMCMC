@@ -161,20 +161,24 @@ def circular_delta_flux_function(x, eta, a, omega, phi):
 def main():
 
     # Generate synthetic data
-    times, fluxes = extract_timeseries_data(r"C:\Users\jonte\Documents\Coding\Python\KJRJMCMCMC\sim\Outputs\Example\timeseries_flux.npy")
+    times, fluxes = extract_timeseries_data(r"C:\Users\jonte\PycharmProjects\KJRJMCMCMC\sim\Outputs\Example\timeseries_flux.npy")
 
     # Initial parameter guesses
-    initial_params = [1e-2, 0.01, 1, 1] # eta, A, omega, phi
+    # [eta radius,      mass,   orbital radius, eccentricity, omega(phase)]
+    # [1 * 4.2635e-5,   90.26,  0.045,          0.000,          0]
+    initial_params = [[1e-5, 90.26, 0.01, 0, 0]]
     sigma_n = 1e-2
     fluxes = add_gaussian_error(fluxes, 0, sigma_n)
     num_iterations = 20000
-    param_bounds = [(0,1), (1, 1e8), (0, 1), (-np.pi, np.pi)]
-    proposal_std = np.array([1e-5, 1e-3, 1e-3, 1e-2])
+    param_bounds = [(0,1), (0, 1e15), (0, 1e5), (0, 0.99), (-np.pi, np.pi)]
+    proposal_std = np.array([1e-5, 0, 1e-3, 1e-3, 0])
 
 
     def likelihood_fn(x, y, params):
         return gaussian_error_ln_likelihood(fluxes, None,
-                                            lambda eta, a,o,p: circular_delta_flux_function(times, eta, a, o, p),
+                                            lambda params: flux_data_from_params([100 * 4.2635e-5, 333000 * 1.12],
+                                                                                 *params,
+                                                                                 times),
                                             params, sigma_n)
 
     # Run MCMC
