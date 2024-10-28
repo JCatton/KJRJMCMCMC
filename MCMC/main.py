@@ -53,6 +53,10 @@ def linear_likelihood(
     log_likelihood = -0.5 * np.sum(residuals**2 / sigma2 + np.log(2 * np.pi * sigma2))
     return log_likelihood
 
+def add_gaussian_error(input_arr: np.ndarray, mu: float, sigma: float) -> np.ndarray:
+    return input_arr + np.random.normal(mu, sigma, input_arr.shape)
+
+
 def gaussian_error_ln_likelihood(observed: np.array, prior_funcs: list[Callable[..., float]],
                                  analytic_func: Callable[..., float],  params: np.array,
                                  sigma_n: float) -> float:
@@ -162,6 +166,7 @@ def main():
     # Initial parameter guesses
     initial_params = [1e-2, 0.01, 1, 1] # eta, A, omega, phi
     sigma_n = 1e-2
+    fluxes = add_gaussian_error(fluxes, 0, sigma_n)
     num_iterations = 20000
     param_bounds = [(0,1), (1, 1e8), (0, 1), (-np.pi, np.pi)]
     proposal_std = np.array([1e-5, 1e-3, 1e-3, 1e-2])
