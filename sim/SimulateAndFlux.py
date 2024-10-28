@@ -5,7 +5,7 @@ import time
 import FileCheck as fc
 import os
 
-from N_body_sim import N_Body_sim
+from N_body_sim import N_Body_sim, n_body_sim_api
 from FluxCalculation import combined_delta_flux
 
 
@@ -89,6 +89,26 @@ def simulate_and_interpolate_flux_vectorized(
         plt.savefig(plot_path)
     return interpolated_flux
 
+def flux_data_from_params(stellar_params: np.ndarray,
+    planet_params: list[np.ndarray],
+    times: np.ndarray):
+    positions = n_body_sim_api(
+        stellar_mass=stellar_params[1],
+        planet_params=planet_params,
+        times=times
+    )
+
+    flux_values = combined_delta_flux(
+        x=positions[:, :, 0].transpose(),
+        y=positions[:, :, 1].transpose(),
+        z=positions[:, :, 2].transpose(),
+        radius_star=stellar_params[0],
+        planet_params=planet_params,
+        times=times,
+    )
+
+    return flux_values
+
 
 # Example Usage
 if __name__ == "__main__":
@@ -107,11 +127,12 @@ if __name__ == "__main__":
     numberMaxPeriod = 4
 
     # Define some sample times for interpolation
-    times_input = [
-        np.linspace(0, 12, 60000),
-        np.linspace(15, 18, 60000),
-        np.linspace(20, 30, 60000),
-    ]
+    # times_input = [
+    #     np.linspace(0, 12, 60000),
+    #     np.linspace(15, 18, 60000),
+    #     np.linspace(20, 30, 60000),
+    # ]
+    times_input = np.linspace(0, 30, 60000)
 
     # Get Flux Values
     interpolated_flux_output = simulate_and_interpolate_flux_vectorized(
@@ -119,7 +140,10 @@ if __name__ == "__main__":
         planet_params=planet_params,
         SamplesPerOrbit=SamplesPerOrbit,
         numberMaxPeriod=numberMaxPeriod,
-        times_input=times_input,
+        times_input=[times_input],
         show=True,
         save=True,
     )
+
+    output = flux_data_from_params(stellar_params=Stellar_params, planet_params=planet_params, times=times_input)
+    print(np.sum(output - interpolated_flux_output))
