@@ -166,12 +166,12 @@ def main():
     # Initial parameter guesses
     # [eta radius,      mass,   orbital radius, eccentricity, omega(phase)]
     # [1 * 4.2635e-5,   90.26,  0.045,          0.000,          0]
-    initial_params = np.array([[1e-5, 90.26, 0.01, 0, 0]])
+    initial_params = np.array([[1e-5, 90.26, 0.045, 0, 0]])
     sigma_n = 1e-2
     fluxes = add_gaussian_error(fluxes, 0, sigma_n)
-    num_iterations = 20000
-    param_bounds = [(0,1), (0, 1e15), (0, 1e5), (0, 0.99), (-np.pi, np.pi)]
-    proposal_std = np.array([1e-5, 0, 1e-3, 1e-3, 0])
+    num_iterations = 10000
+    param_bounds = [(0,1), (0, 1e15), (1-6, 1e5), (0, 0.99), (-np.pi, np.pi)]
+    proposal_std = np.array([1e-5, 0, 1e-3, 1e-3, 1e-3])
 
 
     def likelihood_fn(x, y, params):
