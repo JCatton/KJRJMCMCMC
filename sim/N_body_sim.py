@@ -92,7 +92,7 @@ def N_Body_sim(
     return x_pos, y_pos, orbits_x, orbits_y, times
 
 def n_body_sim_api(
-    stellar_mass: float, planet_params: list[np.ndarray],
+    stellar_mass: float, planet_params: np.ndarray,
     times: np.ndarray
 ) -> (np.ndarray, np.ndarray):
     """

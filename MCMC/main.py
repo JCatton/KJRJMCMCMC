@@ -65,7 +65,7 @@ def gaussian_error_ln_likelihood(observed: np.array, prior_funcs: list[Callable[
     else:
         log_prior = 0
     deviation_lh = 1/2 * np.log(sigma_n)
-    observed_lh = np.power(observed - analytic_func(*params), 2) / (2 * sigma_n ** 2)
+    observed_lh = np.power(observed - analytic_func(params), 2) / (2 * sigma_n ** 2)
     ln_likelihood = log_prior - deviation_lh - np.sum(observed_lh)
     return ln_likelihood
 
@@ -166,7 +166,7 @@ def main():
     # Initial parameter guesses
     # [eta radius,      mass,   orbital radius, eccentricity, omega(phase)]
     # [1 * 4.2635e-5,   90.26,  0.045,          0.000,          0]
-    initial_params = [[1e-5, 90.26, 0.01, 0, 0]]
+    initial_params = np.array([[1e-5, 90.26, 0.01, 0, 0]])
     sigma_n = 1e-2
     fluxes = add_gaussian_error(fluxes, 0, sigma_n)
     num_iterations = 20000
@@ -177,7 +177,7 @@ def main():
     def likelihood_fn(x, y, params):
         return gaussian_error_ln_likelihood(fluxes, None,
                                             lambda params: flux_data_from_params([100 * 4.2635e-5, 333000 * 1.12],
-                                                                                 *params,
+                                                                                 params,
                                                                                  times),
                                             params, sigma_n)
 

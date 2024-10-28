@@ -90,7 +90,7 @@ def simulate_and_interpolate_flux_vectorized(
     return interpolated_flux
 
 def flux_data_from_params(stellar_params: np.ndarray,
-    planet_params: list[np.ndarray],
+    planet_params: np.ndarray,
     times: np.ndarray):
     positions = n_body_sim_api(
         stellar_mass=stellar_params[1],
