@@ -93,7 +93,7 @@ def N_Body_sim(
 
 def n_body_sim_api(
     stellar_mass: float, planet_params: list[np.ndarray],
-    times: np.ndarray[np.float64]
+    times: np.ndarray
 ) -> (np.ndarray, np.ndarray):
     """
     Simulate the N-body system of a star and multiple planets over time.
@@ -104,7 +104,7 @@ def n_body_sim_api(
                     [radius, mass, orbital radius, eccentricity, omega (phase)]
 
     Returns:
-    - Arrays of x, y, and z positions of the star and planets over time
+    - Array of body, positions of the star and planets across time. [time_idx, body_idx, coord]
     """
     sim = rebound.Simulation()
     sim.units = ["mearth", "day", "AU"]  # Set units to Earth masses, days, and AU
