@@ -33,27 +33,6 @@ def delta_flux_from_cartesian(x, y, z, radius_star, radius_planet):
     infront_mid = np.setdiff1d(mid_star, behind_star)
     delta_flux[in_front_near] = 1 - eta_sq
     delta_flux[infront_mid] = overlap_calc(d, radius_planet, radius_star, infront_mid)
-    # # Iterate through each point and calculate the delta flux
-    # for i in range(0, len(x)):
-    #     if d[i] >= (radius_star + radius_planet):  # No overlap
-    #         continue
-    #     elif y[i] >= 0:  # If the planet is behind the star, no overlap
-    #         continue
-    #     elif (
-    #         d[i] <= radius_star - radius_planet
-    #     ):  # If the planet is completely infront of the star, full overlap
-    #         delta_flux[i] = (
-    #             1 - eta_sq
-    #         )
-    #         continue
-    #     elif (
-    #         abs(radius_star - radius_planet) < d[i]
-    #         and d[i] < radius_star + radius_planet
-    #     ):  # Partial overlap
-
-
-
-
     return delta_flux
 
 @jit
@@ -100,7 +79,7 @@ def combined_delta_flux(
 
     # Calculate the delta flux for each planet and subtract it from the combined flux
     for i in range(N):
-        radius_planet = planet_params[i][0]
+        radius_planet = planet_params[i][0] * radius_star
         x, y, z = x_p_rel[i], y_p_rel[i], z_p_rel[i]
         delta_flux = delta_flux_from_cartesian(x, y, z, radius_star, radius_planet)
         combined_flux -= 1 - delta_flux
