@@ -1,4 +1,7 @@
 # main.py
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from typing import Tuple, Callable
 
@@ -158,25 +161,92 @@ def circular_delta_flux_function(x, eta, a, omega, phi):
     return delta_flux_from_cartesian(x, y, z, 1, eta)
 
 
+def Kai_chain_to_plot_and_estimate_new(chain: np.ndarray, likelihoods: np.ndarray, params_labels: list[str]):
+    """
+    Extracts samples from an MCMC chain and plots the estimated parameters and log-likelihoods.
+
+    Args:
+        chain (np.ndarray): The MCMC chain of sampled parameters with shape (num_samples, num_params).
+        likelihoods (np.ndarray): The log-likelihood values for each sample.
+        params_labels (list[str]): List of parameter names.
+    """
+    num_params = len(params_labels)
+    fig, axs = plt.subplots(nrows=3, ncols=2, figsize=(10, 6))
+    fig.suptitle("Parameter Iterations")
+
+    x = np.arange(len(chain))
+
+    # Plot each parameter on its own subplot
+    for i in range(3):
+        param_samples = chain[:, i]
+        axs[i,0].plot(x, param_samples)
+        axs[i,0].set_ylabel(params_labels[i])
+        axs[i,0].set_xlabel("Iteration")
+        axs[i,0].set_title(f"Iteration for Parameter: {params_labels[i]}")
+
+    for i in range(2):
+        param_samples = chain[:, i + 3]
+        axs[i,1].plot(x, param_samples)
+        print(i, i + 3)
+        axs[i,1].set_ylabel(params_labels[i + 3])
+        axs[i,1].set_xlabel("Iteration")
+        axs[i,1].set_title(f"Iteration for Parameter: {params_labels[i + 3]}")
+
+    # Plotting the likelihoods on a separate subplot
+    axs[-1,1].plot(x, likelihoods)
+    axs[-1,1].set_ylabel(r"Log Likelihoods")
+    axs[-1,1].set_xlabel("Iteration")
+    axs[-1,1].set_title("Log-Likelihood Iterations")
+
+    plt.tight_layout()
+    plt.show()
+
+    # Print summary for parameters
+    print("MCMC sampling completed.")
+    for i in range(num_params):
+        if i < chain.shape[1]:
+            print(f"Estimated {params_labels[i]}: {np.mean(chain[:, i]):.4f}")
+        else:
+            print(f"Estimated {params_labels[i]}: Constant value")
+
+
+
 def main():
 
     # Generate synthetic data
-    times, fluxes = extract_timeseries_data(r"C:\Users\jonte\PycharmProjects\KJRJMCMCMC\sim\Outputs\Example\timeseries_flux.npy")
+    # times, fluxes = extract_timeseries_data(r"C:\Users\jonte\PycharmProjects\KJRJMCMCMC\sim\Outputs\Example\timeseries_flux.npy")
+
+    times = np.load("Times.npy")
+    fluxes = np.load("Fluxes.npy")
 
     # Initial parameter guesses
-    # [eta radius,      mass,   orbital radius, eccentricity, omega(phase)]
-    # [1 * 4.2635e-5,   90.26,  0.045,          0.000,          0]
-    initial_params = np.array([[1e-5, 90.26, 0.045, 0, 0]])
-    sigma_n = 1e-2
+    # [eta radius ratio,      mass,   orbital radius, eccentricity, omega(phase)]
+    # [0.1,   90.26,  0.045,          0.000,          0]
+    initial_params = np.array([[0.1 + 0.001, 90.26, 0.045, 0, 0-0.0001]])
+
+    #Stellar params = [radius (in AU), mass]
+    stellar_params = np.array([100 * 4.2635e-5, 333000 * 1.12])
+    sigma_n = 1e-5 # Not too high or it will be unidentifiable
+    num_iterations = 2000
+    param_bounds = [(0,1), (0, 1e15), (0.02, 0.08), (0, 0.99), (-np.pi/10, np.pi/10)]
+    proposal_std = np.array([1e-5, 0, 0, 0, 1e-5])
+
+    """
+    #Plot to check
+    plt.subplot(2, 1, 1)
+    plt.plot(times, fluxes)
+    plt.title("Original Data")
+    plt.subplot(2, 1, 2)
     fluxes = add_gaussian_error(fluxes, 0, sigma_n)
-    num_iterations = 10000
-    param_bounds = [(0,1), (0, 1e15), (1-6, 1e5), (0, 0.99), (-np.pi, np.pi)]
-    proposal_std = np.array([1e-5, 0, 1e-3, 1e-3, 1e-3])
+    plt.plot(times, fluxes)
+    plt.title("Data with Gaussian Noise")
+    plt.show()
+    """
 
 
     def likelihood_fn(x, y, params):
         return gaussian_error_ln_likelihood(fluxes, None,
-                                            lambda params: flux_data_from_params([100 * 4.2635e-5, 333000 * 1.12],
+                                            lambda params: flux_data_from_params(stellar_params,
                                                                                  params,
                                                                                  times),
                                             params, sigma_n)
@@ -195,34 +265,39 @@ def main():
     # Save chain
     np.save("mcmc_chain.npy", chain)
 
-    # Extract samples
-    chain_to_plot_and_estimate(chain, likelihoods)
+    chain = np.squeeze(chain)
+    # Example usage for the chain_to_plot_and_estimate_new
+    params_labels = [r"$\eta$", r"$M", r"$a$", r"$e", r"$\omega$"]
+    Kai_chain_to_plot_and_estimate_new(chain, likelihoods, params_labels)
+
+
+    # # Extract samples
+    # chain_to_plot_and_estimate(chain, likelihoods)
 
     burn_in_index = determine_burn_in_index(chain)
     print(
         f"\n\nBurn-in burn_in_index: {burn_in_index} "
         f"or {burn_in_index/chain.shape[0] * 100:.2f}% of the chain"
     )
+
+    chain = np.squeeze(chain)
+    chain = chain[:, [0, 4]]
     fig = corner(
-        chain[burn_in_index:],
-        labels=[
-            r"$eta$",
-            r"$a$",
-            r"$omega$",
-            r"$phi$",
-        ],
-        truths=[m_true, c_true, m_noise_true, c_noise_true],
+        chain[300:],
+        labels=[r"$\eta$", r"$\omega$"],
+        truths=[0.1, 0],
         show_titles=True,
         title_kwargs={"fontsize": 18},
     )
-    fig.suptitle(
-        f"A plot of y=mx + c,\nFor m~N({m_true}, {m_noise_true}),"
-        f" and c~N({c_true}, {c_noise_true})"
-    )
+    
+    # fig.suptitle(
+    #     f"A plot of y=mx + c,\nFor m~N({m_true}, {m_noise_true}),"
+    #     f" and c~N({c_true}, {c_noise_true})"
+    # )
     plt.show()
 
     print("After Burn-in")
-    chain_to_plot_and_estimate(chain[burn_in_index:])
+    # chain_to_plot_and_estimate(chain[burn_in_index:])
 
 
 # def main():
