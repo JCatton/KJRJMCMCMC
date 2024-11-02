@@ -53,7 +53,8 @@ def metropolis_hastings(
             acceptance += 1
             current_params = proposal
             current_likelihood = proposal_likelihood
-        acceptance_rate = acceptance / i
+        acceptance_rate = acceptance / (i+1)
+
 
         chain[i] = current_params
         likelihoods[i] = current_likelihood
