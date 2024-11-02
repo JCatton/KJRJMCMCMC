@@ -102,3 +102,32 @@ def combined_delta_flux(
         plt.close()
     return combined_flux
 
+
+def delta_flux_from_Mandel_and_Agol(a, i, P, phase, radius_star, eta, times):
+
+    omega = 2*np.pi/P
+
+    r = (a/radius_star) * np.sqrt(1-(np.sin(i)**2)*np.cos(omega * times + phase)**2)
+
+    phi = np.arccos((r**2 + 1 - eta**2)/(2*r))
+
+    psi = np.arccos((r**2 + eta**2 - 1)/(2*r*eta))
+
+    # r(t) >= 1 + eta
+    delta_flux = np.zeros_like(r)
+    mask_case1 = (r >= 1 + eta)
+    delta_flux[mask_case1] = 1
+
+    # |1 - eta| < r(t) <= 1 + eta and CurrPhase is between -pi/2 and pi/2
+    mask_case2 = ((np.abs(1 - eta) < r) & (r <= 1 + eta) &
+                  ((omega * times + phase) >= -np.pi / 2) & ((omega * times + phase) <= np.pi / 2))
+    delta_flux[mask_case2] = (1 - 1 / np.pi * (phi[mask_case2] + eta**2 * psi[mask_case2] -
+                                               0.5 * np.sqrt(4 * r[mask_case2]**2 - (1 + r[mask_case2]**2 - eta**2)**2)))
+
+    # r(t) <= 1 - eta and CurrPhase is between -pi/2 and pi/2
+    mask_case3 = ((r <= 1 - eta) &
+                  ((omega * times + phase) >= -np.pi / 2) & ((omega * times + phase) <= np.pi / 2))
+    delta_flux[mask_case3] = 1 - eta**2
+
+    return delta_flux
+
