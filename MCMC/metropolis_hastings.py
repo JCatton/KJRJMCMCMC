@@ -31,6 +31,8 @@ def metropolis_hastings(
         np.ndarray: Chain of sampled parameters.
     """
     chain = np.zeros((num_iterations, *initial_params.shape))
+    acceptance = 0
+
     current_params = initial_params.copy()
     current_likelihood = likelihood_fn(x, y, current_params)
     likelihoods = np.full(num_iterations, current_likelihood)
@@ -47,10 +49,11 @@ def metropolis_hastings(
         # Acceptance probability
         acceptance_prob = min(1, np.exp(proposal_likelihood - current_likelihood))
 
-        # Accept or reject
         if np.random.rand() < acceptance_prob:
+            acceptance += 1
             current_params = proposal
             current_likelihood = proposal_likelihood
+        acceptance_rate = acceptance / i
 
         chain[i] = current_params
         likelihoods[i] = current_likelihood
