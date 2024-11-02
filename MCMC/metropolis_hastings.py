@@ -31,13 +31,15 @@ def metropolis_hastings(
         np.ndarray: Chain of sampled parameters.
     """
     chain = np.zeros((num_iterations, *initial_params.shape))
+    chain[0] = initial_params
     acceptance = 0
+    sim_number = 1
 
     current_params = initial_params.copy()
     current_likelihood = likelihood_fn(x, y, current_params)
     likelihoods = np.full(num_iterations, current_likelihood)
 
-    for i in trange(num_iterations):
+    for i in trange(1, num_iterations):
         proposal = current_params + normal(0, proposal_std, size=initial_params.shape)
 
         for j, (lower, upper) in enumerate(param_bounds):
@@ -53,11 +55,12 @@ def metropolis_hastings(
             acceptance += 1
             current_params = proposal
             current_likelihood = proposal_likelihood
-        acceptance_rate = acceptance / (i+1)
-
+        acceptance_rate = acceptance / i
+        sim_number = np.ceil(1 / acceptance_rate) if acceptance_rate > 0 else sim_number
 
         chain[i] = current_params
         likelihoods[i] = current_likelihood
+
 
     return chain, likelihoods
 
