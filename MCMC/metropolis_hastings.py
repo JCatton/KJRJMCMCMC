@@ -84,7 +84,7 @@ def metropolis_hastings(
         chain[i] = current_params
         likelihoods[i] = current_likelihood
 
-
+    print(f"{acceptance_rate=:.2f}")
     return chain, likelihoods
 
 
