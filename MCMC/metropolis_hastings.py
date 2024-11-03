@@ -4,7 +4,9 @@ from numpy import ndarray, dtype, floating
 from tqdm import trange
 import numpy as np
 from numpy.random import normal
+from pathos.multiprocessing import ProcessingPool as Pool
 
+CPU_NODES = 16
 
 def metropolis_hastings(
     x: np.ndarray,
@@ -31,30 +33,58 @@ def metropolis_hastings(
         np.ndarray: Chain of sampled parameters.
     """
     chain = np.zeros((num_iterations, *initial_params.shape))
+    chain[0] = initial_params
+    acceptance_number = 0
+    rejection_number = 0
+    sim_number = 1
+    xs = np.array([x] * CPU_NODES)
+    ys = np.array([y] * CPU_NODES)
+
     current_params = initial_params.copy()
     current_likelihood = likelihood_fn(x, y, current_params)
     likelihoods = np.full(num_iterations, current_likelihood)
 
-    for i in trange(num_iterations):
-        proposal = current_params + normal(0, proposal_std, size=initial_params.shape)
+    for i in trange(1, num_iterations):
+        proposal = current_params + normal(0, proposal_std, size=(sim_number, *initial_params.shape))
 
         for j, (lower, upper) in enumerate(param_bounds):
-            proposal[:, j] = np.clip(proposal[:, j], lower, upper)
+            proposal[:, :, j] = np.clip(proposal[:, :, j], lower, upper)
 
-        # Compute likelihood of proposed parameters
-        proposal_likelihood = likelihood_fn(x, y, proposal)
+        with Pool(nodes=CPU_NODES) as pool:
+            proposal_likelihoods = pool.map(likelihood_fn, xs[:sim_number], ys[:sim_number], proposal)
 
-        # Acceptance probability
-        acceptance_prob = min(1, np.exp(proposal_likelihood - current_likelihood))
+        acceptance_probs = np.minimum(1, np.exp(np.array(proposal_likelihoods) - current_likelihood))
 
-        # Accept or reject
-        if np.random.rand() < acceptance_prob:
-            current_params = proposal
-            current_likelihood = proposal_likelihood
+
+        for s in range(sim_number):
+            if np.random.rand() < acceptance_probs[s]:
+                acceptance_number += 1
+                current_params = proposal[s]
+                current_likelihood = proposal_likelihoods[s]
+                break  # Exit after accepting a proposal
+            else:
+                rejection_number += 1
+
+        acceptance_rate = acceptance_number / (rejection_number + acceptance_number)
+        sim_number = int(min(np.ceil(1 / acceptance_rate) if acceptance_rate > 0 else sim_number, CPU_NODES))
+
+        # Old Code
+        # # Compute likelihood of proposed parameters
+        # proposal_likelihood = likelihood_fn(x, y, proposal)
+        #
+        # # Acceptance probability
+        # acceptance_prob = min(1, np.exp(proposal_likelihood - current_likelihood))
+
+        # if np.random.rand() < acceptance_prob:
+        #     acceptance += 1
+        #     current_params = proposal
+        #     current_likelihood = proposal_likelihood
+
 
         chain[i] = current_params
         likelihoods[i] = current_likelihood
 
+    print(f"{acceptance_rate=:.2f}")
     return chain, likelihoods
 
 
