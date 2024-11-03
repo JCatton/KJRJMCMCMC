@@ -32,7 +32,8 @@ def metropolis_hastings(
     """
     chain = np.zeros((num_iterations, *initial_params.shape))
     chain[0] = initial_params
-    acceptance = 0
+    acceptance_number = 0
+    rejection_number = 0
     sim_number = 1
 
     current_params = initial_params.copy()
@@ -40,13 +41,13 @@ def metropolis_hastings(
     likelihoods = np.full(num_iterations, current_likelihood)
 
     for i in trange(1, num_iterations):
-        proposal = current_params + normal(0, proposal_std, size=initial_params.shape)
+        proposal = current_params + normal(0, proposal_std, size=(sim_number, *initial_params.shape))
 
         for j, (lower, upper) in enumerate(param_bounds):
             proposal[:, j] = np.clip(proposal[:, j], lower, upper)
+            proposal[:, :, j] = np.clip(proposal[:, :, j], lower, upper)
 
-        # Compute likelihood of proposed parameters
-        proposal_likelihood = likelihood_fn(x, y, proposal)
+        acceptance_probs = np.minimum(1, np.exp(np.array(proposal_likelihoods) - current_likelihood))
 
         # Acceptance probability
         acceptance_prob = min(1, np.exp(proposal_likelihood - current_likelihood))
@@ -57,6 +58,29 @@ def metropolis_hastings(
             current_likelihood = proposal_likelihood
         acceptance_rate = acceptance / i
         sim_number = np.ceil(1 / acceptance_rate) if acceptance_rate > 0 else sim_number
+        for s in range(sim_number):
+            if np.random.rand() < acceptance_probs[s]:
+                acceptance_number += 1
+                current_params = proposal[s]
+                current_likelihood = proposal_likelihoods[s]
+                break  # Exit after accepting a proposal
+            else:
+                rejection_number += 1
+
+        acceptance_rate = acceptance_number / (rejection_number + acceptance_number)
+
+        # Old Code
+        # # Compute likelihood of proposed parameters
+        # proposal_likelihood = likelihood_fn(x, y, proposal)
+        #
+        # # Acceptance probability
+        # acceptance_prob = min(1, np.exp(proposal_likelihood - current_likelihood))
+
+        # if np.random.rand() < acceptance_prob:
+        #     acceptance += 1
+        #     current_params = proposal
+        #     current_likelihood = proposal_likelihood
+
 
         chain[i] = current_params
         likelihoods[i] = current_likelihood
