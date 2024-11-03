@@ -277,9 +277,6 @@ def main():
     )
 
     fig = corner(
-        chain[300:],
-        labels=[r"$\eta$", r"$\omega$"],
-        truths=[0.1, 0],
         chain[burn_in_index:, 0],
         labels=param_names,
         truths=true_vals,
@@ -290,8 +287,8 @@ def main():
     plt.show()
 
     print("After Burn-in")
-    # chain_to_plot_and_estimate(chain[burn_in_index:], likelihoods[burn_in_index:],
-    #                            param_names, true_vals=true_vals)
+    chain_to_plot_and_estimate(chain[burn_in_index:], likelihoods[burn_in_index:],
+                               param_names, true_vals=true_vals)
 
 
 # def main():
