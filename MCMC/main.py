@@ -207,40 +207,37 @@ def Kai_chain_to_plot_and_estimate_new(chain: np.ndarray, likelihoods: np.ndarra
 def main():
 
     # Generate synthetic data
-    # times, fluxes = extract_timeseries_data(r"C:\Users\jonte\PycharmProjects\KJRJMCMCMC\sim\Outputs\Example\timeseries_flux.npy")
+    # times, inp_fluxes = extract_timeseries_data(r"C:\Users\jonte\PycharmProjects\KJRJMCMCMC\sim\Outputs\Example\timeseries_flux.npy")
 
-    times = np.load("Times.npy")
-    fluxes = np.load("Fluxes.npy")
+    times = np.load("../Times.npy")
+    inp_fluxes = np.load("../Fluxes.npy")
 
     # Initial parameter guesses
-    # param_names = np.array([r"\eta radius", "mass", "orbital radius", "eccentricity", r"\omega (phase)"])
-    # true_vals = np.array([1 * 4.2635e-5, 90.26, 0.045, 0.000, 0])
-    # initial_params = np.array([[4.2635*1e-5, 90.26, 0.045, 0, 0]])
-    # proposal_std = np.array([1e-5, 0, 1e-3, 1e-3, 0])
-    # param_bounds = [(0,1), (0, 1e15), (1e-6, 1e5), (0, 0.99), (-np.pi, np.pi)]
-    # sigma_n = 1e-2
-    # fluxes = add_gaussian_error(fluxes, 0, sigma_n)
-    # num_iterations = 1000
+    param_names = np.array([r"\eta radius", "mass", "orbital radius", "eccentricity", r"\omega (phase)"])
+    true_vals = np.array([1 * 4.2635e-5, 90.26, 0.045, 0.000, 0])
+
     initial_params = np.array([[0.1 + 0.001, 90.26, 0.045, 0, 0-0.0001]])
-
-    #Stellar params = [radius (in AU), mass]
-    stellar_params = np.array([100 * 4.2635e-5, 333000 * 1.12])
-    sigma_n = 1e-5 # Not too high or it will be unidentifiable
+    proposal_std = np.array([3*1e-4, 0, 5*1e-7, 1e-5, 0])
+    param_bounds = [(0,1), (0, 1e15), (1e-6, 1e5), (0, 0.99), (-np.pi, np.pi)]
+    sigma_n = 2*1e-3
+    fluxes = add_gaussian_error(inp_fluxes, 0, sigma_n)
     num_iterations = 2000
-    param_bounds = [(0,1), (0, 1e15), (0.02, 0.08), (0, 0.99), (-np.pi/10, np.pi/10)]
-    proposal_std = np.array([1e-5, 0, 0, 0, 1e-5])
 
-    """
+    # #Stellar params = [radius (in AU), mass]
+    stellar_params = np.array([100 * 4.2635e-5, 333000 * 1.12])
+
+
+
     #Plot to check
     plt.subplot(2, 1, 1)
-    plt.plot(times, fluxes)
+    plt.plot(times, inp_fluxes)
     plt.title("Original Data")
     plt.subplot(2, 1, 2)
     fluxes = add_gaussian_error(fluxes, 0, sigma_n)
     plt.plot(times, fluxes)
     plt.title("Data with Gaussian Noise")
     plt.show()
-    """
+
 
 
     def likelihood_fn(x, y, params):
