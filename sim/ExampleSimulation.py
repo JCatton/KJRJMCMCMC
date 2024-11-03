@@ -47,15 +47,15 @@ delta_flux_combined = combined_delta_flux(
 )
 
 # Animate the orbits and flux
-ani = animate_orbits(
-    x_pos=x_pos,
-    y_pos=y_pos,
-    x_orbit=x_orbit,
-    y_orbit=y_orbit,
-    times=times,
-    planet_params=planet_params,
-    flux=delta_flux_combined,
-    saveloc="Example",
-)
+# ani = animate_orbits(
+#     x_pos=x_pos,
+#     y_pos=y_pos,
+#     x_orbit=x_orbit,
+#     y_orbit=y_orbit,
+#     times=times,
+#     planet_params=planet_params,
+#     flux=delta_flux_combined,
+#     saveloc="Example",
+# )
 
 # animate_orbits currently outpts a gif file to the saveloc folder, use online gif to video converter to convert to mp4 e.g. https://ezgif.com/gif-to-mp4 then speed up the video
