@@ -214,7 +214,7 @@ def main():
 
     # Initial parameter guesses
     param_names = np.array([r"\eta radius", "mass", "orbital radius", "eccentricity", r"\omega (phase)"])
-    true_vals = np.array([1 * 4.2635e-5, 90.26, 0.045, 0.000, 0])
+    true_vals = np.array([0.1, 90.26, 0.045, 0.000, 0])
 
     initial_params = np.array([[0.1 + 0.001, 90.26, 0.045, 0, 0-0.0001]])
     proposal_std = np.array([3*1e-4, 0, 5*1e-7, 1e-5, 0])
@@ -262,17 +262,13 @@ def main():
     np.save("mcmc_chain.npy", chain)
     np.save("mcmc_likelihoods.npy", likelihoods)
 
-    chain = np.squeeze(chain)
-    # Example usage for the chain_to_plot_and_estimate_new
-    params_labels = [r"$\eta$", r"$M", r"$a$", r"$e", r"$\omega$"]
-    Kai_chain_to_plot_and_estimate_new(chain, likelihoods, params_labels)
-    # # Extract samples of parameters that aren't fixed
-    # non_fixed_indexes = np.array(proposal_std, dtype=bool)
-    # chain = chain[:, :, non_fixed_indexes]
-    # param_names = param_names[non_fixed_indexes]
-    # true_vals = true_vals[non_fixed_indexes]
-    #
-    # chain_to_plot_and_estimate(chain, likelihoods, param_names, true_vals=true_vals)
+    # Extract samples of parameters that aren't fixed
+    non_fixed_indexes = np.array(proposal_std, dtype=bool)
+    chain = chain[:, :, non_fixed_indexes]
+    param_names = param_names[non_fixed_indexes]
+    true_vals = true_vals[non_fixed_indexes]
+
+    chain_to_plot_and_estimate(chain, likelihoods, param_names, true_vals=true_vals)
 
     burn_in_index = determine_burn_in_index(chain)
     print(
@@ -280,29 +276,17 @@ def main():
         f"or {burn_in_index/chain.shape[0] * 100:.2f}% of the chain"
     )
 
-    chain = np.squeeze(chain)
-    chain = chain[:, [0, 4]]
     fig = corner(
         chain[300:],
         labels=[r"$\eta$", r"$\omega$"],
         truths=[0.1, 0],
+        chain[burn_in_index:, 0],
+        labels=param_names,
+        truths=true_vals,
         show_titles=True,
         title_kwargs={"fontsize": 18},
+        title_fmt=".2e"
     )
-    # fig = corner(
-    #     chain[burn_in_index:, 0],
-    #     labels=param_names,
-    #     truths=true_vals,
-    #     show_titles=True,
-    #     title_kwargs={"fontsize": 18},
-    #     title_fmt=".2e"
-    # )
-
-
-    # fig.suptitle(
-    #     f"A plot of y=mx + c,\nFor m~N({m_true}, {m_noise_true}),"
-    #     f" and c~N({c_true}, {c_noise_true})"
-    # )
     plt.show()
 
     print("After Burn-in")
