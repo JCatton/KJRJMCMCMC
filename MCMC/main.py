@@ -239,7 +239,7 @@ def main():
 
 
 
-    def likelihood_fn(x, y, params):
+    def likelihood_fn(params):
         return gaussian_error_ln_likelihood(fluxes, None,
                                             lambda params: flux_data_from_params(stellar_params,
                                                                                  params,
