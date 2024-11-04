@@ -153,11 +153,11 @@ class MCMC:
             current_likelihood = self.likelihood_chain[prev_iter]
 
             proposals = current_params + normal(
-                0, self.proposal_std, size=(self.sim_number, *self.chain.shape)
+                0, self.proposal_std, size=(self.sim_number, *self.chain[0].shape)
             )
 
             for j, (lower, upper) in enumerate(self.param_bounds):
-                proposals[:, :, j] = np.clip(proposals[:, :, j], lower, upper)
+                proposals[:, j] = np.clip(proposals[:, j], lower, upper)
 
             with Pool(nodes=self.max_cpu_nodes) as pool:
                 proposal_likelihoods = pool.map(self.likelihood_func, proposals)
