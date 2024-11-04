@@ -9,7 +9,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 from corner import corner
 from data_generator import generate_linear_data
-from metropolis_hastings import determine_burn_in_index, metropolis_hastings
 from sim.FluxCalculation import delta_flux_from_cartesian
 from sim.SimulateAndFlux import flux_data_from_params
 
@@ -246,6 +245,11 @@ def main():
                                                                                  params,
                                                                                  times),
                                             params, sigma_n)
+
+    from mcmc import MCMC
+    mcmc = MCMC(fluxes, initial_params, param_bounds, proposal_std, likelihood_func=likelihood_fn)
+    mcmc.metropolis_hastings(100)
+
 
     # Run MCMC
     chain, likelihoods = metropolis_hastings(
