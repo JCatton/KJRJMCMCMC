@@ -9,6 +9,7 @@ from numpy.random import normal
 from pathos.multiprocessing import ProcessingPool as Pool
 from tqdm import tqdm
 import matplotlib.pyplot as plt
+from corner import corner
 
 CPU_NODES = 16
 
@@ -213,13 +214,18 @@ class MCMC:
             self.chain[self.iteration_num] = current_params
             self.likelihood_chain[self.iteration_num] = current_likelihood
 
+        print(f"{acceptance_rate=}")
         pbar.close()
 
     def chain_to_plot_and_estimate(self,
                                    true_vals: Optional[np.ndarray[float]] = None):
-        chain = self.chain
+
+        non_fixed_indexes = np.array(self.proposal_std, dtype=bool)
+        chain = self.chain[:, :, non_fixed_indexes]
+        param_names = self.param_names[non_fixed_indexes]
+        true_vals = true_vals[non_fixed_indexes] if true_vals.any() else None
         likelihoods = self.likelihood_chain
-        param_names = self.param_names
+
         print("MCMC sampling completed.")
 
         plt.figure(figsize=(10, 8))
@@ -245,6 +251,21 @@ class MCMC:
                 axs[body, i].set_ylabel(f"{name}")
 
         plt.tight_layout()
+        plt.show()
+
+    def corner_plot(self, true_vals: Optional[np.ndarray]=None, burn_in_index: int=0):
+        non_fixed_indexes = np.array(self.proposal_std, dtype=bool)
+        chain = self.chain[:, :, non_fixed_indexes]
+        param_names = self.param_names[non_fixed_indexes]
+        true_vals = true_vals[non_fixed_indexes] if true_vals.any() else None
+        fig = corner(
+            chain[burn_in_index:, 0],
+            labels=param_names,
+            truths=true_vals,
+            show_titles=True,
+            title_kwargs={"fontsize": 18},
+            title_fmt=".2e"
+        )
         plt.show()
 
     def determine_burn_in_index(self) -> int:
