@@ -161,7 +161,7 @@ class MCMC:
             )
 
             for j, (lower, upper) in enumerate(self.param_bounds):
-                proposals[:, j] = np.clip(proposals[:, j], lower, upper)
+                proposals[:, :, j] = np.clip(proposals[:, :, j], lower, upper)
 
             if self.max_cpu_nodes == 1:
                 proposal_likelihoods = np.atleast_1d(
