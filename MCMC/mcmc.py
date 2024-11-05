@@ -56,6 +56,7 @@ class MCMC:
         self.sim_number = 1
         self.data_folder = build_folder_name(specified_folder_name)
         self.param_names = param_names
+        self.initial_parameters = initial_parameters
 
         # Diagnostics
         self.acceptance_num = 0
@@ -86,10 +87,11 @@ class MCMC:
         np.save(self.data_folder / "raw_data.npy", self.raw_data)
         np.save(self.data_folder / "chain.npy", self.chain)
         np.save(self.data_folder / "likelihoods.npy", self.likelihood_chain)
-        del self.raw_data, self.chain, self.likelihood_chain
 
         with open(self.data_folder / "mcmc_attributes.pkl", "wb") as f:
-            dill.dump(self.__dict__, f)
+            ignore_attrs = ["chain", "likelihood_chain", "raw_data"]
+            attrs = {k: v for k, v in self.__dict__.items() if k not in ignore_attrs}
+            dill.dump(attrs, f)
 
     @classmethod
     def load(cls, data_folder: Path):
@@ -102,8 +104,9 @@ class MCMC:
                 # Load the object using dill
                 with open(data_folder / "mcmc_attributes.pkl", "rb") as f:
                     mcmc_attributes = dill.load(f)
+                    raw_data = np.load(data_folder / "raw_data.npy")
                     try:
-                        obj = cls(**mcmc_attributes)
+                        obj = cls(raw_data=raw_data, **mcmc_attributes)
                     except TypeError as e:
                         print(
                             f"Error occurred due to missing attributes in"
@@ -112,7 +115,6 @@ class MCMC:
                         )
                         raise e
                     try:
-                        obj.raw_data = np.load(data_folder / "raw_data.npy")
                         obj.chain = np.load(data_folder / "chain.npy")
                         obj.likelihood_chain = np.load(data_folder / "likelihoods.npy")
                     except FileNotFoundError as e:
@@ -216,6 +218,7 @@ class MCMC:
 
         print(f"{acceptance_rate=}")
         pbar.close()
+        self.save()
 
     def chain_to_plot_and_estimate(self,
                                    true_vals: Optional[np.ndarray[float]] = None):
