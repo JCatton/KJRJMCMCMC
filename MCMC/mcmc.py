@@ -148,9 +148,11 @@ class MCMC:
         prev_iter = self.iteration_num - 1
 
         pbar = tqdm(
-            initial=self.iteration_num, total=max_iteration_number, desc="MCMC Run "
+            initial=self.iteration_num, total=max_iteration_number - 1, desc="MCMC Run "
         )
-        while self.iteration_num < max_iteration_number:
+
+        remaining_iter = num_of_new_iterations - 1
+        while self.iteration_num < (max_iteration_number - 1):
             current_params = self.chain[prev_iter]
             current_likelihood = self.likelihood_chain[prev_iter]
 
@@ -202,6 +204,7 @@ class MCMC:
                     self.max_cpu_nodes,
                 )
             )
+            self.sim_number = min(self.sim_number, remaining_iter)
             self.chain[self.iteration_num] = current_params
             self.likelihood_chain[self.iteration_num] = current_likelihood
 
