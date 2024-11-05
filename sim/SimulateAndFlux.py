@@ -121,11 +121,11 @@ if __name__ == "__main__":
     # Stellar parameters: [radius, mass]
     Stellar_params = [100 * 4.2635e-5, 333000 * 1.12]
 
-    # Planet parameters: [radius, mass, orbital radius, eccentricity, omega (phase)]
+    # Planet parameters: [radiusRatios, mass, orbital radius, eccentricity, omega (phase)]
     planet_params = [
-        [1 * 4.2635e-5, 90.26, 0.045, 0.000, 0],
-        [0.5 * 4.2635e-5, 66, 0.078, 0.021, 90],
-        [2 * 4.2635e-5, 70, 0.1, 0.000, 45],
+        [0.1, 90.26, 0.045, 0.000, 0]
+        # ,[0.5 * 4.2635e-5, 66, 0.078, 0.021, 90],
+        # [2 * 4.2635e-5, 70, 0.1, 0.000, 45],
     ]
     SamplesPerOrbit = 60000
     numberMaxPeriod = 4
@@ -138,16 +138,17 @@ if __name__ == "__main__":
     # ]
     times_input = np.linspace(0, 30, 60000)
 
-    # Get Flux Values
-    interpolated_flux_output = simulate_and_interpolate_flux_vectorized(
-        Stellar_params=Stellar_params,
-        planet_params=planet_params,
-        SamplesPerOrbit=SamplesPerOrbit,
-        numberMaxPeriod=numberMaxPeriod,
-        times_input=[times_input],
-        show=True,
-        save=True,
-    )
+    # # Get Flux Values
+    # interpolated_flux_output = simulate_and_interpolate_flux_vectorized(
+    #     Stellar_params=Stellar_params,
+    #     planet_params=planet_params,
+    #     SamplesPerOrbit=SamplesPerOrbit,
+    #     numberMaxPeriod=numberMaxPeriod,
+    #     times_input=[times_input],
+    #     show=True,
+    #     save=True,
+    # )
 
     output = flux_data_from_params(stellar_params=Stellar_params, planet_params=planet_params, times=times_input)
-    print(np.sum(output - interpolated_flux_output))
+    # print(np.sum(output - interpolated_flux_output))
+
