@@ -65,7 +65,9 @@ class MCMC:
         self.likelihood_func: Callable = likelihood_func
 
         # MCMC-Runtime
-        self.chain = np.array(initial_parameters)
+        empty_chain = np.empty_like(initial_parameters, shape=(1, *initial_parameters.shape))
+        empty_chain[0] = initial_parameters
+        self.chain = empty_chain
         self.likelihood_chain = np.array(self.likelihood_func(initial_parameters))
 
         if kwargs:
@@ -159,8 +161,13 @@ class MCMC:
             for j, (lower, upper) in enumerate(self.param_bounds):
                 proposals[:, j] = np.clip(proposals[:, j], lower, upper)
 
-            with Pool(nodes=self.max_cpu_nodes) as pool:
-                proposal_likelihoods = pool.map(self.likelihood_func, proposals)
+            if self.max_cpu_nodes == 1:
+                proposal_likelihoods = np.atleast_1d(
+                    self.likelihood_func(proposals[0])
+                )
+            else:
+                with Pool(nodes=self.max_cpu_nodes) as pool:
+                    proposal_likelihoods = pool.map(self.likelihood_func, proposals)
 
             acceptance_probs = np.minimum(
                 1,
@@ -173,6 +180,7 @@ class MCMC:
                 self.iteration_num += 1
                 prev_iter += 1
                 pbar.update(1)
+                remaining_iter -= 1
                 if np.random.rand() < acceptance_probs[s]:
                     self.acceptance_num += 1
                     self.chain[prev_iter] = proposals[s]
@@ -191,7 +199,7 @@ class MCMC:
                         if acceptance_rate > 0
                         else self.sim_number
                     ),
-                    CPU_NODES,
+                    self.max_cpu_nodes,
                 )
             )
             self.chain[self.iteration_num] = current_params

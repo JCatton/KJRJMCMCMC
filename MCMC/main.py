@@ -247,7 +247,7 @@ def main():
                                             params, sigma_n)
 
     from mcmc import MCMC
-    mcmc = MCMC(fluxes, initial_params, param_bounds, proposal_std, likelihood_func=likelihood_fn)
+    mcmc = MCMC(fluxes, initial_params, param_bounds, proposal_std, likelihood_func=likelihood_fn, max_cpu_nodes=1)
     mcmc.metropolis_hastings(100)
 
 
