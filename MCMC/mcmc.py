@@ -8,6 +8,7 @@ from numpy import ndarray
 from numpy.random import normal
 from pathos.multiprocessing import ProcessingPool as Pool
 from tqdm import tqdm
+import matplotlib.pyplot as plt
 
 CPU_NODES = 16
 
@@ -43,6 +44,7 @@ class MCMC:
         param_bounds: List[Tuple[float, float]],
         proposal_std: ndarray,
         likelihood_func: Callable[[ndarray], float],
+        param_names = list[str],
         specified_folder_name: Optional[str] = None,
         max_cpu_nodes: int = 16,
         **kwargs,
@@ -52,6 +54,7 @@ class MCMC:
         self.max_cpu_nodes = max_cpu_nodes
         self.sim_number = 1
         self.data_folder = build_folder_name(specified_folder_name)
+        self.param_names = param_names
 
         # Diagnostics
         self.acceptance_num = 0
@@ -209,6 +212,38 @@ class MCMC:
             self.likelihood_chain[self.iteration_num] = current_likelihood
 
         pbar.close()
+
+    def chain_to_plot_and_estimate(self,
+                                   true_vals: Optional[np.ndarray[float]] = None):
+        chain = self.chain
+        likelihoods = self.likelihood_chain
+        param_names = self.param_names
+        print("MCMC sampling completed.")
+
+        plt.figure(figsize=(10, 8))
+        plt.xlabel("Iteration #")
+        x = np.arange(len(chain))
+        plt.plot(x, likelihoods)
+        plt.ylabel(r"Log Likelihoods")
+        plt.tight_layout()
+        plt.show()
+
+        fig, axs = plt.subplots(nrows=chain.shape[2], ncols=chain.shape[1], figsize=(10, 8))
+        axs = axs.reshape(chain[0].shape)
+        fig.suptitle("Parameter Iterations")
+        plt.xlabel("Iteration #")
+        x = np.arange(len(chain))
+
+        for body in range(chain.shape[1]):
+            for i, name in enumerate(param_names):
+                param_samples = chain[:, body, i]
+                print(f"Estimated {name}: {np.mean(param_samples):.3e}",
+                      f", true {name}: {true_vals[i]}" if true_vals is not None else None)
+                axs[body, i].plot(x, param_samples, label=name)
+                axs[body, i].set_ylabel(f"{name}")
+
+        plt.tight_layout()
+        plt.show()
 
     def determine_burn_in_index(self) -> int:
         """

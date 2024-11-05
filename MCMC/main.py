@@ -80,35 +80,6 @@ def extract_timeseries_data(file_location: str) -> (np.ndarray, np.ndarray):
     timeseries = np.load(file_location, allow_pickle=True)
     return timeseries[0], timeseries[1]
 
-def chain_to_plot_and_estimate(chain: np.ndarray, likelihoods: np.ndarray,
-                               param_names: np.ndarray[str], true_vals: Optional[np.ndarray[float]] = None):
-    print("MCMC sampling completed.")
-
-    plt.figure(figsize=(10, 8))
-    plt.xlabel("Iteration #")
-    x = np.arange(len(chain))
-    plt.plot(x, likelihoods)
-    plt.ylabel(r"Log Likelihoods")
-    plt.tight_layout()
-    plt.show()
-
-    fig, axs = plt.subplots(nrows=chain.shape[2], ncols=chain.shape[1], figsize=(10, 8))
-    axs = axs.reshape(chain[0].shape)
-    fig.suptitle("Parameter Iterations")
-    plt.xlabel("Iteration #")
-    x = np.arange(len(chain))
-
-    for body in range(chain.shape[1]):
-        for i, name in enumerate(param_names):
-            param_samples = chain[:, body, i]
-            print(f"Estimated {name}: {np.mean(param_samples):.3e}",
-                  f", true {name}: {true_vals[i]}" if true_vals is not None else None)
-            axs[body, i].plot(x, param_samples, label=name)
-            axs[body, i].set_ylabel(f"{name}")
-
-    plt.tight_layout()
-    plt.show()
-
 
 def synthetic_data(
     linear: bool, num_data_points: int = 500
@@ -247,8 +218,9 @@ def main():
                                             params, sigma_n)
 
     from mcmc import MCMC
-    mcmc = MCMC(fluxes, initial_params, param_bounds, proposal_std, likelihood_func=likelihood_fn, max_cpu_nodes=1)
+    mcmc = MCMC(fluxes, initial_params, param_bounds, proposal_std, param_names=param_names, likelihood_func=likelihood_fn, max_cpu_nodes=4)
     mcmc.metropolis_hastings(100)
+    mcmc.chain_to_plot_and_estimate(true_vals)
 
 
     # Run MCMC
