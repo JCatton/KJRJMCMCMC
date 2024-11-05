@@ -193,6 +193,8 @@ class MCMC:
                     break  # Exit after accepting a proposal
                 else:
                     self.rejection_num += 1
+                    self.chain[prev_iter] = current_params
+                    self.likelihood_chain[prev_iter] = current_likelihood
 
             # Because iteration number is the number of the next iteration
             # due to 0 indexing
