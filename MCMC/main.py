@@ -86,7 +86,7 @@ def main():
     from mcmc import MCMC
     mcmc = MCMC(fluxes, initial_params, param_bounds, proposal_std,
                 param_names=param_names, likelihood_func=likelihood_fn, max_cpu_nodes=4)
-    mcmc.metropolis_hastings(100)
+    mcmc.metropolis_hastings(num_iterations)
     mcmc.chain_to_plot_and_estimate(true_vals)
     mcmc.corner_plot(true_vals)
 
