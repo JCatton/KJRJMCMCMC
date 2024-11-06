@@ -67,12 +67,13 @@ def main():
     # planet_params =[ [ eta,   P,     a,   e,               inc, omega, OHM, phase_lag ] ]
     # planet_params =  np.array([[  eta1, 8.8, 0.08, 0.208, np.radians(90),   0, 0,  0]
     param_names = np.array([r"\eta", "P", "a", "e", "inc", "omega", "OHM", "phase_lag"])
-    true_vals = np.array([0.1, 8.8, 0.08, 0.208, np.radians(90), 0, 0, 0])
+    true_vals = np.array([0.1, 8.8, 0.08, 0.208, np.radians(88), 0, 0, 0])
     initial_params = np.array(
-        [[0.1 + 0.001, 8.8, 0.08 + 0.001, 0.208, np.radians(90), 0, 0, 0]]
+        # [[0.1 + 0.001, 8.8, 0.08 + 0.001, 0.208-0.0003, np.radians(88+0.002 ), 0, 0,0 + np.pi/8]]
+        [[0.1 + 0.1, 8.8, 0.08+0.03, 0.208 - 0.003, np.radians(90-0.01), 0-0.03, 0, 0 + 0.02]]
     )
-    proposal_std = np.array([3 * 1e-4, 0, 5 * 1e-7, 0, 0, 0, 0, 0])
-
+    # proposal_std = np.array([3 * 1e-4, 0, 5 * 1e-7, 3e-5, 1e-4, 0, 0, 1e-4])
+    proposal_std = np.array([3 * 1e-4, 0, 5 * 1e-5, 1e-5, 6e-5, 4e-4, 0, 4e-5])
     param_bounds = [
         (0, 1),
         (0, 1e1000),
@@ -84,9 +85,9 @@ def main():
         (-np.pi, np.pi),
     ]
 
-    sigma_n = 2 * 1e-3
+    sigma_n = 6 * 1e-4
     fluxes = add_gaussian_error(inp_fluxes, 0, sigma_n)
-    num_iterations = 2000
+    num_iterations = int(1000000)
 
     radius_WASP148A = 0.912 * 696.34e6 / 1.496e11
     mass_WASP148A = 0.9540 * 2e30 / 6e24
