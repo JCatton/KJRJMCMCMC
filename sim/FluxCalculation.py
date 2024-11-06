@@ -82,7 +82,6 @@ def combined_delta_flux(x, y, z, radius_star, planet_params, times, from_rebound
         delta_flux = delta_flux_from_Mandel_and_Agol(
             x_p_rel[i], y_p_rel[i], z_p_rel[i], radius_star, eta
         )
-        print(min(delta_flux))
         combined_flux += (delta_flux - 1)
     return combined_flux
 
