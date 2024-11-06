@@ -36,17 +36,19 @@ def delta_flux_from_cartesian(x, y, z, radius_star, radius_planet):
     return delta_flux
 
 @jit
-def overlap_calc(d, radius_planet, radius_star, slice):
-    # Derivation of the overlap area based on Mulcock (2024, Imperial College London, unpublished Literature Review)
-    r1, r2 = radius_star, radius_planet
-    phi = np.arccos((d[slice] ** 2 + r1 ** 2 - r2 ** 2) / (2 * d[slice] * r1))
-    psi = np.arccos((d[slice] ** 2 + r2 ** 2 - r1 ** 2) / (2 * d[slice] * r2))
-    area1 = r1 ** 2 * phi
-    area2 = r2 ** 2 * psi
-    area3 = d[slice] * r1 * np.sin(phi)
+def overlap_calc(r, eta, radius_star, slice_indices):
+    phi = np.arccos((r[slice_indices] ** 2 + 1 - eta ** 2) / (2 * r[slice_indices]))
+    psi = np.arccos((r[slice_indices] ** 2 + eta ** 2 - 1) / (2 * r[slice_indices] * eta))
+    
+    radius_planet = eta * radius_star
+    area1 = radius_planet ** 2 * psi
+    area2 = radius_star ** 2 * phi
+    area3 = r[slice_indices] * radius_star ** 2 * np.sin(phi)
     overlap_area = area1 + area2 - area3
-    star_area = np.pi * r1 ** 2
-    return 1 - overlap_area / star_area
+    star_area = np.pi * radius_star ** 2
+    
+    blocked_flux = overlap_area / star_area
+    return blocked_flux
 
 
 def combined_delta_flux(
