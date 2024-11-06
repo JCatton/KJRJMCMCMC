@@ -63,6 +63,12 @@ class MCMC:
         self.rejection_num = 0
         self.iteration_num = 1  # Can't start on the zeroth iteration
 
+        # Statistics
+        self.mean: Optional[np.ndarray] = None
+        self.var: Optional[np.ndarray] = None
+        self.burn_in_index: Optional[int] = None
+        self.remaining_chain_length = None
+
         # MCMC-Inputs
         self.raw_data: ndarray = raw_data
         self.param_bounds: List[Tuple[float, float]] = param_bounds
@@ -218,6 +224,8 @@ class MCMC:
 
         print(f"{acceptance_rate=}")
         pbar.close()
+        self.mean = np.mean(self.chain, axis=0)
+        self.determine_burn_in_index()
         self.save()
 
     def chain_to_plot_and_estimate(self,
@@ -292,4 +300,69 @@ class MCMC:
             indices.append(index_param)
 
         burn_in_index = max(indices)
+        self.burn_in_index = burn_in_index
+        self.remaining_chain_length = len(self.chain) - burn_in_index
         return burn_in_index
+
+class Statistics:
+
+    def __init__(self, folder_names: list[str | Path]):
+        # MCMC handling
+        self.folder_names = [Path(f_name) for f_name in folder_names]
+        self.folder_indexing = {f_name: i for i, f_name in enumerate(folder_names)}
+        self.chain_num: int = len(folder_names)
+        self.loaded_mcmcs: List[MCMC] = [] * self.chain_num
+
+        # Chain Details
+        self._unique_stats = 2
+        self.statistics_data = np.empty(shape=(folder_names, self._unique_stats))
+        self._means_idx = 0
+        self._var_idx = 1
+
+        # Global Statistics
+        self.mean_of_means = None
+        self.variance_of_means = None
+        self.gelman_rubin = None
+
+        self.load_folders()
+
+
+    def load_folders(self):
+        mcmcs = []
+        valid_paths = []
+        for f_path in self.folder_names:
+            if f_path.is_dir():
+                mcmcs.append(MCMC.load(f_path))
+                valid_paths.append(f_path)
+
+        self.chain_num = len(valid_paths)
+        chain = mcmcs[0].chain
+
+        if self.chain_num != len(self.folder_names):
+            self.statistics_data = np.empty(shape=(self.chain_num,
+                                                   self._unique_stats,
+                                                   *chain[0].shape))
+            self.loaded_mcmcs = [] * self.chain_num
+
+        for idx, (mcmc, f_path) in enumerate(zip(mcmcs, valid_paths)):
+            self.folder_indexing[f_path.name] = idx
+            self.loaded_mcmcs[idx] = mcmc
+
+
+    def gelman_rubin(self) -> np.ndarray:
+        stats = self.statistics_data
+        stats[:, self._means_idx] = [mcmc.mean for mcmc in self.loaded_mcmcs]
+        stats[:, self._var_idx] = [mcmc.var for mcmc in self.loaded_mcmcs]
+        mean_of_means = np.sum(stats[:, self._means_idx])
+
+        len_chain = len(self.loaded_mcmcs[0].chain)
+        coeff = len_chain / (self.chain_num - 1)
+        var_of_means = (coeff * np.sum(stats[:, self._means_idx] - mean_of_means))
+        mean_var = np.sum(stats[self._var_idx]) / self.chain_num
+
+        numerator = (len_chain - 1) / len_chain * mean_var + var_of_means / len_chain
+        self.gelman_rubin = numerator / mean_var
+        return self.gelman_rubin
+
+
+
