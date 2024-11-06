@@ -189,7 +189,5 @@ def analytical_positions_api(planet_params, times):
         pos[:, i, 0] = x
         pos[:, i, 1] = y
         pos[:, i, 2] = z
-    
-    
 
     return pos

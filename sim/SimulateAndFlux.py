@@ -1,7 +1,8 @@
 # main.py
 import sys
 import os
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -165,28 +166,32 @@ if __name__ == "__main__":
     #     # ,[0.5 * 4.2635e-5, 66, 0.078, 0.021, 90],
     #     # [2 * 4.2635e-5, 70, 0.1, 0.000, 45],
     # ]
- 
 
     """
     Use below params for analytical positions
     """
     # Stellar parameters: [radius, mass]
-    radius_WASP148A = 0.912  * 696.34e6 / 1.496e11
+    radius_WASP148A = 0.912 * 696.34e6 / 1.496e11
     mass_WASP148A = 0.9540 * 2e30 / 6e24
 
-    stellar_params = [radius_WASP148A, mass_WASP148A] # Based on WASP 148
+    stellar_params = [radius_WASP148A, mass_WASP148A]  # Based on WASP 148
     radius_WASP148_B = 8.47 * 6.4e6 / 1.496e11
-    radius_WASP148_c = 9.4 * 6.4e6 / 1.496e11 # assumed similar densities as no values for radius
+    radius_WASP148_c = (
+        9.4 * 6.4e6 / 1.496e11
+    )  # assumed similar densities as no values for radius
     eta1 = radius_WASP148_B / radius_WASP148A
     eta2 = radius_WASP148_c / radius_WASP148A
 
     eta1 = 0.1
     eta2 = 0.3
     # planet_params =[ [ eta,   P,     a,   e,               inc, omega, OHM, phase_lag ] ]
-    planet_params =  np.array([[  eta1, 8.8, 0.08, 0.208, np.radians(90),   0, 0,  0]
-                      , [eta2, 34.5, 0.20, 0.1809, np.radians(90), 0, 0, np.pi/4]
-                    ])
-    #True inclinations are 89.3 and 104.9 +- some
+    planet_params = np.array(
+        [
+            [eta1, 8.8, 0.08, 0.208, np.radians(90), 0, 0, 0],
+            [eta2, 34.5, 0.20, 0.1809, np.radians(90), 0, 0, np.pi / 4],
+        ]
+    )
+    # True inclinations are 89.3 and 104.9 +- some
 
     SamplesPerOrbit = 60000
     numberMaxPeriod = 4
@@ -197,11 +202,11 @@ if __name__ == "__main__":
     #     np.linspace(15, 18, 60000),
     #     np.linspace(20, 30, 60000),
     # ]
-    times_input = np.linspace(0, 2*34.5, 6000)  # Three orbital periods for planet 1
+    times_input = np.linspace(0, 2 * 34.5, 6000)  # Three orbital periods for planet 1
 
-
-    ouptut = flux_data_from_params_Analytical( stellar_params=stellar_params, planet_params=planet_params, times=times_input)
-
+    ouptut = flux_data_from_params_Analytical(
+        stellar_params=stellar_params, planet_params=planet_params, times=times_input
+    )
 
     np.save("TestFluxes.npy", ouptut)
     np.save("TestTimes.npy", times_input)
