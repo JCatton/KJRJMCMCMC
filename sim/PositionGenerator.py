@@ -5,6 +5,7 @@ from tqdm import tqdm
 import os
 from numba import jit
 
+
 def N_Body_sim(
     StellarMass, planet_params, SamplesPerOrbit=60, numberMaxPeriod=4, saveloc=None
 ):
@@ -92,10 +93,12 @@ def N_Body_sim(
 
     return x_pos, y_pos, orbits_x, orbits_y, times
 
+
 def n_body_sim_api(
-    stellar_mass: float, planet_params: np.ndarray,
+    stellar_mass: float,
+    planet_params: np.ndarray,
     times: np.ndarray,
-    no_loading_bar: bool = True
+    no_loading_bar: bool = True,
 ) -> (np.ndarray, np.ndarray):
     """
     Simulate the N-body system of a star and multiple planets over time.
@@ -120,9 +123,7 @@ def n_body_sim_api(
     for params in planet_params:
         radius, mass, semi_major_axis, eccentricity, omega = params
 
-        sim.add(
-            m=mass, a=semi_major_axis, e=eccentricity, omega=omega
-        )
+        sim.add(m=mass, a=semi_major_axis, e=eccentricity, omega=omega)
 
         period = sim.particles[-1].P
         shortest_period = min(shortest_period, period)
@@ -136,7 +137,6 @@ def n_body_sim_api(
             pos[time_idx, :, :] = [[p.x, p.y, p.z] for p in sim.particles]
 
     return pos
-
 
 
 @jit
@@ -153,9 +153,13 @@ def GenerateCoordinates(eta, P, a, e, inc, omega, OHM, phase_lag, time_array):
     """
     f = 2 * np.pi * ((time_array % P) / P + phase_lag)
     r = a * (1 - e**2) / (1 + e * np.cos(f))
-    
-    x = r * (np.cos(OHM) * np.cos(omega + f) - np.sin(OHM) * np.sin(omega + f) * np.cos(inc))
-    y = r * (np.sin(OHM) * np.cos(omega + f) + np.cos(OHM) * np.sin(omega + f) * np.cos(inc))
+
+    x = r * (
+        np.cos(OHM) * np.cos(omega + f) - np.sin(OHM) * np.sin(omega + f) * np.cos(inc)
+    )
+    y = r * (
+        np.sin(OHM) * np.cos(omega + f) + np.cos(OHM) * np.sin(omega + f) * np.cos(inc)
+    )
     z = -r * np.sin(omega + f) * np.sin(inc)
 
     return x, y, z
@@ -167,7 +171,7 @@ def analytical_positions_api(planet_params, times):
 
     Parameters:
     - planet_params: 2D numpy array where each row represents
-                     a planet's parameters as 
+                     a planet's parameters as
                      [eta, P, a, e, inc, omega, OHM, phase_lag]
     - times: Array of time values
 
@@ -184,6 +188,6 @@ def analytical_positions_api(planet_params, times):
         x, y, z = GenerateCoordinates(eta, P, a, e, inc, omega, OHM, phase_lag, times)
         pos[:, i, 0] = x
         pos[:, i, 1] = y
-        pos[:, i, 2] = z 
+        pos[:, i, 2] = z
 
     return pos

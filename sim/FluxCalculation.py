@@ -21,10 +21,10 @@ def delta_flux_from_Mandel_and_Agol(x, y, z, eta, radius_star):
     d = np.sqrt(x**2 + y**2)
     r = d / radius_star
     delta_flux = np.ones_like(d)
-    
+
     complete_overlap = np.nonzero((z > 0) & (r <= 1 - eta))
     partial_overlap = np.nonzero((z > 0) & (r > abs(1 - eta)) & (r < 1 + eta))
-    
+
     delta_flux[complete_overlap] = 1 - eta * eta
     delta_flux[partial_overlap] -= overlap_calc(r, eta, radius_star, partial_overlap)
     return delta_flux
@@ -32,23 +32,22 @@ def delta_flux_from_Mandel_and_Agol(x, y, z, eta, radius_star):
 
 @jit
 def overlap_calc(r, eta, radius_star, slice_indices):
-    phi = np.arccos((r[slice_indices] ** 2 + 1 - eta ** 2) / (2 * r[slice_indices]))
-    psi = np.arccos((r[slice_indices] ** 2 + eta ** 2 - 1) / (2 * r[slice_indices] * eta))
-    
+    phi = np.arccos((r[slice_indices] ** 2 + 1 - eta**2) / (2 * r[slice_indices]))
+    psi = np.arccos((r[slice_indices] ** 2 + eta**2 - 1) / (2 * r[slice_indices] * eta))
+
     radius_planet = eta * radius_star
-    area1 = radius_planet ** 2 * psi
-    area2 = radius_star ** 2 * phi
-    area3 = r[slice_indices] * radius_star ** 2 * np.sin(phi)
+    area1 = radius_planet**2 * psi
+    area2 = radius_star**2 * phi
+    area3 = r[slice_indices] * radius_star**2 * np.sin(phi)
     overlap_area = area1 + area2 - area3
-    star_area = np.pi * radius_star ** 2
-    
+    star_area = np.pi * radius_star**2
+
     blocked_flux = overlap_area / star_area
     return blocked_flux
 
+
 @jit
-def combined_delta_flux(
-    x, y, z, radius_star, planet_params, times, from_rebound=False
-):
+def combined_delta_flux(x, y, z, radius_star, planet_params, times, from_rebound=False):
     """
     Treating each transits individually, calculate the combined delta flux for all planets.
 
@@ -70,10 +69,9 @@ def combined_delta_flux(
         x_p_rel = x[1:] - x_s
         y_p_rel = y[1:] - y_s
         z_p_rel = z[1:] - z_s
-    
+
     else:
         x_p_rel, y_p_rel, z_p_rel = x[0], y[0], z[0]
-    
 
     # Initialize the combined delta flux as an array of ones
     combined_flux = np.ones(len(times))
@@ -81,9 +79,12 @@ def combined_delta_flux(
     # Calculate the delta flux for each planet and subtract it from the combined flux
     for i in range(N):
         eta = planet_params[i][0]
-        delta_flux = delta_flux_from_Mandel_and_Agol(x_p_rel[i], y_p_rel[i], z_p_rel[i], radius_star, eta)
-        combined_flux -= (1 - delta_flux)
+        delta_flux = delta_flux_from_Mandel_and_Agol(
+            x_p_rel[i], y_p_rel[i], z_p_rel[i], radius_star, eta
+        )
+        combined_flux -= 1 - delta_flux
     return combined_flux
+
 
 def plot_flux(times, flux_values, save=False):
     """
@@ -102,5 +103,3 @@ def plot_flux(times, flux_values, save=False):
     if save:
         plt.savefig("Flux_vs_Time.png")
     plt.show()
-
-

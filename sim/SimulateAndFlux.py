@@ -9,6 +9,7 @@ from sim.PositionGenerator import N_Body_sim, n_body_sim_api, analytical_positio
 from sim.FluxCalculation import combined_delta_flux
 from sim.Decorators import TimeMeasure
 
+
 @TimeMeasure
 def simulate_and_interpolate_flux_vectorized(
     Stellar_params,
@@ -90,16 +91,19 @@ def simulate_and_interpolate_flux_vectorized(
         plt.savefig(plot_path)
     return interpolated_flux
 
-def flux_data_from_params(stellar_params: np.ndarray,
+
+def flux_data_from_params(
+    stellar_params: np.ndarray,
     planet_params: np.ndarray,
     times: np.ndarray,
-    no_loading_bar: bool = True):
+    no_loading_bar: bool = True,
+):
 
     positions = n_body_sim_api(
         stellar_mass=stellar_params[1],
         planet_params=planet_params,
         times=times,
-        no_loading_bar=no_loading_bar
+        no_loading_bar=no_loading_bar,
     )
 
     flux_values = combined_delta_flux(
@@ -114,9 +118,9 @@ def flux_data_from_params(stellar_params: np.ndarray,
     return flux_values
 
 
-def flux_data_from_params_Analytical(stellar_params: np.ndarray,
-    planet_params: np.ndarray,
-    times: np.ndarray):
+def flux_data_from_params_Analytical(
+    stellar_params: np.ndarray, planet_params: np.ndarray, times: np.ndarray
+):
     """
     Calculate flux values from analytical positions.
 
@@ -129,11 +133,7 @@ def flux_data_from_params_Analytical(stellar_params: np.ndarray,
     - flux_values: Array of flux values
     """
 
-
-    positions = analytical_positions_api(
-        planet_params=planet_params,
-        times=times
-    )
+    positions = analytical_positions_api(planet_params=planet_params, times=times)
 
     flux_values = combined_delta_flux(
         x=positions[:, :, 0].transpose(),
@@ -145,6 +145,7 @@ def flux_data_from_params_Analytical(stellar_params: np.ndarray,
     )
 
     return flux_values
+
 
 # Example Usage
 if __name__ == "__main__":
@@ -181,6 +182,7 @@ if __name__ == "__main__":
     #     save=True,
     # )
 
-    output = flux_data_from_params(stellar_params=Stellar_params, planet_params=planet_params, times=times_input)
+    output = flux_data_from_params(
+        stellar_params=Stellar_params, planet_params=planet_params, times=times_input
+    )
     # print(np.sum(output - interpolated_flux_output))
-
