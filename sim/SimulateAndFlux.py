@@ -5,7 +5,7 @@ import time
 import sim.FileCheck as fc
 import os
 
-from sim.N_body_sim import N_Body_sim, n_body_sim_api
+from sim.PositionGenerator import N_Body_sim, n_body_sim_api, analytical_positions_api
 from sim.FluxCalculation import combined_delta_flux
 from sim.Decorators import TimeMeasure
 
@@ -113,6 +113,38 @@ def flux_data_from_params(stellar_params: np.ndarray,
 
     return flux_values
 
+
+def flux_data_from_params_Analytical(stellar_params: np.ndarray,
+    planet_params: np.ndarray,
+    times: np.ndarray):
+    """
+    Calculate flux values from analytical positions.
+
+    Parameters:
+    - stellar_params: List of stellar parameters [radius, mass]
+    - planet_params: List of planet parameters [radius, mass, orbital radius, eccentricity, omega (phase)]
+    - times: Array of time values
+
+    Returns:
+    - flux_values: Array of flux values
+    """
+
+
+    positions = analytical_positions_api(
+        planet_params=planet_params,
+        times=times
+    )
+
+    flux_values = combined_delta_flux(
+        x=positions[:, :, 0].transpose(),
+        y=positions[:, :, 1].transpose(),
+        z=positions[:, :, 2].transpose(),
+        radius_star=stellar_params[0],
+        planet_params=planet_params,
+        times=times,
+    )
+
+    return flux_values
 
 # Example Usage
 if __name__ == "__main__":
