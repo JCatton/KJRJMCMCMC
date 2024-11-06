@@ -151,7 +151,7 @@ def GenerateCoordinates(eta, P, a, e, inc, omega, OHM, phase_lag, time_array):
     Returns:
     - Arrays of x, y, and z coordinates of the planet over time
     """
-    f = 2 * np.pi * ((time_array % P) / P + phase_lag)
+    f = 2 * np.pi * ((time_array) / P + phase_lag)
     r = a * (1 - e**2) / (1 + e * np.cos(f))
 
     x = r * (
@@ -189,5 +189,7 @@ def analytical_positions_api(planet_params, times):
         pos[:, i, 0] = x
         pos[:, i, 1] = y
         pos[:, i, 2] = z
+    
+    
 
     return pos

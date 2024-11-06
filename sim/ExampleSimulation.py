@@ -3,7 +3,7 @@ import matplotlib.animation as animation
 import numpy as np
 from tqdm import tqdm
 
-from N_body_sim import N_Body_sim
+from sim.PositionGenerator import N_Body_sim
 from FluxCalculation import combined_delta_flux
 from Animation import animate_orbits
 

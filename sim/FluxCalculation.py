@@ -7,7 +7,7 @@ from numba import jit
 
 
 @jit
-def delta_flux_from_Mandel_and_Agol(x, y, z, eta, radius_star):
+def delta_flux_from_Mandel_and_Agol(x, y, z, radius_star, eta):
     """
     Calculate the delta flux for a planet using the Mandel and Agol model.
 
@@ -71,7 +71,7 @@ def combined_delta_flux(x, y, z, radius_star, planet_params, times, from_rebound
         z_p_rel = z[1:] - z_s
 
     else:
-        x_p_rel, y_p_rel, z_p_rel = x[0], y[0], z[0]
+        x_p_rel, y_p_rel, z_p_rel = x, y, z
 
     # Initialize the combined delta flux as an array of ones
     combined_flux = np.ones(len(times))
@@ -82,7 +82,8 @@ def combined_delta_flux(x, y, z, radius_star, planet_params, times, from_rebound
         delta_flux = delta_flux_from_Mandel_and_Agol(
             x_p_rel[i], y_p_rel[i], z_p_rel[i], radius_star, eta
         )
-        combined_flux -= 1 - delta_flux
+        print(min(delta_flux))
+        combined_flux += (delta_flux - 1)
     return combined_flux
 
 
