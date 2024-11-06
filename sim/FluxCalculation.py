@@ -7,33 +7,47 @@ from numba import jit
 
 
 
-def delta_flux_from_cartesian(x, y, z, radius_star, radius_planet):
+@jit
+def delta_flux_from_Mandel_and_Agol(x, y, z, eta, radius_star):
     """
-    Calculate the delta flux for a single planet based on its position relative to the star.
-    Parameters:
-    - x: Array of horizontal positions of the planet relative to the star's center
-    - y: Array of y-positions (direction to star from observer) of the planet relative to the star's center
-    - z: Array of z-coordinates of the planet relative to the star's center (perpendicular to both x and y)
-    - radius_star: Radius of the star
-    - radius_planet: Radius of the planet
+    Calculate the delta flux for a planet using the Mandel and Agol model.
 
-    Returns:
-    - Array of delta flux values as fractions of the total stellar flux
+    Parameters:
+    - x : x sky coordinate
+    - y : y sky coordinate
+    - z : towards the observer
+    - eta : planet radius / star radius
+    - radius_star : radius of the star
     """
-    # Center to center distance
-    d = np.sqrt(x**2 + z**2)
-    eta_sq = radius_planet / radius_star * radius_planet / radius_star
-    # Initialize delta flux array with all values set to 1 (no blocking)
+    d = np.sqrt(x**2 + y**2)
+    r = d / radius_star
     delta_flux = np.ones_like(d)
-    behind_star = np.nonzero(y >= 0)
-    near_star = np.nonzero((d <= radius_star - radius_planet))
-    mid_and_near_star = np.nonzero((d <= radius_star + radius_planet))
-    mid_star = np.setdiff1d(mid_and_near_star, near_star)
-    in_front_near = np.setdiff1d(near_star, behind_star)
-    infront_mid = np.setdiff1d(mid_star, behind_star)
-    delta_flux[in_front_near] = 1 - eta_sq
-    delta_flux[infront_mid] = overlap_calc(d, radius_planet, radius_star, infront_mid)
+    
+    complete_overlap = np.nonzero((z > 0) & (r <= 1 - eta))
+    partial_overlap = np.nonzero((z > 0) & (r > abs(1 - eta)) & (r < 1 + eta))
+    
+    delta_flux[complete_overlap] = 1 - eta * eta
+    delta_flux[partial_overlap] -= overlap_calc(r, eta, radius_star, partial_overlap)
     return delta_flux
+
+
+
+@jit
+def delta_flux_from_Mandel_and_Agol(x_sky, y_sky, z_orbit, eta, radius_star):
+    d = np.sqrt(x**2 + y**2)
+    r = d / radius_star
+    delta_flux = np.ones_like(d)
+    
+    behind_star = np.nonzero(z_orbit <= 0)
+    complete_overlap = np.nonzero((z_orbit > 0) & (r <= 1 - eta))
+    partial_overlap = np.nonzero((z_orbit > 0) & (r > abs(1 - eta)) & (r < 1 + eta))
+    
+    delta_flux[complete_overlap] = 1 - eta * eta
+    delta_flux[partial_overlap] -= overlap_calc(r, eta, radius_star, partial_overlap)
+    return delta_flux
+
+
+
 
 @jit
 def overlap_calc(r, eta, radius_star, slice_indices):
