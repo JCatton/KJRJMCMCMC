@@ -6,7 +6,6 @@ import matplotlib.pyplot as plt
 from numba import jit
 
 
-
 @jit
 def delta_flux_from_Mandel_and_Agol(x, y, z, eta, radius_star):
     """
@@ -45,8 +44,6 @@ def delta_flux_from_Mandel_and_Agol(x_sky, y_sky, z_orbit, eta, radius_star):
     delta_flux[complete_overlap] = 1 - eta * eta
     delta_flux[partial_overlap] -= overlap_calc(r, eta, radius_star, partial_overlap)
     return delta_flux
-
-
 
 
 @jit
