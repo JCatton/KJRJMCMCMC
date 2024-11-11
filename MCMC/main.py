@@ -1,6 +1,9 @@
 # main.py
 import sys
 import os
+
+from MCMC.mcmc import Statistics
+
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from typing import Callable, Optional
@@ -8,7 +11,7 @@ from typing import Callable, Optional
 import matplotlib.pyplot as plt
 import numpy as np
 from sim.SimulateAndFlux import flux_data_from_params
-
+from mcmc import MCMC
 # Global Configuration
 
 
@@ -52,7 +55,7 @@ def main():
     param_names = np.array([r"\eta radius", "mass", "orbital radius", "eccentricity", r"\omega (phase)"])
     true_vals = np.array([0.1, 90.26, 0.045, 0.000, 0])
 
-    initial_params = np.array([[0.1 + 0.001, 90.26, 0.045, 0, 0-0.0001]])
+    initial_params = np.array([[0.1 + 0.01, 90.26, 0.045, 0, 0-0.001]])
     proposal_std = np.array([3*1e-4, 0, 5*1e-7, 1e-5, 0])
     param_bounds = [(0,1), (0, 1e15), (1e-6, 1e5), (0, 0.99), (-np.pi, np.pi)]
     sigma_n = 2*1e-3
@@ -65,14 +68,14 @@ def main():
 
 
     #Plot to check
-    plt.subplot(2, 1, 1)
-    plt.plot(times, inp_fluxes)
-    plt.title("Original Data")
-    plt.subplot(2, 1, 2)
-    fluxes = add_gaussian_error(fluxes, 0, sigma_n)
-    plt.plot(times, fluxes)
-    plt.title("Data with Gaussian Noise")
-    plt.show()
+    # plt.subplot(2, 1, 1)
+    # plt.plot(times, inp_fluxes)
+    # plt.title("Original Data")
+    # plt.subplot(2, 1, 2)
+    # fluxes = add_gaussian_error(fluxes, 0, sigma_n)
+    # plt.plot(times, fluxes)
+    # plt.title("Data with Gaussian Noise")
+    # plt.show()
 
 
 
@@ -83,13 +86,22 @@ def main():
                                                                                  times),
                                             params, sigma_n)
 
-    from mcmc import MCMC
-    mcmc = MCMC(fluxes, initial_params, param_bounds, proposal_std,
-                param_names=param_names, likelihood_func=likelihood_fn, max_cpu_nodes=4)
-    mcmc.metropolis_hastings(100)
-    mcmc.chain_to_plot_and_estimate(true_vals)
-    mcmc.corner_plot(true_vals)
-
+    # mcmc = MCMC(fluxes, initial_params, param_bounds, proposal_std,
+    #             param_names=param_names, likelihood_func=likelihood_fn, max_cpu_nodes=4)
+    # mcmc.metropolis_hastings(50_000)
+    # mcmc.chain_to_plot_and_estimate(true_vals)
+    # mcmc.corner_plot(true_vals)
+    folder_names = ["2024-11-06_run1",
+                    "2024-11-06_run2",
+                    "2024-11-06_run3",
+                    "2024-11-06_run4",
+                    "2024-11-06_run5"]
+    stats = Statistics(folder_names)
+    for mcmc in stats.loaded_mcmcs:
+        # mcmc.corner_plot(true_vals=true_vals, burn_in_index=1000)
+        mcmc.chain_to_plot_and_estimate(true_vals=true_vals)
+    # gr = stats.calc_gelman_rubin()
+    # print(f"The Gelman Rubin Statistic is {gr}")
 
 
 if __name__ == "__main__":

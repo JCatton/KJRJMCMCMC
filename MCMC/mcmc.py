@@ -311,11 +311,11 @@ class Statistics:
         self.folder_names = [Path(f_name) for f_name in folder_names]
         self.folder_indexing = {f_name: i for i, f_name in enumerate(folder_names)}
         self.chain_num: int = len(folder_names)
-        self.loaded_mcmcs: List[MCMC] = [] * self.chain_num
+        self.loaded_mcmcs: List[MCMC] = []
 
         # Chain Details
         self._unique_stats = 2
-        self.statistics_data = np.empty(shape=(folder_names, self._unique_stats))
+        self.statistics_data = np.empty(shape=(self.chain_num, self._unique_stats))
         self._means_idx = 0
         self._var_idx = 1
 
@@ -337,22 +337,22 @@ class Statistics:
 
         self.chain_num = len(valid_paths)
         chain = mcmcs[0].chain
+        self.statistics_data = np.empty(shape=(self.chain_num,
+                                               self._unique_stats,
+                                               *chain[0].shape))
 
         if self.chain_num != len(self.folder_names):
-            self.statistics_data = np.empty(shape=(self.chain_num,
-                                                   self._unique_stats,
-                                                   *chain[0].shape))
-            self.loaded_mcmcs = [] * self.chain_num
+            self.loaded_mcmcs = []
 
         for idx, (mcmc, f_path) in enumerate(zip(mcmcs, valid_paths)):
             self.folder_indexing[f_path.name] = idx
-            self.loaded_mcmcs[idx] = mcmc
+            self.loaded_mcmcs.append(mcmc)
 
 
-    def gelman_rubin(self) -> np.ndarray:
+    def calc_gelman_rubin(self) -> np.ndarray:
         stats = self.statistics_data
         stats[:, self._means_idx] = [mcmc.mean for mcmc in self.loaded_mcmcs]
-        stats[:, self._var_idx] = [mcmc.var for mcmc in self.loaded_mcmcs]
+        stats[:, self._var_idx] = [np.var(mcmc.chain, axis=0) for mcmc in self.loaded_mcmcs]
         mean_of_means = np.sum(stats[:, self._means_idx])
 
         len_chain = len(self.loaded_mcmcs[0].chain)
