@@ -3,13 +3,13 @@ from pathlib import Path
 from typing import Callable, List, Optional, Tuple
 
 import dill
+import matplotlib.pyplot as plt
 import numpy as np
+from corner import corner
 from numpy import ndarray
 from numpy.random import normal
 from pathos.multiprocessing import ProcessingPool as Pool
 from tqdm import tqdm
-import matplotlib.pyplot as plt
-from corner import corner
 
 CPU_NODES = 16
 
@@ -45,7 +45,7 @@ class MCMC:
         param_bounds: List[Tuple[float, float]],
         proposal_std: ndarray,
         likelihood_func: Callable[[ndarray], float],
-        param_names = list[str],
+        param_names=list[str],
         specified_folder_name: Optional[str] = None,
         max_cpu_nodes: int = 16,
         **kwargs,
@@ -65,12 +65,16 @@ class MCMC:
 
         # MCMC-Inputs
         self.raw_data: ndarray = raw_data
-        self.param_bounds: List[Tuple[float, float]] = param_bounds
+        self.param_bounds = np.array(param_bounds)
+        self.lower_bounds = self.param_bounds[:, 0]
+        self.upper_bounds = self.param_bounds[:, 1]
         self.proposal_std: ndarray = proposal_std
         self.likelihood_func: Callable = likelihood_func
 
         # MCMC-Runtime
-        empty_chain = np.empty_like(initial_parameters, shape=(1, *initial_parameters.shape))
+        empty_chain = np.empty_like(
+            initial_parameters, shape=(1, *initial_parameters.shape)
+        )
         empty_chain[0] = initial_parameters
         self.chain = empty_chain
         self.likelihood_chain = np.array(self.likelihood_func(initial_parameters))
@@ -130,6 +134,21 @@ class MCMC:
                 f"{data_folder} is not a valid saved state of {cls.__name__}"
             )
 
+    def proposal_within_bounds(self, proposals):
+        """
+        Parameters:
+        - proposals: np.ndarray of shape (sim_number, max_cpu_nodes, num_params)
+          The array of proposed parameter values.
+        Returns:
+        - proposal_bools: np.ndarray of shape (sim_number, max_cpu_nodes)
+          Boolean array indicating whether each proposal is within bounds.
+        """
+        is_within_bounds = (proposals >= self.lower_bounds) & (
+            proposals <= self.upper_bounds
+        )
+        proposal_bools = is_within_bounds.all(axis=2)
+        return proposal_bools
+
     def metropolis_hastings(
         self,
         num_of_new_iterations: int,
@@ -157,7 +176,7 @@ class MCMC:
             initial=self.iteration_num, total=max_iteration_number - 1, desc="MCMC Run "
         )
 
-        remaining_iter = num_of_new_iterations - 1
+        remaining_iter = num_of_new_iterations
         while self.iteration_num < (max_iteration_number - 1):
             current_params = self.chain[prev_iter]
             current_likelihood = self.likelihood_chain[prev_iter]
@@ -166,13 +185,15 @@ class MCMC:
                 0, self.proposal_std, size=(self.sim_number, *self.chain[0].shape)
             )
 
+            proposal_within_bounds = self.proposal_within_bounds(proposals)
+
+            # Keep clipping as easiest solution that works with multiprocessing and
+            # negligible run cost
             for j, (lower, upper) in enumerate(self.param_bounds):
                 proposals[:, :, j] = np.clip(proposals[:, :, j], lower, upper)
 
             if self.max_cpu_nodes == 1:
-                proposal_likelihoods = np.atleast_1d(
-                    self.likelihood_func(proposals[0])
-                )
+                proposal_likelihoods = np.atleast_1d(self.likelihood_func(proposals[0]))
             else:
                 with Pool(nodes=self.max_cpu_nodes) as pool:
                     proposal_likelihoods = pool.map(self.likelihood_func, proposals)
@@ -189,7 +210,9 @@ class MCMC:
                 prev_iter += 1
                 pbar.update(1)
                 remaining_iter -= 1
-                if np.random.rand() < acceptance_probs[s]:
+                if proposal_within_bounds[s] and (
+                    np.random.rand() < acceptance_probs[s]
+                ):
                     self.acceptance_num += 1
                     self.chain[prev_iter] = proposals[s]
                     self.likelihood_chain[prev_iter] = proposal_likelihoods[s]
@@ -213,15 +236,14 @@ class MCMC:
                 )
             )
             self.sim_number = min(self.sim_number, remaining_iter)
-            self.chain[self.iteration_num] = current_params
-            self.likelihood_chain[self.iteration_num] = current_likelihood
+            # self.chain[self.iteration_num] = current_params
+            # self.likelihood_chain[self.iteration_num] = current_likelihood
 
         print(f"{acceptance_rate=}")
         pbar.close()
         self.save()
 
-    def chain_to_plot_and_estimate(self,
-                                   true_vals: Optional[np.ndarray[float]] = None):
+    def chain_to_plot_and_estimate(self, true_vals: Optional[np.ndarray[float]] = None):
 
         non_fixed_indexes = np.array(self.proposal_std, dtype=bool)
         chain = self.chain[:, :, non_fixed_indexes]
@@ -239,7 +261,9 @@ class MCMC:
         plt.tight_layout()
         plt.show()
 
-        fig, axs = plt.subplots(nrows=chain.shape[2], ncols=chain.shape[1], figsize=(10, 8))
+        fig, axs = plt.subplots(
+            nrows=chain.shape[2], ncols=chain.shape[1], figsize=(10, 8)
+        )
         axs = axs.reshape(chain[0].shape)
         fig.suptitle("Parameter Iterations")
         plt.xlabel("Iteration #")
@@ -248,26 +272,30 @@ class MCMC:
         for body in range(chain.shape[1]):
             for i, name in enumerate(param_names):
                 param_samples = chain[:, body, i]
-                print(f"Estimated {name}: {np.mean(param_samples):.3e}",
-                      f", true {name}: {true_vals[i]}" if true_vals is not None else None)
+                print(
+                    f"Estimated {name}: {np.mean(param_samples):.3e}",
+                    f", true {name}: {true_vals[i]}" if true_vals is not None else None,
+                )
                 axs[body, i].plot(x, param_samples, label=name)
                 axs[body, i].set_ylabel(f"{name}")
 
         plt.tight_layout()
         plt.show()
 
-    def corner_plot(self, true_vals: Optional[np.ndarray]=None, burn_in_index: int=0):
+    def corner_plot(
+        self, true_vals: Optional[np.ndarray] = None, burn_in_index: int = 0
+    ):
         non_fixed_indexes = np.array(self.proposal_std, dtype=bool)
         chain = self.chain[:, :, non_fixed_indexes]
         param_names = self.param_names[non_fixed_indexes]
         true_vals = true_vals[non_fixed_indexes] if true_vals.any() else None
-        fig = corner(
+        corner(
             chain[burn_in_index:, 0],
             labels=param_names,
             truths=true_vals,
             show_titles=True,
             title_kwargs={"fontsize": 18},
-            title_fmt=".2e"
+            title_fmt=".2e",
         )
         plt.show()
 
