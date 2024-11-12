@@ -229,6 +229,7 @@ class MCMC:
         print(f"{acceptance_rate=}")
         pbar.close()
         self.mean = np.mean(self.chain, axis=0)
+        self.var = np.var(self.chain, axis=0)
         self.determine_burn_in_index()
         self.save()
 
@@ -366,9 +367,7 @@ class Statistics:
         """
         stats = self.statistics_data
         stats[:, self._means_idx] = [mcmc.mean for mcmc in self.loaded_mcmcs]
-        stats[:, self._var_idx] = [
-            np.var(mcmc.chain, axis=0) for mcmc in self.loaded_mcmcs
-        ]
+        stats[:, self._var_idx] = [mcmc.var for mcmc in self.loaded_mcmcs]
         mean_of_means = np.mean(stats[:, self._means_idx], axis=0)
 
         len_chain = len(self.loaded_mcmcs[0].chain)
