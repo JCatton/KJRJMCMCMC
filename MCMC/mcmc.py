@@ -46,7 +46,7 @@ class MCMC:
         proposal_std: ndarray,
         likelihood_func: Callable[[ndarray], float],
         param_names = list[str],
-        specified_folder_name: Optional[str] = None,
+        specified_folder_name: Optional[str | Path] = None,
         max_cpu_nodes: int = 16,
         **kwargs,
     ):
@@ -112,7 +112,7 @@ class MCMC:
                     mcmc_attributes = dill.load(f)
                     raw_data = np.load(data_folder / "raw_data.npy")
                     try:
-                        obj = cls(raw_data=raw_data, **mcmc_attributes)
+                        obj = cls(raw_data=raw_data, specified_folder_name=data_folder, **mcmc_attributes)
                     except TypeError as e:
                         print(
                             f"Error occurred due to missing attributes in"
