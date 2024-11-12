@@ -358,16 +358,30 @@ class Statistics:
             self.loaded_mcmcs.append(mcmc)
 
     def calc_gelman_rubin(self) -> np.ndarray:
+        """
+        Calculates the Gelman_Rubin statistic of the loaded chains using the formula
+        https://en.wikipedia.org/wiki/Gelman-Rubin_statistic
+        Any parameters which do not vary are set to have a statistic
+        of zero.
+        """
         stats = self.statistics_data
         stats[:, self._means_idx] = [mcmc.mean for mcmc in self.loaded_mcmcs]
-        stats[:, self._var_idx] = [np.var(mcmc.chain, axis=0) for mcmc in self.loaded_mcmcs]
-        mean_of_means = np.sum(stats[:, self._means_idx])
+        stats[:, self._var_idx] = [
+            np.var(mcmc.chain, axis=0) for mcmc in self.loaded_mcmcs
+        ]
+        mean_of_means = np.mean(stats[:, self._means_idx], axis=0)
 
         len_chain = len(self.loaded_mcmcs[0].chain)
-        coeff = len_chain / (self.chain_num - 1)
-        var_of_means = (coeff * np.sum(stats[:, self._means_idx] - mean_of_means))
-        mean_var = np.sum(stats[self._var_idx]) / self.chain_num
-
+        chain_num = self.chain_num
+        var_of_means = (
+            len_chain
+            / (chain_num - 1)
+            * np.sum(np.power(stats[:, self._means_idx] - mean_of_means, 2), axis=0)
+        )
+        mean_var = np.mean(stats[:, self._var_idx], axis=0)
         numerator = (len_chain - 1) / len_chain * mean_var + var_of_means / len_chain
         self.gelman_rubin = numerator / mean_var
+        self.gelman_rubin *= np.where(
+            self.loaded_mcmcs[0].proposal_std == 0, False, True
+        )
         return self.gelman_rubin
