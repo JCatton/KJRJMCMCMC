@@ -3,18 +3,18 @@ from pathlib import Path
 from typing import Callable, List, Optional, Tuple
 
 import dill
+import matplotlib.pyplot as plt
 import numpy as np
+from corner import corner
 from numpy import ndarray
 from numpy.random import normal
 from pathos.multiprocessing import ProcessingPool as Pool
 from tqdm import tqdm
-import matplotlib.pyplot as plt
-from corner import corner
 
 CPU_NODES = 16
 
 
-def build_folder_name(specified_folder_name: Optional[str] = None):
+def build_folder_name(specified_folder_name: Optional[str | Path] = None):
     if specified_folder_name:
         pth = Path(specified_folder_name)
         if not pth.is_dir():
@@ -45,7 +45,7 @@ class MCMC:
         param_bounds: List[Tuple[float, float]],
         proposal_std: ndarray,
         likelihood_func: Callable[[ndarray], float],
-        param_names = list[str],
+        param_names=list[str],
         specified_folder_name: Optional[str | Path] = None,
         max_cpu_nodes: int = 16,
         **kwargs,
@@ -76,7 +76,9 @@ class MCMC:
         self.likelihood_func: Callable = likelihood_func
 
         # MCMC-Runtime
-        empty_chain = np.empty_like(initial_parameters, shape=(1, *initial_parameters.shape))
+        empty_chain = np.empty_like(
+            initial_parameters, shape=(1, *initial_parameters.shape)
+        )
         empty_chain[0] = initial_parameters
         self.chain = empty_chain
         self.likelihood_chain = np.array(self.likelihood_func(initial_parameters))
@@ -112,7 +114,11 @@ class MCMC:
                     mcmc_attributes = dill.load(f)
                     raw_data = np.load(data_folder / "raw_data.npy")
                     try:
-                        obj = cls(raw_data=raw_data, specified_folder_name=data_folder, **mcmc_attributes)
+                        obj = cls(
+                            raw_data=raw_data,
+                            specified_folder_name=data_folder,
+                            **mcmc_attributes,
+                        )
                     except TypeError as e:
                         print(
                             f"Error occurred due to missing attributes in"
@@ -176,9 +182,7 @@ class MCMC:
                 proposals[:, :, j] = np.clip(proposals[:, :, j], lower, upper)
 
             if self.max_cpu_nodes == 1:
-                proposal_likelihoods = np.atleast_1d(
-                    self.likelihood_func(proposals[0])
-                )
+                proposal_likelihoods = np.atleast_1d(self.likelihood_func(proposals[0]))
             else:
                 with Pool(nodes=self.max_cpu_nodes) as pool:
                     proposal_likelihoods = pool.map(self.likelihood_func, proposals)
@@ -228,8 +232,7 @@ class MCMC:
         self.determine_burn_in_index()
         self.save()
 
-    def chain_to_plot_and_estimate(self,
-                                   true_vals: Optional[np.ndarray[float]] = None):
+    def chain_to_plot_and_estimate(self, true_vals: Optional[np.ndarray[float]] = None):
 
         non_fixed_indexes = np.array(self.proposal_std, dtype=bool)
         chain = self.chain[:, :, non_fixed_indexes]
@@ -247,7 +250,9 @@ class MCMC:
         plt.tight_layout()
         plt.show()
 
-        fig, axs = plt.subplots(nrows=chain.shape[2], ncols=chain.shape[1], figsize=(10, 8))
+        fig, axs = plt.subplots(
+            nrows=chain.shape[2], ncols=chain.shape[1], figsize=(10, 8)
+        )
         axs = axs.reshape(chain[0].shape)
         fig.suptitle("Parameter Iterations")
         plt.xlabel("Iteration #")
@@ -256,15 +261,19 @@ class MCMC:
         for body in range(chain.shape[1]):
             for i, name in enumerate(param_names):
                 param_samples = chain[:, body, i]
-                print(f"Estimated {name}: {np.mean(param_samples):.3e}",
-                      f", true {name}: {true_vals[i]}" if true_vals is not None else None)
+                print(
+                    f"Estimated {name}: {np.mean(param_samples):.3e}",
+                    f", true {name}: {true_vals[i]}" if true_vals is not None else None,
+                )
                 axs[body, i].plot(x, param_samples, label=name)
                 axs[body, i].set_ylabel(f"{name}")
 
         plt.tight_layout()
         plt.show()
 
-    def corner_plot(self, true_vals: Optional[np.ndarray]=None, burn_in_index: int=0):
+    def corner_plot(
+        self, true_vals: Optional[np.ndarray] = None, burn_in_index: int = 0
+    ):
         non_fixed_indexes = np.array(self.proposal_std, dtype=bool)
         chain = self.chain[:, :, non_fixed_indexes]
         param_names = self.param_names[non_fixed_indexes]
@@ -275,7 +284,7 @@ class MCMC:
             truths=true_vals,
             show_titles=True,
             title_kwargs={"fontsize": 18},
-            title_fmt=".2e"
+            title_fmt=".2e",
         )
         plt.show()
 
@@ -304,6 +313,7 @@ class MCMC:
         self.remaining_chain_length = len(self.chain) - burn_in_index
         return burn_in_index
 
+
 class Statistics:
 
     def __init__(self, folder_names: list[str | Path]):
@@ -326,7 +336,6 @@ class Statistics:
 
         self.load_folders()
 
-
     def load_folders(self):
         mcmcs = []
         valid_paths = []
@@ -337,9 +346,9 @@ class Statistics:
 
         self.chain_num = len(valid_paths)
         chain = mcmcs[0].chain
-        self.statistics_data = np.empty(shape=(self.chain_num,
-                                               self._unique_stats,
-                                               *chain[0].shape))
+        self.statistics_data = np.empty(
+            shape=(self.chain_num, self._unique_stats, *chain[0].shape)
+        )
 
         if self.chain_num != len(self.folder_names):
             self.loaded_mcmcs = []
@@ -347,7 +356,6 @@ class Statistics:
         for idx, (mcmc, f_path) in enumerate(zip(mcmcs, valid_paths)):
             self.folder_indexing[f_path.name] = idx
             self.loaded_mcmcs.append(mcmc)
-
 
     def calc_gelman_rubin(self) -> np.ndarray:
         stats = self.statistics_data
@@ -363,6 +371,3 @@ class Statistics:
         numerator = (len_chain - 1) / len_chain * mean_var + var_of_means / len_chain
         self.gelman_rubin = numerator / mean_var
         return self.gelman_rubin
-
-
-
