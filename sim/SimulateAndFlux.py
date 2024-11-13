@@ -149,7 +149,7 @@ def flux_data_from_params(
             y=positions[:, :, 1].transpose(),
             z=positions[:, :, 2].transpose(),
             radius_star=stellar_params[0],
-            planet_params=planet_params,
+            eta_values=planet_params[:, 0],
             times=times,
         )
 
@@ -174,7 +174,7 @@ def flux_data_from_params(
             y=y_p_rel,
             z=z_p_rel,
             radius_star=stellar_params[0],
-            planet_params=planet_params,
+            eta_values=planet_params[:, 0],
             times=times,
         )
 

@@ -78,7 +78,7 @@ def combined_delta_flux(
     y: np.ndarray, 
     z: np.ndarray,
     radius_star: float, 
-    planet_params: np.ndarray, 
+    eta_values: np.ndarray, 
     times: np.ndarray
     ) -> np.ndarray:
     """
@@ -96,15 +96,14 @@ def combined_delta_flux(
     - combined_flux : Array of combined delta flux values as fractions of the total stellar flux
     """
 
-    N = len(planet_params)
-
+    N = eta_values.shape[0]
 
     # Initialize the combined delta flux as an array of ones
     combined_flux = np.ones(len(times))
 
     # Calculate the delta flux for each planet and subtract it from the combined flux
     for i in range(N):
-        eta = planet_params[i][0]
+        eta = eta_values[i]
         delta_flux = delta_flux_from_mandel_and_agol(
             x[i], y[i], z[i], radius_star, eta
         )
