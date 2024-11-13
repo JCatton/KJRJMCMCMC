@@ -235,7 +235,7 @@ if __name__ == "__main__":
     times_input = np.linspace(0, 2 * 34.5, 60000)  # Three orbital periods for planet 1
 
     ouptut = flux_data_from_params(
-        stellar_params=stellar_params, planet_params=planet_params, times=times_input
+        stellar_params=stellar_params, planet_params=planet_params, times=times_input, analytical_bool=True
     )
 
     np.save("TestFluxes.npy", ouptut)
