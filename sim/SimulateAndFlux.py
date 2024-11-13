@@ -134,7 +134,7 @@ def flux_data_from_params(
 
     Parameters:
     - stellar_params: List of stellar parameters [radius, mass]
-    - planet_params: List of planet parameters [radius, mass, orbital radius, eccentricity, omega (phase)]
+    - planet_params: List of planet parameters [eta, p, a, e, inc, omega, big_ohm, phase_lag]
     - times: Array of time values
     - no_loading_bar: Boolean to disable loading bar
     - analytical_bool: Boolean to use analytical positions, default is False
