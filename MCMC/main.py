@@ -79,7 +79,7 @@ def main():
         (0, 1e1000),
         (1e-6, 1e5),
         (0, 0.99),
-        (0, np.pi),
+        (np.radians(86.8), np.pi),
         (-np.pi, np.pi),
         (-np.pi, np.pi),
         (-np.pi, np.pi),
