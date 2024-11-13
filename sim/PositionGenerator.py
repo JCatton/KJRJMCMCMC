@@ -6,8 +6,12 @@ import os
 from numba import jit
 
 
-def N_Body_sim(
-    StellarMass, planet_params, SamplesPerOrbit=60, numberMaxPeriod=4, saveloc=None
+def n_body_sim(
+    stellar_mass,
+    planet_params,
+    samples_per_orbit=60,
+    number_max_period=4,
+    save_loc=None,
 ):
     """
     Simulate the N-body system of a star and multiple planets over time.
@@ -36,10 +40,10 @@ def N_Body_sim(
     orbits_x = np.empty((N, len(theta)))
     orbits_y = np.empty((N, len(theta)))
 
-    LongestPeriod = 0
-    ShortestPeriod = None
+    longest_period = 0
+    shortest_period = None
 
-    sim.add(m=StellarMass)
+    sim.add(m=stellar_mass)
 
     # Add each planet to the simulation
     for i, params in enumerate(planet_params):
@@ -58,19 +62,19 @@ def N_Body_sim(
         orbits_y[i, :] = y_orbit
 
         period = sim.particles[-1].P  # Calculate period of planet
-        LongestPeriod = max(LongestPeriod, period)  # Update longest period
-        ShortestPeriod = (
-            min(ShortestPeriod, period) if ShortestPeriod is not None else period
+        longest_period = max(longest_period, period)  # Update longest period
+        shortest_period = (
+            min(shortest_period, period) if shortest_period is not None else period
         )  # Update shortest period
 
     # Ensure a the smallest orbit is sampled enough (30 times is suggested in Pearson 2019)
-    timestep = 1 / SamplesPerOrbit * ShortestPeriod
-    TotalTime = LongestPeriod * numberMaxPeriod
-    Numbersteps = int(np.ceil(TotalTime / timestep))
+    time_step = 1 / samples_per_orbit * shortest_period
+    total_time = longest_period * number_max_period
+    number_steps = int(np.ceil(total_time / time_step))
 
-    x_pos = np.empty((N + 1, Numbersteps))  # N+1 to include the star (particle 0)
-    y_pos = np.empty((N + 1, Numbersteps))
-    times = np.linspace(0, TotalTime, Numbersteps)
+    x_pos = np.empty((N + 1, number_steps))  # N+1 to include the star (particle 0)
+    y_pos = np.empty((N + 1, number_steps))
+    times = np.linspace(0, total_time, number_steps)
 
     # Integrate the simulation over time and save the positions
     for i, t in tqdm(enumerate(times), total=len(times)):
@@ -80,8 +84,8 @@ def N_Body_sim(
             y_pos[j, i] = sim.particles[j].y
         # Save the N-body outputs if saveloc is provided
 
-    if saveloc:
-        full_saveloc = fc.check_and_create_folder(saveloc)
+    if save_loc:
+        full_saveloc = fc.check_and_create_folder(save_loc)
         np.savez(
             os.path.join(full_saveloc, "N_body_outputs.npz"),
             x_pos=x_pos,
@@ -140,25 +144,27 @@ def n_body_sim_api(
 
 
 @jit
-def GenerateCoordinates(eta, P, a, e, inc, omega, OHM, phase_lag, time_array):
+def GenerateCoordinates(eta, p, a, e, inc, omega, big_ohm, phase_lag, time_array):
     """
     Generate the x, y, and z coordinates of a planet over time.
 
     Parameters:
-    - eta, P, a, e, inc, omega, OHM, phase_lag: Planetary parameters
+    - eta, p, a, e, inc, omega, big_ohm, phase_lag: Planetary parameters
     - time_array: Array of time values
 
     Returns:
     - Arrays of x, y, and z coordinates of the planet over time
     """
-    f = 2 * np.pi * ((time_array) / P + phase_lag)
+    f = 2 * np.pi * ((time_array) / p + phase_lag)
     r = a * (1 - e**2) / (1 + e * np.cos(f))
 
     x = r * (
-        np.cos(OHM) * np.cos(omega + f) - np.sin(OHM) * np.sin(omega + f) * np.cos(inc)
+        np.cos(big_ohm) * np.cos(omega + f)
+        - np.sin(big_ohm) * np.sin(omega + f) * np.cos(inc)
     )
     y = r * (
-        np.sin(OHM) * np.cos(omega + f) + np.cos(OHM) * np.sin(omega + f) * np.cos(inc)
+        np.sin(big_ohm) * np.cos(omega + f)
+        + np.cos(big_ohm) * np.sin(omega + f) * np.cos(inc)
     )
     z = -r * np.sin(omega + f) * np.sin(inc)
 
@@ -172,7 +178,7 @@ def analytical_positions_api(planet_params, times):
     Parameters:
     - planet_params: 2D numpy array where each row represents
                      a planet's parameters as
-                     [eta, P, a, e, inc, omega, OHM, phase_lag]
+                     [eta, p, a, e, inc, omega, big_ohm, phase_lag]
     - times: Array of time values
 
     Returns:
@@ -184,8 +190,10 @@ def analytical_positions_api(planet_params, times):
     pos = np.empty((sample_num, planet_num, 3), dtype=np.float64)
 
     for i in range(planet_num):
-        eta, P, a, e, inc, omega, OHM, phase_lag = planet_params[i]
-        x, y, z = GenerateCoordinates(eta, P, a, e, inc, omega, OHM, phase_lag, times)
+        eta, p, a, e, inc, omega, big_ohm, phase_lag = planet_params[i]
+        x, y, z = GenerateCoordinates(
+            eta, p, a, e, inc, omega, big_ohm, phase_lag, times
+        )
         pos[:, i, 0] = x
         pos[:, i, 1] = y
         pos[:, i, 2] = z

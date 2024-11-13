@@ -2,7 +2,7 @@ from tqdm import tqdm
 import os
 
 
-def check_and_create_folder(saveloc):
+def check_and_create_folder(save_loc):
     """
     Helper function to check if a folder exists. If not, create it.
     Parameters:
@@ -13,7 +13,7 @@ def check_and_create_folder(saveloc):
         os.makedirs("Outputs")
 
     # Check if the specific saveloc exists
-    full_saveloc = os.path.join("Outputs", saveloc)
+    full_saveloc = os.path.join("Outputs", save_loc)
     if not os.path.exists(full_saveloc):
         os.makedirs(full_saveloc)
 

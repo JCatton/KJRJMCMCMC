@@ -10,7 +10,7 @@ from scipy.interpolate import interp1d
 import time
 import sim.FileCheck as fc
 
-from sim.PositionGenerator import N_Body_sim, n_body_sim_api, analytical_positions_api
+from sim.PositionGenerator import n_body_sim, n_body_sim_api, analytical_positions_api
 from sim.FluxCalculation import combined_delta_flux
 from sim.Decorators import TimeMeasure
 
@@ -45,7 +45,7 @@ def simulate_and_interpolate_flux_vectorized(
     - Plots and saves the plot if save is True
     """
     # Run the N-body simulation
-    x_pos, y_pos, x_orbit, y_orbit, simulation_times = N_Body_sim(
+    x_pos, y_pos, x_orbit, y_orbit, simulation_times = n_body_sim(
         StellarMass=Stellar_params[1],
         planet_params=planet_params,
         SamplesPerOrbit=SamplesPerOrbit,
@@ -123,7 +123,7 @@ def flux_data_from_params(
     return flux_values
 
 
-def flux_data_from_params_Analytical(
+def flux_data_from_params_analytical(
     stellar_params: np.ndarray, planet_params: np.ndarray, times: np.ndarray
 ):
     """
@@ -204,7 +204,7 @@ if __name__ == "__main__":
     # ]
     times_input = np.linspace(0, 2 * 34.5, 60000)  # Three orbital periods for planet 1
 
-    ouptut = flux_data_from_params_Analytical(
+    ouptut = flux_data_from_params_analytical(
         stellar_params=stellar_params, planet_params=planet_params, times=times_input
     )
 

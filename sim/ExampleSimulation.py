@@ -3,7 +3,7 @@ import matplotlib.animation as animation
 import numpy as np
 from tqdm import tqdm
 
-from sim.PositionGenerator import N_Body_sim
+from sim.PositionGenerator import n_body_sim
 from FluxCalculation import combined_delta_flux
 from Animation import animate_orbits
 
@@ -12,7 +12,7 @@ from Animation import animate_orbits
 # make sure to define parameters in terms of AU, Earth masses, and days
 
 # Stellar parameters: [radius, mass]
-Stellar_params = [100 * 4.2635e-5, 333000 * 1.12]
+stellar_params = [100 * 4.2635e-5, 333000 * 1.12]
 
 # Planet parameters: [radius, mass, orbital radius, eccentricity, omega (phase)]
 planet_params = [
@@ -22,12 +22,12 @@ planet_params = [
 ]
 
 # Run N-body simulation
-x_pos, y_pos, x_orbit, y_orbit, times = N_Body_sim(
-    StellarMass=Stellar_params[1],
+x_pos, y_pos, x_orbit, y_orbit, times = n_body_sim(
+    stellar_params=stellar_params[1],
     planet_params=planet_params,
-    SamplesPerOrbit=20000,
-    numberMaxPeriod=4,
-    saveloc="Example",
+    samples_per_orbit=20000,
+    number_max_period=4,
+    save_loc="Example",
 )
 
 z_pos = np.zeros(
@@ -39,7 +39,7 @@ delta_flux_combined = combined_delta_flux(
     x=x_pos,
     y=y_pos,
     z=z_pos,
-    radius_star=Stellar_params[0],
+    radius_star=stellar_params[0],
     planet_params=planet_params,
     times=times,
     saveloc="Example",

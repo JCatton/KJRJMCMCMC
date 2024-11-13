@@ -7,7 +7,7 @@ from numba import jit
 
 
 @jit
-def delta_flux_from_Mandel_and_Agol(x, y, z, radius_star, eta):
+def delta_flux_from_mandel_and_agol(x, y, z, radius_star, eta):
     """
     Calculate the delta flux for a planet using the Mandel and Agol model.
 
@@ -52,7 +52,7 @@ def combined_delta_flux(x, y, z, radius_star, planet_params, times, from_rebound
     Treating each transits individually, calculate the combined delta flux for all planets.
 
     Parameters:
-    - x, y, z: Arrays of x, y, and z positions of the star and planets over time
+    - x, y, z: Arrays of x, y, and z positions of the star (If using Rebound) and planets over time
     - radius_star: Radius of the star
     - planet_params: List of planet parameters [radius, mass, orbital radius, eccentricity, omega (phase)]
     - times: Array of time values
@@ -79,14 +79,14 @@ def combined_delta_flux(x, y, z, radius_star, planet_params, times, from_rebound
     # Calculate the delta flux for each planet and subtract it from the combined flux
     for i in range(N):
         eta = planet_params[i][0]
-        delta_flux = delta_flux_from_Mandel_and_Agol(
+        delta_flux = delta_flux_from_mandel_and_agol(
             x_p_rel[i], y_p_rel[i], z_p_rel[i], radius_star, eta
         )
         combined_flux += delta_flux - 1
     return combined_flux
 
 
-def plot_flux(times, flux_values, save=False):
+def plot_flux(times, flux_values, save_bool=False):
     """
     Plot the flux values against time.
 
@@ -100,6 +100,6 @@ def plot_flux(times, flux_values, save=False):
     plt.xlabel("Time (days)")
     plt.ylabel("Flux")
     plt.title("Flux vs Time")
-    if save:
+    if save_bool:
         plt.savefig("Flux_vs_Time.png")
     plt.show()
