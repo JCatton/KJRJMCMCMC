@@ -1,3 +1,9 @@
+# main.py
+import sys
+import os
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
 import rebound
 import sim.FileCheck as fc
 import numpy as np
@@ -212,3 +218,30 @@ def analytical_positions_api(
         pos[:, i, 2] = z
 
     return pos
+
+if __name__ == "__main__":
+    from sim.FluxCalculation import combined_delta_flux
+    import matplotlib.pyplot as plt
+    times = np.load("TestTimes.npy")
+    radius_WASP148A = 0.912 * 696.34e6 / 1.496e11
+    mass_WASP148A = 0.9540 * 2e30 / 6e24
+
+    stellar_params = [radius_WASP148A, mass_WASP148A]  # Based on WASP 148
+
+    planet_params = np.array(
+    [[0.1 + 0.001, 8.8, 0.08 + 0.001, 0.208-0.0003, np.radians(88+0.002 ), 0, 0,0 + np.pi/8],
+    [0.1 + 0.1, 8.8, 0.08 + 0.03, 0.208 - 0.001, np.radians(89.5), 0, 0, 0]]
+    )
+    positions  = analytical_positions_api(planet_params=planet_params, times=times)
+    print(positions.shape)
+    flux_values = combined_delta_flux(
+        x=positions[:, :, 0].transpose(),
+        y=positions[:, :, 1].transpose(),
+        z=positions[:, :, 2].transpose(),
+        radius_star=stellar_params[0],
+        eta_values=planet_params[:, 0],
+        times=times,
+    )
+
+    plt.plot(times, flux_values)
+    plt.show()
