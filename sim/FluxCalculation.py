@@ -85,9 +85,9 @@ def combined_delta_flux(
     Treating each transits individually, calculate the combined delta flux for all planets.
 
     Parameters:
-    - x : Arrays of x positions of the star (If using Rebound) and planets over time
-    - y : Arrays of y positions of the star (If using Rebound) and planets over time
-    - z : Arrays of z positions of the star (If using Rebound) and planets over time
+    - x : Arrays of x positions of planets over time
+    - y : Arrays of y positions of planets over time
+    - z : Arrays of z positions of planets over time
     - radius_star : Radius of the star
     - planet_params : List of list of the planet parameters [radius, mass, orbital radius, eccentricity, omega (phase)] for each planet
     - times : Array of time values
