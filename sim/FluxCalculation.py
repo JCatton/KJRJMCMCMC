@@ -47,7 +47,7 @@ def overlap_calc(r, eta, radius_star, slice_indices):
 
 
 @jit
-def combined_delta_flux(x, y, z, radius_star, planet_params, times, from_rebound=False):
+def combined_delta_flux(x, y, z, radius_star, planet_params, times):
     """
     Treating each transits individually, calculate the combined delta flux for all planets.
 
@@ -56,7 +56,6 @@ def combined_delta_flux(x, y, z, radius_star, planet_params, times, from_rebound
     - radius_star: Radius of the star
     - planet_params: List of planet parameters [radius, mass, orbital radius, eccentricity, omega (phase)]
     - times: Array of time values
-    - from_rebound: Boolean to determine if the input data is from a rebound simulation
 
     Returns:
     - Array of combined delta flux values as fractions of the total stellar flux
@@ -64,14 +63,6 @@ def combined_delta_flux(x, y, z, radius_star, planet_params, times, from_rebound
 
     N = len(planet_params)
 
-    if from_rebound:
-        x_s, y_s, z_s = x[0], y[0], z[0]
-        x_p_rel = x[1:] - x_s
-        y_p_rel = y[1:] - y_s
-        z_p_rel = z[1:] - z_s
-
-    else:
-        x_p_rel, y_p_rel, z_p_rel = x, y, z
 
     # Initialize the combined delta flux as an array of ones
     combined_flux = np.ones(len(times))
@@ -80,7 +71,7 @@ def combined_delta_flux(x, y, z, radius_star, planet_params, times, from_rebound
     for i in range(N):
         eta = planet_params[i][0]
         delta_flux = delta_flux_from_mandel_and_agol(
-            x_p_rel[i], y_p_rel[i], z_p_rel[i], radius_star, eta
+            x[i], y[i], z[i], radius_star, eta
         )
         combined_flux += delta_flux - 1
     return combined_flux

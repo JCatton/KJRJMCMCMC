@@ -144,8 +144,6 @@ def flux_data_from_params(
     """
     if analytical_bool:
         positions = analytical_positions_api(planet_params=planet_params, times=times)
-
-        np.save("AnalyticalPositions.npy", positions)
         flux_values = combined_delta_flux(
             x=positions[:, :, 0].transpose(),
             y=positions[:, :, 1].transpose(),
@@ -162,11 +160,19 @@ def flux_data_from_params(
             times=times,
             no_loading_bar=no_loading_bar,
         )
+        # Get relative positions of the x,y,z coordinates from their star
+        x=positions[:, :, 0].transpose()
+        y=positions[:, :, 1].transpose()
+        z=positions[:, :, 2].transpose()
+        x_s, y_s, z_s = x[0], y[0], z[0]
+        x_p_rel = x[1:] - x_s
+        y_p_rel = y[1:] - y_s
+        z_p_rel = z[1:] - z_s
 
         flux_values = combined_delta_flux(
-            x=positions[:, :, 0].transpose(),
-            y=positions[:, :, 1].transpose(),
-            z=positions[:, :, 2].transpose(),
+            x=x_p_rel,
+            y=y_p_rel,
+            z=z_p_rel,
             radius_star=stellar_params[0],
             planet_params=planet_params,
             times=times,
