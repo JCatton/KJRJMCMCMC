@@ -7,12 +7,12 @@ from numba import jit
 
 
 def n_body_sim(
-    stellar_mass,
-    planet_params,
-    samples_per_orbit=60,
-    number_max_period=4,
-    save_loc=None,
-):
+    stellar_mass: float,
+    planet_params: np.ndarray,
+    samples_per_orbit: int = 60,
+    number_max_period: int = 4,
+    save_loc: str = None,
+) -> (np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray):
     """
     Simulate the N-body system of a star and multiple planets over time.
 
@@ -103,7 +103,7 @@ def n_body_sim_api(
     planet_params: np.ndarray,
     times: np.ndarray,
     no_loading_bar: bool = True,
-) -> (np.ndarray, np.ndarray):
+) -> np.ndarray:
     """
     Simulate the N-body system of a star and multiple planets over time.
 
@@ -144,7 +144,17 @@ def n_body_sim_api(
 
 
 @jit
-def GenerateCoordinates(eta, p, a, e, inc, omega, big_ohm, phase_lag, time_array):
+def GenerateCoordinates(
+    eta: float,
+    p: float,
+    a: float,
+    e: float,
+    inc: float,
+    omega: float,
+    big_ohm: float,
+    phase_lag: float,
+    time_array: np.ndarray,
+) -> (np.ndarray, np.ndarray, np.ndarray):
     """
     Generate the x, y, and z coordinates of a planet over time.
 
@@ -171,7 +181,10 @@ def GenerateCoordinates(eta, p, a, e, inc, omega, big_ohm, phase_lag, time_array
     return x, y, z
 
 
-def analytical_positions_api(planet_params, times):
+def analytical_positions_api(
+        planet_params: np.ndarray,
+        times: np.ndarray,
+        ) -> np.ndarray:
     """
     Simulate the N-body system of a star and multiple planets over time.
 
