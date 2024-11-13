@@ -96,6 +96,7 @@ def simulate_and_interpolate_flux_vectorized(
         plt.savefig(plot_path)
     return interpolated_flux
 
+
 """
 def flux_data_from_params(
     stellar_params: np.ndarray,
@@ -122,12 +123,13 @@ def flux_data_from_params(
     return flux_values
 """
 
+
 def flux_data_from_params(
     stellar_params: np.ndarray,
     planet_params: np.ndarray,
     times: np.ndarray,
     no_loading_bar: bool = False,
-    analytical_bool: bool =False,
+    analytical_bool: bool = False,
 ) -> np.ndarray:
     """
     Calculate flux values from analytical positions.
@@ -161,9 +163,9 @@ def flux_data_from_params(
             no_loading_bar=no_loading_bar,
         )
         # Get relative positions of the x,y,z coordinates from their star
-        x=positions[:, :, 0].transpose()
-        y=positions[:, :, 1].transpose()
-        z=positions[:, :, 2].transpose()
+        x = positions[:, :, 0].transpose()
+        y = positions[:, :, 1].transpose()
+        z = positions[:, :, 2].transpose()
         x_s, y_s, z_s = x[0], y[0], z[0]
         x_p_rel = x[1:] - x_s
         y_p_rel = y[1:] - y_s
@@ -179,7 +181,6 @@ def flux_data_from_params(
         )
 
     return flux_values
-
 
 
 # Example Usage

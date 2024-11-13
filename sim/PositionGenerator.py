@@ -88,7 +88,7 @@ def n_body_sim(
         for j in range(N + 1):  # Including the star (particle 0)
             x_pos[j, i] = sim.particles[j].x
             y_pos[j, i] = sim.particles[j].y
-    
+
     # Save the N-body outputs if save_loc is provided
     if save_loc:
         full_saveloc = fc.check_and_create_folder(save_loc)
@@ -188,9 +188,9 @@ def GenerateCoordinates(
 
 
 def analytical_positions_api(
-        planet_params: np.ndarray,
-        times: np.ndarray,
-        ) -> np.ndarray:
+    planet_params: np.ndarray,
+    times: np.ndarray,
+) -> np.ndarray:
     """
     Simulate the N-body system of a star and multiple planets over time.
 
@@ -219,9 +219,11 @@ def analytical_positions_api(
 
     return pos
 
+
 if __name__ == "__main__":
     from sim.FluxCalculation import combined_delta_flux
     import matplotlib.pyplot as plt
+
     times = np.load("TestTimes.npy")
     radius_WASP148A = 0.912 * 696.34e6 / 1.496e11
     mass_WASP148A = 0.9540 * 2e30 / 6e24
@@ -229,10 +231,21 @@ if __name__ == "__main__":
     stellar_params = [radius_WASP148A, mass_WASP148A]  # Based on WASP 148
 
     planet_params = np.array(
-    [[0.1 + 0.001, 8.8, 0.08 + 0.001, 0.208-0.0003, np.radians(88+0.002 ), 0, 0,0 + np.pi/8],
-    [0.1 + 0.1, 8.8, 0.08 + 0.03, 0.208 - 0.001, np.radians(89.5), 0, 0, 0]]
+        [
+            [
+                0.1 + 0.001,
+                8.8,
+                0.08 + 0.001,
+                0.208 - 0.0003,
+                np.radians(88 + 0.002),
+                0,
+                0,
+                0 + np.pi / 8,
+            ],
+            [0.1 + 0.1, 8.8, 0.08 + 0.03, 0.208 - 0.001, np.radians(89.5), 0, 0, 0],
+        ]
     )
-    positions  = analytical_positions_api(planet_params=planet_params, times=times)
+    positions = analytical_positions_api(planet_params=planet_params, times=times)
     print(positions.shape)
     flux_values = combined_delta_flux(
         x=positions[:, :, 0].transpose(),

@@ -126,21 +126,36 @@ def main():
         likelihood_func=likelihood_fn,
         max_cpu_nodes=4,
     )
+
     mcmc.metropolis_hastings(num_iterations)
     mcmc.chain_to_plot_and_estimate(true_vals)
     mcmc.corner_plot(true_vals, burn_in_index=30_000)
 
     plt.plot(
         times,
-        flux_data_from_params(stellar_params, mcmc.chain[-1], times, analytical_bool=True)
-        - flux_data_from_params(stellar_params, np.array([true_vals]), times, analytical_bool=True),
-            )
+        flux_data_from_params(
+            stellar_params, mcmc.chain[-1], times, analytical_bool=True
+        )
+        - flux_data_from_params(
+            stellar_params, np.array([true_vals]), times, analytical_bool=True
+        ),
+    )
     plt.show()
 
-    plt.plot(times,
-        flux_data_from_params(stellar_params, mcmc.chain[-1], times, analytical_bool=True), label = "Estimated")
-    plt.plot(times,
-        flux_data_from_params(stellar_params, np.array([true_vals]), times, analytical_bool=True), label = "True")
+    plt.plot(
+        times,
+        flux_data_from_params(
+            stellar_params, mcmc.chain[-1], times, analytical_bool=True
+        ),
+        label="Estimated",
+    )
+    plt.plot(
+        times,
+        flux_data_from_params(
+            stellar_params, np.array([true_vals]), times, analytical_bool=True
+        ),
+        label="True",
+    )
     plt.legend()
     plt.show()
     print(mcmc.acceptance_num)

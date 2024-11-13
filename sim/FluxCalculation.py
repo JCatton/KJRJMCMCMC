@@ -8,11 +8,7 @@ from numba import jit
 
 @jit
 def delta_flux_from_mandel_and_agol(
-    x: float, 
-    y: float, 
-    z: float, 
-    radius_star: float, 
-    eta: float
+    x: float, y: float, z: float, radius_star: float, eta: float
 ) -> np.ndarray:
     """
     Calculate the delta flux for a planet using the Mandel and Agol model.
@@ -41,10 +37,7 @@ def delta_flux_from_mandel_and_agol(
 
 @jit
 def overlap_calc(
-    r: np.ndarray, 
-    eta: float, 
-    radius_star: float, 
-    slice_indices: np.ndarray
+    r: np.ndarray, eta: float, radius_star: float, slice_indices: np.ndarray
 ) -> np.ndarray:
     """
     Calculate the overlap area between the star and planet.
@@ -74,13 +67,13 @@ def overlap_calc(
 
 @jit
 def combined_delta_flux(
-    x: np.ndarray, 
-    y: np.ndarray, 
+    x: np.ndarray,
+    y: np.ndarray,
     z: np.ndarray,
-    radius_star: float, 
-    eta_values: np.ndarray, 
-    times: np.ndarray
-    ) -> np.ndarray:
+    radius_star: float,
+    eta_values: np.ndarray,
+    times: np.ndarray,
+) -> np.ndarray:
     """
     Treating each transits individually, calculate the combined delta flux for all planets.
 
@@ -104,18 +97,14 @@ def combined_delta_flux(
     # Calculate the delta flux for each planet and subtract it from the combined flux
     for i in range(N):
         eta = eta_values[i]
-        delta_flux = delta_flux_from_mandel_and_agol(
-            x[i], y[i], z[i], radius_star, eta
-        )
+        delta_flux = delta_flux_from_mandel_and_agol(x[i], y[i], z[i], radius_star, eta)
         combined_flux += delta_flux - 1
     return combined_flux
 
 
 def plot_flux(
-    times: np.ndarray, 
-    flux_values: np.ndarray, 
-    save_bool: bool =False
-    ) -> None:
+    times: np.ndarray, flux_values: np.ndarray, save_bool: bool = False
+) -> None:
     """
     Plot the flux values against time.
 
