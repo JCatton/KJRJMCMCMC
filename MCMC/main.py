@@ -142,7 +142,7 @@ def main():
     plt.plot(times,
         flux_data_from_params(stellar_params, np.array([true_vals]), times, analytical_bool=True), label = "True")
     plt.legend()
-    plt.show
+    plt.show()
     print(mcmc.acceptance_num)
 
 
