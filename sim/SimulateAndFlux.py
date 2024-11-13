@@ -96,7 +96,7 @@ def simulate_and_interpolate_flux_vectorized(
         plt.savefig(plot_path)
     return interpolated_flux
 
-
+"""
 def flux_data_from_params(
     stellar_params: np.ndarray,
     planet_params: np.ndarray,
@@ -119,12 +119,15 @@ def flux_data_from_params(
         planet_params=planet_params,
         times=times,
     )
-
     return flux_values
+"""
 
-
-def flux_data_from_params_analytical(
-    stellar_params: np.ndarray, planet_params: np.ndarray, times: np.ndarray
+def flux_data_from_params(
+    stellar_params: np.ndarray,
+    planet_params: np.ndarray,
+    times: np.ndarray,
+    no_loading_bar=False,
+    analytical_bool=False,
 ):
     """
     Calculate flux values from analytical positions.
@@ -133,24 +136,44 @@ def flux_data_from_params_analytical(
     - stellar_params: List of stellar parameters [radius, mass]
     - planet_params: List of planet parameters [radius, mass, orbital radius, eccentricity, omega (phase)]
     - times: Array of time values
+    - no_loading_bar: Boolean to disable loading bar
+    - analytical_bool: Boolean to use analytical positions, default is False
 
     Returns:
     - flux_values: Array of flux values
     """
+    if analytical_bool:
+        positions = analytical_positions_api(planet_params=planet_params, times=times)
 
-    positions = analytical_positions_api(planet_params=planet_params, times=times)
+        np.save("AnalyticalPositions.npy", positions)
+        flux_values = combined_delta_flux(
+            x=positions[:, :, 0].transpose(),
+            y=positions[:, :, 1].transpose(),
+            z=positions[:, :, 2].transpose(),
+            radius_star=stellar_params[0],
+            planet_params=planet_params,
+            times=times,
+        )
 
-    np.save("AnalyticalPositions.npy", positions)
-    flux_values = combined_delta_flux(
-        x=positions[:, :, 0].transpose(),
-        y=positions[:, :, 1].transpose(),
-        z=positions[:, :, 2].transpose(),
-        radius_star=stellar_params[0],
-        planet_params=planet_params,
-        times=times,
-    )
+    else:
+        positions = n_body_sim_api(
+            stellar_mass=stellar_params[1],
+            planet_params=planet_params,
+            times=times,
+            no_loading_bar=no_loading_bar,
+        )
+
+        flux_values = combined_delta_flux(
+            x=positions[:, :, 0].transpose(),
+            y=positions[:, :, 1].transpose(),
+            z=positions[:, :, 2].transpose(),
+            radius_star=stellar_params[0],
+            planet_params=planet_params,
+            times=times,
+        )
 
     return flux_values
+
 
 
 # Example Usage
@@ -204,7 +227,7 @@ if __name__ == "__main__":
     # ]
     times_input = np.linspace(0, 2 * 34.5, 60000)  # Three orbital periods for planet 1
 
-    ouptut = flux_data_from_params_analytical(
+    ouptut = flux_data_from_params(
         stellar_params=stellar_params, planet_params=planet_params, times=times_input
     )
 
