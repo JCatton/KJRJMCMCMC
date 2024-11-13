@@ -71,7 +71,9 @@ class MCMC:
 
         # MCMC-Inputs
         self.raw_data: ndarray = raw_data
-        self.param_bounds: List[Tuple[float, float]] = param_bounds
+        self.param_bounds = np.array(param_bounds)
+        self.lower_bounds = self.param_bounds[:, 0]
+        self.upper_bounds = self.param_bounds[:, 1]
         self.proposal_std: ndarray = proposal_std
         self.likelihood_func: Callable = likelihood_func
 
@@ -142,6 +144,21 @@ class MCMC:
                 f"{data_folder} is not a valid saved state of {cls.__name__}"
             )
 
+    def proposal_within_bounds(self, proposals):
+        """
+        Parameters:
+        - proposals: np.ndarray of shape (sim_number, max_cpu_nodes, num_params)
+          The array of proposed parameter values.
+        Returns:
+        - proposal_bools: np.ndarray of shape (sim_number, max_cpu_nodes)
+          Boolean array indicating whether each proposal is within bounds.
+        """
+        is_within_bounds = (proposals >= self.lower_bounds) & (
+            proposals <= self.upper_bounds
+        )
+        proposal_bools = is_within_bounds.all(axis=2)
+        return proposal_bools
+
     def metropolis_hastings(
         self,
         num_of_new_iterations: int,
@@ -169,7 +186,7 @@ class MCMC:
             initial=self.iteration_num, total=max_iteration_number - 1, desc="MCMC Run "
         )
 
-        remaining_iter = num_of_new_iterations - 1
+        remaining_iter = num_of_new_iterations
         while self.iteration_num < (max_iteration_number - 1):
             current_params = self.chain[prev_iter]
             current_likelihood = self.likelihood_chain[prev_iter]
@@ -178,6 +195,10 @@ class MCMC:
                 0, self.proposal_std, size=(self.sim_number, *self.chain[0].shape)
             )
 
+            proposal_within_bounds = self.proposal_within_bounds(proposals)
+
+            # Keep clipping as easiest solution that works with multiprocessing and
+            # negligible run cost
             for j, (lower, upper) in enumerate(self.param_bounds):
                 proposals[:, :, j] = np.clip(proposals[:, :, j], lower, upper)
 
@@ -199,7 +220,9 @@ class MCMC:
                 prev_iter += 1
                 pbar.update(1)
                 remaining_iter -= 1
-                if np.random.rand() < acceptance_probs[s]:
+                if proposal_within_bounds[s] and (
+                    np.random.rand() < acceptance_probs[s]
+                ):
                     self.acceptance_num += 1
                     self.chain[prev_iter] = proposals[s]
                     self.likelihood_chain[prev_iter] = proposal_likelihoods[s]
@@ -223,8 +246,8 @@ class MCMC:
                 )
             )
             self.sim_number = min(self.sim_number, remaining_iter)
-            self.chain[self.iteration_num] = current_params
-            self.likelihood_chain[self.iteration_num] = current_likelihood
+            # self.chain[self.iteration_num] = current_params
+            # self.likelihood_chain[self.iteration_num] = current_likelihood
 
         print(f"{acceptance_rate=}")
         pbar.close()
@@ -279,7 +302,7 @@ class MCMC:
         chain = self.chain[:, :, non_fixed_indexes]
         param_names = self.param_names[non_fixed_indexes]
         true_vals = true_vals[non_fixed_indexes] if true_vals.any() else None
-        fig = corner(
+        corner(
             chain[burn_in_index:, 0],
             labels=param_names,
             truths=true_vals,
