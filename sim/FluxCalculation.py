@@ -23,6 +23,9 @@ def delta_flux_from_mandel_and_agol(
     - z : towards the observer
     - eta : planet radius / star radius
     - radius_star : radius of the star
+
+    Returns:
+    - delta_flux : Array of delta flux values as fractions of the total stellar flux
     """
     d = np.sqrt(x**2 + y**2)
     r = d / radius_star
@@ -82,13 +85,15 @@ def combined_delta_flux(
     Treating each transits individually, calculate the combined delta flux for all planets.
 
     Parameters:
-    - x, y, z: Arrays of x, y, and z positions of the star (If using Rebound) and planets over time
-    - radius_star: Radius of the star
-    - planet_params: List of planet parameters [radius, mass, orbital radius, eccentricity, omega (phase)]
-    - times: Array of time values
+    - x : Arrays of x positions of the star (If using Rebound) and planets over time
+    - y : Arrays of y positions of the star (If using Rebound) and planets over time
+    - z : Arrays of z positions of the star (If using Rebound) and planets over time
+    - radius_star : Radius of the star
+    - planet_params : List of list of the planet parameters [radius, mass, orbital radius, eccentricity, omega (phase)] for each planet
+    - times : Array of time values
 
     Returns:
-    - Array of combined delta flux values as fractions of the total stellar flux
+    - combined_flux : Array of combined delta flux values as fractions of the total stellar flux
     """
 
     N = len(planet_params)

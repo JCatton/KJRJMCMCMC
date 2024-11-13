@@ -17,18 +17,18 @@ def n_body_sim(
     Simulate the N-body system of a star and multiple planets over time.
 
     Parameters:
-    - StellarMass: Mass of the star
+    - stellar_mass: Mass of the star
     - planet_params: List of planet parameters [radius, mass, orbital radius, eccentricity, omega (phase)]
-    - SamplesPerOrbit: Number of samples per orbit for the shortest period planet
-    - numberMaxPeriod: Number of periods to simulate
-    - saveloc: Path to save the N-body outputs
+    - samples_per_orbit: Number of samples per orbit for the shortest period planet
+    - number_max_period: Number of periods to simulate
+    - save_loc: Path to save the N-body outputs
 
     Returns:
     - Arrays of x, y, and z positions of the star and planets over time
     - Unperturbed x and y positions of the planets
     - Array of time values
 
-    If saveloc is provided, the N-body outputs are saved as a .npz file
+    If save_loc is provided, the N-body outputs are saved as a .npz file
     """
     sim = rebound.Simulation()
     sim.units = ["mearth", "day", "AU"]  # Set units to Earth masses, days, and AU
@@ -82,8 +82,8 @@ def n_body_sim(
         for j in range(N + 1):  # Including the star (particle 0)
             x_pos[j, i] = sim.particles[j].x
             y_pos[j, i] = sim.particles[j].y
-        # Save the N-body outputs if saveloc is provided
-
+    
+    # Save the N-body outputs if save_loc is provided
     if save_loc:
         full_saveloc = fc.check_and_create_folder(save_loc)
         np.savez(
