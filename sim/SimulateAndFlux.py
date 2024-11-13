@@ -232,7 +232,7 @@ if __name__ == "__main__":
     #     np.linspace(15, 18, 60000),
     #     np.linspace(20, 30, 60000),
     # ]
-    times_input = np.linspace(0, 3 * 34.5, 60000)  # Three orbital periods for planet 1
+    times_input = np.linspace(0, 2 * 34.5, 60000)  # Three orbital periods for planet 1
 
     ouptut = flux_data_from_params(
         stellar_params=stellar_params, planet_params=planet_params, times=times_input, analytical_bool=True
