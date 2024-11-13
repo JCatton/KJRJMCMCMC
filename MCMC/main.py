@@ -8,7 +8,7 @@ from typing import Callable, Optional
 
 import matplotlib.pyplot as plt
 import numpy as np
-from sim.SimulateAndFlux import flux_data_from_params, flux_data_from_params_Analytical
+from sim.SimulateAndFlux import flux_data_from_params
 
 # Global Configuration
 
@@ -108,8 +108,8 @@ def main():
         return gaussian_error_ln_likelihood(
             fluxes,
             None,
-            lambda params: flux_data_from_params_Analytical(
-                stellar_params, params, times
+            lambda params: flux_data_from_params(
+                stellar_params, params, times, analytical_bool=True
             ),
             params,
             sigma_n,
