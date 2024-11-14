@@ -248,7 +248,7 @@ class MCMC:
     def chain_to_plot_and_estimate(self, true_vals: Optional[np.ndarray[float]] = None):
 
         non_fixed_indexes = np.array(self.proposal_std, dtype=bool)
-        chain = self.chain[:, :, non_fixed_indexes]
+        chain = self.chain[:,  non_fixed_indexes]
         param_names = self.param_names[non_fixed_indexes]
         true_vals = true_vals[non_fixed_indexes] if true_vals.any() else None
         likelihoods = self.likelihood_chain
