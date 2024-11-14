@@ -272,7 +272,7 @@ class MCMC:
         fig, axs = plt.subplots(
             nrows=chain.shape[2], ncols=chain.shape[1], figsize=(10, 8)
         )
-        axs = axs.reshape(chain[0].shape)
+        # axs = axs.reshape(chain[0].shape)
         fig.suptitle("Parameter Iterations")
         plt.xlabel("Iteration #")
         x = np.arange(len(chain))
