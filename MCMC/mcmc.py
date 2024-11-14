@@ -67,6 +67,7 @@ class MCMC:
         self.mean: Optional[np.ndarray] = None
         self.var: Optional[np.ndarray] = None
         self.autocorrelation: Optional[np.ndarray] = None
+        self.effective_sample_size: Optional[float] = None
         self.burn_in_index: Optional[int] = None
         self.remaining_chain_length = None
 
@@ -312,12 +313,15 @@ class MCMC:
         plt.show()
 
     def calc_statistics(self):
+        """
+        Allows the chain to calculate its own relevant statistics.
+        """
         if len(self.chain) <= 1 or self.chain is None:
             print(f"Can't calculate statistics on Markov Chain at file:"
                   f"{self.data_folder}")
         self.mean = np.mean(self.chain, axis=0)
         self.var = np.var(self.chain, axis=0)
-        self.autocorrelation = np.corrcoef(self.chain)
+        self.effective_sample_size = self.effective_sample_size_calc()
 
 
     def determine_burn_in_index(self) -> int:
@@ -345,16 +349,37 @@ class MCMC:
         self.remaining_chain_length = len(self.chain) - burn_in_index
         return burn_in_index
 
+    def effective_sample_size_calc(self):
+        """
+        Finds the ESS as defined in Betancourt 2018
+        :return:
+        :rtype:
+        """
+        iter_num, body_num, param_num = self.chain.shape
+        non_fixed_indexes = np.array(self.proposal_std, dtype=bool)
+        correlation = np.empty(iter_num, dtype=np.float64)
+        sample_sizes = []
+        for body in range(body_num):
+            for param in range(param_num):
+                if param in non_fixed_indexes:
+                    correlation = autocorr_func_1d(self.chain[:, body, param])
+                    sample_sizes.append(iter_num / (1+2*sum(correlation)))
+        self.effective_sample_size = np.mean(sample_sizes)
+        return self.effective_sample_size
+
+
 def next_pow_two(n):
     i = 1
     while i < n:
         i = i << 1
     return i
 
-def lag_k_autocorrelation(x: np.ndarray) -> np.ndarray:
-    pass
 
-def autocorr_func_1d(x, norm=True):
+def autocorr_func_1d(x: np.ndarray, norm=True) -> np.ndarray:
+    """
+    The auto correlation function as used in EMCEE
+    https://emcee.readthedocs.io/en/stable/tutorials/autocorr/
+    """
     x = np.atleast_1d(x)
     if len(x.shape) != 1:
         raise ValueError("invalid dimensions for 1D autocorrelation function")
