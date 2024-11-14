@@ -284,8 +284,8 @@ class MCMC:
                     f"Estimated {name}: {np.mean(param_samples):.3e}",
                     f", true {name}: {true_vals[body, i]}" if true_vals is not None else None,
                 )
-                axs[body, i].plot(x, param_samples, label=name)
-                axs[body, i].set_ylabel(f"{name}")
+                axs[i, body].plot(x, param_samples, label=name)
+                axs[i, body].set_ylabel(f"{name}")
 
         plt.tight_layout()
         plt.show()
