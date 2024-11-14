@@ -42,7 +42,7 @@ class MCMC:
         self,
         raw_data: ndarray,
         initial_parameters: ndarray,
-        param_bounds: List[Tuple[float, float]],
+        param_bounds: List[List[Tuple[float, float]]],
         proposal_std: ndarray,
         likelihood_func: Callable[[ndarray], float],
         param_names=list[str],
