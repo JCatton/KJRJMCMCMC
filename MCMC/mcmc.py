@@ -212,7 +212,7 @@ class MCMC:
                 prev_iter += 1
                 pbar.update(1)
                 remaining_iter -= 1
-                if proposal_within_bounds[s] and (
+                if proposal_within_bounds[s].all() and (
                     np.random.rand() < acceptance_probs[s]
                 ):
                     self.acceptance_num += 1
