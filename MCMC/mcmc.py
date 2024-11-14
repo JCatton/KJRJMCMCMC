@@ -322,6 +322,7 @@ class MCMC:
         self.mean = np.mean(self.chain, axis=0)
         self.var = np.var(self.chain, axis=0)
         self.effective_sample_size = self.effective_sample_size_calc()
+        self.mcmc_standard_error = np.sqrt(self.var/self.effective_sample_size)
 
 
     def determine_burn_in_index(self) -> int:
