@@ -178,6 +178,7 @@ def main():
     stats = Statistics(folder_names)
     for mcmc in stats.loaded_mcmcs:
         # mcmc.corner_plot(true_vals=true_vals, burn_in_index=1000)
+        mcmc.calc_statistics()
         mcmc.chain_to_plot_and_estimate(true_vals=true_vals)
     # gr = stats.calc_gelman_rubin()
     # print(f"The Gelman Rubin Statistic is {gr}")

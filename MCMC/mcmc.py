@@ -66,6 +66,7 @@ class MCMC:
         # Statistics
         self.mean: Optional[np.ndarray] = None
         self.var: Optional[np.ndarray] = None
+        self.autocorrelation: Optional[np.ndarray] = None
         self.burn_in_index: Optional[int] = None
         self.remaining_chain_length = None
 
@@ -251,8 +252,6 @@ class MCMC:
 
         print(f"{acceptance_rate=}")
         pbar.close()
-        self.mean = np.mean(self.chain, axis=0)
-        self.var = np.var(self.chain, axis=0)
         self.determine_burn_in_index()
         self.save()
 
@@ -312,6 +311,15 @@ class MCMC:
         )
         plt.show()
 
+    def calc_statistics(self):
+        if len(self.chain) <= 1 or self.chain is None:
+            print(f"Can't calculate statistics on Markov Chain at file:"
+                  f"{self.data_folder}")
+        self.mean = np.mean(self.chain, axis=0)
+        self.var = np.var(self.chain, axis=0)
+        self.autocorrelation = np.corrcoef(self.chain)
+
+
     def determine_burn_in_index(self) -> int:
         """
         Determines the burn-in cutoff index for an MCMC chain.
@@ -337,6 +345,31 @@ class MCMC:
         self.remaining_chain_length = len(self.chain) - burn_in_index
         return burn_in_index
 
+def next_pow_two(n):
+    i = 1
+    while i < n:
+        i = i << 1
+    return i
+
+def lag_k_autocorrelation(x: np.ndarray) -> np.ndarray:
+    pass
+
+def autocorr_func_1d(x, norm=True):
+    x = np.atleast_1d(x)
+    if len(x.shape) != 1:
+        raise ValueError("invalid dimensions for 1D autocorrelation function")
+    n = next_pow_two(len(x))
+
+    # Compute the FFT and then (from that) the auto-correlation function
+    f = np.fft.fft(x - np.mean(x), n=2 * n)
+    acf = np.fft.ifft(f * np.conjugate(f))[: len(x)].real
+    acf /= 4 * n
+
+    # Optionally normalize
+    if norm:
+        acf /= acf[0]
+
+    return acf
 
 class Statistics:
 
