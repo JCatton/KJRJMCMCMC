@@ -248,10 +248,12 @@ class MCMC:
     def chain_to_plot_and_estimate(self, true_vals: Optional[np.ndarray[float]] = None):
 
         non_fixed_indexes = np.array(self.proposal_std, dtype=bool)
-        chain = self.chain[:,  non_fixed_indexes]
-        param_names = self.param_names[non_fixed_indexes]
-        true_vals = true_vals[non_fixed_indexes] if true_vals.any() else None
+        chain = np.stack([self.chain[:, i, non_fixed_indexes[i]] for i in range(self.chain.shape[1])], axis=1)
+        param_names = np.stack([self.param_names[i, non_fixed_indexes[i]] for i in range(self.param_names.shape[0])], axis=0)
+        true_vals = np.stack([true_vals[i, non_fixed_indexes[i]] for i in range(true_vals.shape[0])], axis=0)
         likelihoods = self.likelihood_chain
+
+        # print(f"{chain.shape=}, {param_names.shape=}, {true_vals.shape=}")
 
         print("MCMC sampling completed.")
 
@@ -272,14 +274,14 @@ class MCMC:
         x = np.arange(len(chain))
 
         for body in range(chain.shape[1]):
-            for i, name in enumerate(param_names):
+            for i, name in enumerate(param_names[body]):
                 param_samples = chain[:, body, i]
                 print(
                     f"Estimated {name}: {np.mean(param_samples):.3e}",
                     f", true {name}: {true_vals[i]}" if true_vals is not None else None,
                 )
-                axs[body, i].plot(x, param_samples, label=name)
-                axs[body, i].set_ylabel(f"{name}")
+                axs[i, body].plot(x, param_samples, label=name)
+                axs[i, body].set_ylabel(f"{name}")
 
         plt.tight_layout()
         plt.show()
