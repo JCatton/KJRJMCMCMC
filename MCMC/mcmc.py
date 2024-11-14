@@ -189,8 +189,10 @@ class MCMC:
 
             # Keep clipping as easiest solution that works with multiprocessing and
             # negligible run cost
-            for j, (lower, upper) in enumerate(self.param_bounds):
-                proposals[:, :, j] = np.clip(proposals[:, :, j], lower, upper)
+            for planet_index in range(self.param_bounds.shape[0]):  # Number of planets
+                for param_index in range(self.param_bounds.shape[1]):  # Number of parameters per planet
+                    lower, upper = self.param_bounds[planet_index, param_index]
+                    proposals[:, planet_index, param_index] = np.clip(proposals[:, planet_index, param_index], lower, upper)
 
             if self.max_cpu_nodes == 1:
                 proposal_likelihoods = np.atleast_1d(self.likelihood_func(proposals[0]))
