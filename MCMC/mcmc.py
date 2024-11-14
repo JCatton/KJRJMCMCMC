@@ -294,13 +294,34 @@ class MCMC:
         self, true_vals: Optional[np.ndarray] = None, burn_in_index: int = 0
     ):
         non_fixed_indexes = np.array(self.proposal_std, dtype=bool)
-        chain = self.chain[:, :, non_fixed_indexes]
-        param_names = self.param_names[non_fixed_indexes]
-        true_vals = true_vals[non_fixed_indexes] if true_vals.any() else None
+        
+        # Flatten the chain to have shape (samples, parameters)
+        flattened_chain = np.concatenate([
+            self.chain[burn_in_index:, i, non_fixed_indexes[i]]
+            for i in range(self.chain.shape[1])
+        ], axis=1)
+        
+        # Flatten param_names and true_vals to match the flattened_chain dimensions
+        flattened_param_names = np.concatenate([
+            self.param_names[i, non_fixed_indexes[i]]
+            for i in range(self.param_names.shape[0])
+        ])
+        
+        if true_vals is not None:
+            flattened_true_vals = np.concatenate([
+                true_vals[i, non_fixed_indexes[i]]
+                for i in range(true_vals.shape[0])
+            ])
+        else:
+            flattened_true_vals = None
+        
+        print(f"{flattened_chain.shape=}, {flattened_param_names.shape=}, {flattened_true_vals.shape=}")
+
+        # Pass the flattened arrays to the corner plot
         corner(
-            chain[burn_in_index:, 0],
-            labels=param_names,
-            truths=true_vals,
+            flattened_chain,
+            labels=flattened_param_names,
+            truths=flattened_true_vals,
             show_titles=True,
             title_kwargs={"fontsize": 18},
             title_fmt=".2e",
