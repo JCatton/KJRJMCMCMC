@@ -11,8 +11,6 @@ from numpy.random import normal
 from pathos.multiprocessing import ProcessingPool as Pool
 from tqdm import tqdm
 
-CPU_NODES = 16
-
 
 def build_folder_name(specified_folder_name: Optional[str] = None):
     if specified_folder_name:
@@ -35,6 +33,16 @@ def build_folder_name(specified_folder_name: Optional[str] = None):
     data_folder.mkdir(parents=True, exist_ok=False)
     return data_folder
 
+def safe_exp(x: np.array) -> np.array:
+    threshold = 708
+    # This value is chosen since `np.exp(709)` is near the limit for most systems
+    result = np.zeros_like(x, dtype=float)
+
+    # Only calc values that are safe in the threshold
+    mask = x <= threshold
+    result[mask] = np.exp(x[mask])
+    result[~mask] = 1.0
+    return result
 
 class MCMC:
 
@@ -200,7 +208,7 @@ class MCMC:
 
             acceptance_probs = np.minimum(
                 1,
-                np.exp(
+                safe_exp(
                     np.array(proposal_likelihoods) - self.likelihood_chain[prev_iter]
                 ),
             )
