@@ -66,8 +66,8 @@ class MCMC:
         # MCMC-Inputs
         self.raw_data: ndarray = raw_data
         self.param_bounds = np.array(param_bounds)
-        self.lower_bounds = self.param_bounds[:, 0]
-        self.upper_bounds = self.param_bounds[:, 1]
+        self.lower_bounds = self.param_bounds[:, :, 0]
+        self.upper_bounds = self.param_bounds[:, :, 1]
         self.proposal_std: ndarray = proposal_std
         self.likelihood_func: Callable = likelihood_func
 
