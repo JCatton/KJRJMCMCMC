@@ -1,6 +1,8 @@
 # main.py
-import sys
 import os
+import sys
+
+from MCMC.mcmc import Statistics
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
@@ -8,6 +10,8 @@ from typing import Callable, Optional
 
 import matplotlib.pyplot as plt
 import numpy as np
+
+from mcmc import MCMC
 from sim.SimulateAndFlux import flux_data_from_params
 
 # Global Configuration
@@ -159,6 +163,24 @@ def main():
     plt.legend()
     plt.show()
     print(mcmc.acceptance_num)
+    # mcmc = MCMC(fluxes, initial_params, param_bounds, proposal_std,
+    #             param_names=param_names, likelihood_func=likelihood_fn, max_cpu_nodes=4)
+    # mcmc.metropolis_hastings(50_000)
+    # mcmc.chain_to_plot_and_estimate(true_vals)
+    # mcmc.corner_plot(true_vals)
+    folder_names = [
+        "2024-11-06_run1",
+        "2024-11-06_run2",
+        "2024-11-06_run3",
+        "2024-11-06_run4",
+        "2024-11-06_run5",
+    ]
+    stats = Statistics(folder_names)
+    for mcmc in stats.loaded_mcmcs:
+        # mcmc.corner_plot(true_vals=true_vals, burn_in_index=1000)
+        mcmc.chain_to_plot_and_estimate(true_vals=true_vals)
+    # gr = stats.calc_gelman_rubin()
+    # print(f"The Gelman Rubin Statistic is {gr}")
 
 
 if __name__ == "__main__":

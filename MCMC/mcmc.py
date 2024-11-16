@@ -14,7 +14,7 @@ from tqdm import tqdm
 CPU_NODES = 16
 
 
-def build_folder_name(specified_folder_name: Optional[str] = None):
+def build_folder_name(specified_folder_name: Optional[str | Path] = None):
     if specified_folder_name:
         pth = Path(specified_folder_name)
         if not pth.is_dir():
@@ -46,7 +46,7 @@ class MCMC:
         proposal_std: ndarray,
         likelihood_func: Callable[[ndarray], float],
         param_names=list[str],
-        specified_folder_name: Optional[str] = None,
+        specified_folder_name: Optional[str | Path] = None,
         max_cpu_nodes: int = 16,
         **kwargs,
     ):
@@ -62,6 +62,12 @@ class MCMC:
         self.acceptance_num = 0
         self.rejection_num = 0
         self.iteration_num = 1  # Can't start on the zeroth iteration
+
+        # Statistics
+        self.mean: Optional[np.ndarray] = None
+        self.var: Optional[np.ndarray] = None
+        self.burn_in_index: Optional[int] = None
+        self.remaining_chain_length = None
 
         # MCMC-Inputs
         self.raw_data: ndarray = raw_data
@@ -110,7 +116,11 @@ class MCMC:
                     mcmc_attributes = dill.load(f)
                     raw_data = np.load(data_folder / "raw_data.npy")
                     try:
-                        obj = cls(raw_data=raw_data, **mcmc_attributes)
+                        obj = cls(
+                            raw_data=raw_data,
+                            specified_folder_name=data_folder,
+                            **mcmc_attributes,
+                        )
                     except TypeError as e:
                         print(
                             f"Error occurred due to missing attributes in"
@@ -241,6 +251,9 @@ class MCMC:
 
         print(f"{acceptance_rate=}")
         pbar.close()
+        self.mean = np.mean(self.chain, axis=0)
+        self.var = np.var(self.chain, axis=0)
+        self.determine_burn_in_index()
         self.save()
 
     def chain_to_plot_and_estimate(self, true_vals: Optional[np.ndarray[float]] = None):
@@ -320,4 +333,77 @@ class MCMC:
             indices.append(index_param)
 
         burn_in_index = max(indices)
+        self.burn_in_index = burn_in_index
+        self.remaining_chain_length = len(self.chain) - burn_in_index
         return burn_in_index
+
+
+class Statistics:
+
+    def __init__(self, folder_names: list[str | Path]):
+        # MCMC handling
+        self.folder_names = [Path(f_name) for f_name in folder_names]
+        self.folder_indexing = {f_name: i for i, f_name in enumerate(folder_names)}
+        self.chain_num: int = len(folder_names)
+        self.loaded_mcmcs: List[MCMC] = []
+
+        # Chain Details
+        self._unique_stats = 2
+        self.statistics_data = np.empty(shape=(self.chain_num, self._unique_stats))
+        self._means_idx = 0
+        self._var_idx = 1
+
+        # Global Statistics
+        self.mean_of_means = None
+        self.variance_of_means = None
+        self.gelman_rubin = None
+
+        self.load_folders()
+
+    def load_folders(self):
+        mcmcs = []
+        valid_paths = []
+        for f_path in self.folder_names:
+            if f_path.is_dir():
+                mcmcs.append(MCMC.load(f_path))
+                valid_paths.append(f_path)
+
+        self.chain_num = len(valid_paths)
+        chain = mcmcs[0].chain
+        self.statistics_data = np.empty(
+            shape=(self.chain_num, self._unique_stats, *chain[0].shape)
+        )
+
+        if self.chain_num != len(self.folder_names):
+            self.loaded_mcmcs = []
+
+        for idx, (mcmc, f_path) in enumerate(zip(mcmcs, valid_paths)):
+            self.folder_indexing[f_path.name] = idx
+            self.loaded_mcmcs.append(mcmc)
+
+    def calc_gelman_rubin(self) -> np.ndarray:
+        """
+        Calculates the Gelman_Rubin statistic of the loaded chains using the formula
+        https://en.wikipedia.org/wiki/Gelman-Rubin_statistic
+        Any parameters which do not vary are set to have a statistic
+        of zero.
+        """
+        stats = self.statistics_data
+        stats[:, self._means_idx] = [mcmc.mean for mcmc in self.loaded_mcmcs]
+        stats[:, self._var_idx] = [mcmc.var for mcmc in self.loaded_mcmcs]
+        mean_of_means = np.mean(stats[:, self._means_idx], axis=0)
+
+        len_chain = len(self.loaded_mcmcs[0].chain)
+        chain_num = self.chain_num
+        var_of_means = (
+            len_chain
+            / (chain_num - 1)
+            * np.sum(np.power(stats[:, self._means_idx] - mean_of_means, 2), axis=0)
+        )
+        mean_var = np.mean(stats[:, self._var_idx], axis=0)
+        numerator = (len_chain - 1) / len_chain * mean_var + var_of_means / len_chain
+        self.gelman_rubin = numerator / mean_var
+        self.gelman_rubin *= np.where(
+            self.loaded_mcmcs[0].proposal_std == 0, False, True
+        )
+        return self.gelman_rubin
