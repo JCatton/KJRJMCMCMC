@@ -121,12 +121,12 @@ class MCMC:
             try:
                 # Load the object using dill
                 with open(data_folder / "mcmc_attributes.pkl", "rb") as f:
-                    mcmc_attributes = dill.load(f)
+                    mcmc_attributes: dict[str, ...] = dill.load(f)
+                    mcmc_attributes |= {"specified_folder_name": data_folder, "data_folder": data_folder}
                     raw_data = np.load(data_folder / "raw_data.npy")
                     try:
                         obj = cls(
                             raw_data=raw_data,
-                            specified_folder_name=data_folder,
                             **mcmc_attributes,
                         )
                     except TypeError as e:
@@ -182,8 +182,8 @@ class MCMC:
             self.likelihood_chain, shape=max_iteration_number
         )
 
-        empty_chain[: self.iteration_num + 1] = self.chain
-        empty_likelihood[: self.iteration_num + 1] = self.likelihood_chain
+        empty_chain[: self.iteration_num] = self.chain
+        empty_likelihood[: self.iteration_num] = self.likelihood_chain
 
         self.chain = empty_chain
         self.likelihood_chain = empty_likelihood

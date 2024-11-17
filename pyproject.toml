@@ -6,7 +6,7 @@ authors = ["JonteC <106551147+JCatton@users.noreply.github.com.>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.12"
+python =  ">=3.12,<3.14"
 pre-commit = "^4.0.0"
 pillow = "^11.0.0"
 rebound = "^4.4.3"
@@ -15,6 +15,7 @@ scipy = "^1.14.1"
 numba = "0.59.1"
 pathos = "^0.3.3"
 tqdm = "^4.66.6"
+pyside6 = "^6.8.0.2"
 
 
 [build-system]
