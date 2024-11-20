@@ -59,41 +59,29 @@ def main():
 
     times = np.load("TestTimesMultiple.npy")
     inp_fluxes = np.load("TestFluxesMultiple.npy")
-
-    # #Stellar params = [radius (in AU), mass]
-    # stellar_params = np.array([100 * 4.2635e-5, 333000 * 1.12])
-    # Initial parameter guesses
-    # param_names = np.array([r"\eta radius", "mass", "orbital radius", "eccentricity", r"\omega (phase)"])
-    # true_vals = np.array([0.1, 90.26, 0.045, 0.000, 0])
-
-    # initial_params = np.array([[0.1 + 0.001, 90.26, 0.045, 0, 0-0.0001]])
-    # proposal_std = np.array([3*1e-4, 0, 5*1e-7, 1e-5, 0])
-    # param_bounds = [(0,1), (0, 1e15), (1e-6, 1e5), (0, 0.99), (-np.pi, np.pi)]
-
-    # planet_params =[ [ eta,   P,     a,   e,               inc, omega, OHM, phase_lag ] ]
-    # planet_params =  np.array([[  eta1, 8.8, 0.08, 0.208, np.radians(90),   0, 0,  0]
+    
     param_names = np.array([
-        [r"\eta_1", "P_1", "a_1", "e_1", "inc_1", "omega_1", "OHM_1", "phase_lag_1"],
-        [r"\eta_2", "P_2", "a_2", "e_2", "inc_2", "omega_2", "OHM_2", "phase_lag_2"]
+        [r"\eta_1", "a_1", "P_1", "e_1", "inc_1", "omega_1", "OHM_1", "phase_lag_1"],
+        [r"\eta_2", "a_2", "P_2", "e_2", "inc_2", "omega_2", "OHM_2", "phase_lag_2"]
     ])
 
     true_vals = np.array([
-        [0.1, 8.8, 0.08, 0.208, np.radians(90), 0, 0, 0],
-        [0.3, 12, 0.101, 0.1809, np.radians(90), 0, 0, np.pi / 4]
+        [0.1, 0.08, 8.8, 0.208, np.radians(90), 0, 0, 0],
+        [0.3, 0.101, 12, 0.1809, np.radians(90), 0, 0, np.pi / 4]
     ])
     initial_params = np.array([
-        [0.1+0.025, 8.8, 0.08, 0.208, np.radians(90), 0, 0, 0],
-        [0.3+0.025, 12, 0.101, 0.1809, np.radians(90), 0, 0, np.pi / 4]
+        [0.1+0.025, 0.08, 8.8, 0.208, np.radians(90), 0, 0, 0],
+        [0.3+0.025, 0.101, 12, 0.1809, np.radians(90), 0, 0, np.pi / 4]
     ])
 
     proposal_std = np.array([
-        [3e-5, 5e-4, 5e-6, 1e-6, 0, 4e-5, 0, 4e-6],  # Planet 1
-        [3e-5, 5e-4, 5e-6, 1e-6, 0, 4e-5, 0, 4e-6],   # Planet 2
+        [3e-5, 5e-6, 5e-4, 1e-6, 0, 4e-5, 0, 4e-6],  # Planet 1
+        [3e-5, 5e-6, 5e-4, 1e-6, 0, 4e-5, 0, 4e-6],   # Planet 2
     ])
 
     param_bounds = [
-        [(0.05, 0.25), (0, 1e1000), (0.04, 0.2), (0, 0.3), (np.radians(86.8), np.pi), (-np.pi/8, np.pi/8), (-np.pi/8, np.pi/8), (-np.pi/8, np.pi/8)],
-        [(0.2, 0.4), (0, 1e1000), (0.08, 0.18), (0, 0.3), (np.radians(86.8), np.pi), (-np.pi/8, np.pi/8), (-np.pi/8, np.pi/8), (0, np.pi/2)]
+        [(0.05, 0.25), (0.04, 0.2), (0, 1e1000), (0, 0.3), (np.radians(86.8), np.pi), (-np.pi/8, np.pi/8), (-np.pi/8, np.pi/8), (-np.pi/8, np.pi/8)],
+        [(0.2, 0.4), (0.08, 0.18), (0, 1e1000), (0, 0.3), (np.radians(86.8), np.pi), (-np.pi/8, np.pi/8), (-np.pi/8, np.pi/8), (0, np.pi/2)]
     ]
 
 

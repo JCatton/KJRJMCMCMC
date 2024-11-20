@@ -27,7 +27,9 @@ def flux_data_from_params(
 
     Parameters:
     - stellar_params: List of stellar parameters [radius, mass]
-    - planet_params: List of planet parameters [eta, p, a, e, inc, omega, big_ohm, phase_lag, mass (Only used in N-body)]
+    - planet_params: List of planet parameters planet_params: 2D numpy array where each row represents
+                     a planet's parameters as
+                     [eta, a, p, e, inc, omega, big_ohm, phase_lag, mass (only for N body)]
     - times: Array of time values
     - no_loading_bar: Boolean to disable loading bar
     - analytical_bool: Boolean to use analytical positions, default is False
@@ -114,6 +116,10 @@ if __name__ == "__main__":
     )
     # True inclinations are 89.3 and 104.9 +- some
 
+
+
+
+
     SamplesPerOrbit = 60000
     numberMaxPeriod = 4
 
@@ -124,6 +130,7 @@ if __name__ == "__main__":
     #     np.linspace(20, 30, 60000),
     # ]
     times_input = np.linspace(0, 4 * 12, 60000)  # Three orbital periods for planet 1
+
 
     ouptut = flux_data_from_params(
         stellar_params=stellar_params, planet_params=planet_params, times=times_input, analytical_bool=True

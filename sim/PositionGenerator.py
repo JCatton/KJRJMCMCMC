@@ -115,8 +115,9 @@ def n_body_sim_api(
 
     Parameters:
     - stellar_mass: Mass of the star
-    - planet_params: List of array planet parameters
-                    [radius, mass, orbital radius, eccentricity, omega (phase)]
+    - planet_params: 2D numpy array where each row represents
+                     a planet's parameters as
+                     [a, p, e, inc, omega, big_ohm, phase_lag, mass]
 
     Returns:
     - Array of body, positions of the star and planets across time. [time_idx, body_idx, coord]
@@ -165,7 +166,7 @@ def analytical_coordinate_generator(
     Generate the x, y, and z coordinates of a planet over time.
 
     Parameters:
-    - eta, p, a, e, inc, omega, big_ohm, phase_lag: Planetary parameters
+    - eta, a, p, e, inc, omega, big_ohm, phase_lag: Planetary parameters
     - time_array: Array of time values
 
     Returns:
@@ -197,7 +198,7 @@ def analytical_positions_api(
     Parameters:
     - planet_params: 2D numpy array where each row represents
                      a planet's parameters as
-                     [eta, p, a, e, inc, omega, big_ohm, phase_lag]
+                     [eta, a, p, e, inc, omega, big_ohm, phase_lag]
     - times: Array of time values
 
     Returns:
@@ -209,9 +210,9 @@ def analytical_positions_api(
     pos = np.empty((sample_num, planet_num, 3), dtype=np.float64)
 
     for i in range(planet_num):
-        eta, p, a, e, inc, omega, big_ohm, phase_lag = planet_params[i]
+        eta, a, p, e, inc, omega, big_ohm, phase_lag = planet_params[i]
         x, y, z = analytical_coordinate_generator(
-            eta, p, a, e, inc, omega, big_ohm, phase_lag, times
+            eta, a, p, e, inc, omega, big_ohm, phase_lag, times
         )
         pos[:, i, 0] = x
         pos[:, i, 1] = y
@@ -234,15 +235,15 @@ if __name__ == "__main__":
         [
             [
                 0.1 + 0.001,
-                8.8,
                 0.08 + 0.001,
+                8.8,
                 0.208 - 0.0003,
                 np.radians(88 + 0.002),
                 0,
                 0,
                 0 + np.pi / 8,
             ],
-            [0.1 + 0.1, 8.8, 0.08 + 0.03, 0.208 - 0.001, np.radians(89.5), 0, 0, 0],
+            [0.1 + 0.1, 0.08 + 0.03, 8.8, 0.208 - 0.001, np.radians(89.5), 0, 0, 0],
         ]
     )
     positions = analytical_positions_api(planet_params=planet_params, times=times)
