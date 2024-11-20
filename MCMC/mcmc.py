@@ -419,6 +419,8 @@ class Statistics:
             if f_path.is_dir():
                 mcmcs.append(MCMC.load(f_path))
                 valid_paths.append(f_path)
+            else:
+                print(f"{f_path} is not a valid directory")
 
         self.chain_num = len(valid_paths)
         chain = mcmcs[0].chain
