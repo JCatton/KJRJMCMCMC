@@ -150,7 +150,7 @@ def n_body_sim_api(
 
 
 @jit
-def GenerateCoordinates(
+def analytical_coordinate_generator(
     eta: float,
     p: float,
     a: float,
@@ -210,7 +210,7 @@ def analytical_positions_api(
 
     for i in range(planet_num):
         eta, p, a, e, inc, omega, big_ohm, phase_lag = planet_params[i]
-        x, y, z = GenerateCoordinates(
+        x, y, z = analytical_coordinate_generator(
             eta, p, a, e, inc, omega, big_ohm, phase_lag, times
         )
         pos[:, i, 0] = x
