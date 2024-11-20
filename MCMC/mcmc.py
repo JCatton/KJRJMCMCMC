@@ -326,7 +326,8 @@ class MCMC:
                 axs[i, body].plot(x, param_samples, label=name)
                 min_val, max_val = minmax(param_samples)
                 axs[i, body].vlines(self.burn_in_index, ymin=max_val,
-                                    ymax=min_val, linestyles="dotted")
+                                    ymax=min_val, linestyles="dotted",
+                                    color="red")
                 axs[i, body].set_ylabel(f"{name}")
 
         plt.tight_layout()
