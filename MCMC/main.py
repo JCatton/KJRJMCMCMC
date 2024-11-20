@@ -73,27 +73,27 @@ def main():
 
     true_vals = np.array([
         [0.1, 8.8, 0.08, 0.208, np.radians(90), 0, 0, 0],
-        [0.3, 34.5, 0.20, 0.1809, np.radians(90), 0, 0, np.pi / 4]
+        [0.3, 12, 0.101, 0.1809, np.radians(90), 0, 0, np.pi / 4]
     ])
     initial_params = np.array([
-        [0.1+0.1, 8.8, 0.08+0.03, 0.208-0.003, np.radians(90-0.01), 0-0.03, 0, 0+0.02],
-        [0.3-0.05, 34.5, 0.20-0.03, 0.1809-0.003, np.radians(90-0.05), 0+0.03, 0, np.pi / 4 - 0.02]
+        [0.1+0.025, 8.8, 0.08, 0.208, np.radians(90), 0, 0, 0],
+        [0.3+0.025, 12, 0.101, 0.1809, np.radians(90), 0, 0, np.pi / 4]
     ])
 
     proposal_std = np.array([
-        [3e-4, 0, 5e-5, 1e-5, 6e-5, 4e-4, 0, 4e-5],  # Planet 1
-        [3e-4, 0, 5e-5, 1e-5, 6e-5, 4e-4, 0, 4e-5],   # Planet 2
+        [3e-5, 5e-4, 5e-6, 1e-6, 0, 4e-5, 0, 4e-6],  # Planet 1
+        [3e-5, 5e-4, 5e-6, 1e-6, 0, 4e-5, 0, 4e-6],   # Planet 2
     ])
 
     param_bounds = [
-        [(0, 1), (0, 1e1000), (1e-6, 1e5), (0, 0.99), (np.radians(86.8), np.pi), (-np.pi, np.pi), (-np.pi, np.pi), (-np.pi, np.pi)],
-        [(0, 30), (0, 1e1000), (1e-6, 1e5), (0, 0.99), (np.radians(86.8), np.pi), (-np.pi, np.pi), (-np.pi, np.pi), (-np.pi, np.pi)]
+        [(0.05, 0.25), (0, 1e1000), (0.04, 0.2), (0, 0.3), (np.radians(86.8), np.pi), (-np.pi/8, np.pi/8), (-np.pi/8, np.pi/8), (-np.pi/8, np.pi/8)],
+        [(0.2, 0.4), (0, 1e1000), (0.08, 0.18), (0, 0.3), (np.radians(86.8), np.pi), (-np.pi/8, np.pi/8), (-np.pi/8, np.pi/8), (0, np.pi/2)]
     ]
 
 
     sigma_n = 6 * 1e-4
     fluxes = add_gaussian_error(inp_fluxes, 0, sigma_n)
-    num_iterations = int(10000/4)
+    num_iterations = int(1_000_000)
 
     radius_WASP148A = 0.912 * 696.34e6 / 1.496e11
     mass_WASP148A = 0.9540 * 2e30 / 6e24
@@ -135,7 +135,7 @@ def main():
 
     mcmc.metropolis_hastings(num_iterations)
     mcmc.chain_to_plot_and_estimate(true_vals)
-    mcmc.corner_plot(true_vals, burn_in_index=3)
+    mcmc.corner_plot(true_vals, burn_in_index=350_000)
 
     plt.title("Difference between true and estimated fluxes")
     plt.xlabel("Time")

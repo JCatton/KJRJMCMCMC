@@ -144,6 +144,7 @@ def flux_data_from_params(
     Returns:
     - flux_values: Array of flux values
     """
+
     if analytical_bool:
         positions = analytical_positions_api(planet_params=planet_params, times=times)
         flux_values = combined_delta_flux(
@@ -179,7 +180,6 @@ def flux_data_from_params(
             eta_values=planet_params[:, 0],
             times=times,
         )
-
     return flux_values
 
 
@@ -209,8 +209,8 @@ if __name__ == "__main__":
     radius_WASP148_c = (
         9.4 * 6.4e6 / 1.496e11
     )  # assumed similar densities as no values for radius
-    eta1 = radius_WASP148_B / radius_WASP148A
-    eta2 = radius_WASP148_c / radius_WASP148A
+    # eta1 = radius_WASP148_B / radius_WASP148A
+    # eta2 = radius_WASP148_c / radius_WASP148A
 
     eta1 = 0.1
     eta2 = 0.3
@@ -218,7 +218,7 @@ if __name__ == "__main__":
     planet_params = np.array(
         [
             [eta1, 8.8, 0.08, 0.208, np.radians(90), 0, 0, 0],
-            [eta2, 34.5, 0.20, 0.1809, np.radians(90), 0, 0, np.pi / 4]
+            [eta2, 12, 0.101, 0.1809, np.radians(90), 0, 0, np.pi / 4]
         ]
     )
     # True inclinations are 89.3 and 104.9 +- some
@@ -232,7 +232,7 @@ if __name__ == "__main__":
     #     np.linspace(15, 18, 60000),
     #     np.linspace(20, 30, 60000),
     # ]
-    times_input = np.linspace(0, 2 * 34.5, 60000)  # Three orbital periods for planet 1
+    times_input = np.linspace(0, 4 * 12, 60000)  # Three orbital periods for planet 1
 
     ouptut = flux_data_from_params(
         stellar_params=stellar_params, planet_params=planet_params, times=times_input, analytical_bool=True
