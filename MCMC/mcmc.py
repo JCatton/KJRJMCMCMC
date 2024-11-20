@@ -324,6 +324,9 @@ class MCMC:
                     f", true {name}: {true_vals[body, i]}" if true_vals is not None else None,
                 )
                 axs[i, body].plot(x, param_samples, label=name)
+                min_val, max_val = minmax(param_samples)
+                axs[i, body].vlines(self.burn_in_index, ymin=max_val,
+                                    ymax=min_val, linestyles="dotted")
                 axs[i, body].set_ylabel(f"{name}")
 
         plt.tight_layout()
