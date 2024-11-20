@@ -136,7 +136,7 @@ def flux_data_from_params(
 
     Parameters:
     - stellar_params: List of stellar parameters [radius, mass]
-    - planet_params: List of planet parameters [eta, p, a, e, inc, omega, big_ohm, phase_lag]
+    - planet_params: List of planet parameters [eta, p, a, e, inc, omega, big_ohm, phase_lag, mass (Only used in N-body)]
     - times: Array of time values
     - no_loading_bar: Boolean to disable loading bar
     - analytical_bool: Boolean to use analytical positions, default is False
@@ -146,7 +146,7 @@ def flux_data_from_params(
     """
 
     if analytical_bool:
-        positions = analytical_positions_api(planet_params=planet_params, times=times)
+        positions = analytical_positions_api(planet_params=planet_params[:,:-1], times=times)
         flux_values = combined_delta_flux(
             x=positions[:, :, 0].transpose(),
             y=positions[:, :, 1].transpose(),
