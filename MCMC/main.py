@@ -55,8 +55,8 @@ def main():
     # Generate synthetic data
     # times, inp_fluxes = extract_timeseries_data(r"C:\Users\jonte\PycharmProjects\KJRJMCMCMC\sim\Outputs\Example\timeseries_flux.npy")
 
-    times = np.load("TestTimes.npy")
-    inp_fluxes = np.load("TestFluxes.npy")
+    times = np.load("TestTimesMultiple.npy")
+    inp_fluxes = np.load("TestFluxesMultiple.npy")
 
     # #Stellar params = [radius (in AU), mass]
     # stellar_params = np.array([100 * 4.2635e-5, 333000 * 1.12])
@@ -70,28 +70,34 @@ def main():
 
     # planet_params =[ [ eta,   P,     a,   e,               inc, omega, OHM, phase_lag ] ]
     # planet_params =  np.array([[  eta1, 8.8, 0.08, 0.208, np.radians(90),   0, 0,  0]
-    param_names = np.array([r"\eta", "P", "a", "e", "inc", "omega", "OHM", "phase_lag"])
-    true_vals = np.array([0.1, 8.8, 0.08, 0.208, np.radians(88), 0, 0, 0])
-    initial_params = np.array(
-        # [[0.1 + 0.001, 8.8, 0.08 + 0.001, 0.208-0.0003, np.radians(88+0.002 ), 0, 0,0 + np.pi/8]]
-        [[0.1 + 0.1, 8.8, 0.08+0.03, 0.208 - 0.003, np.radians(90-0.01), 0-0.03, 0, 0 + 0.02]]
-    )
-    # proposal_std = np.array([3 * 1e-4, 0, 5 * 1e-7, 3e-5, 1e-4, 0, 0, 1e-4])
-    proposal_std = np.array([3 * 1e-4, 0, 5 * 1e-5, 1e-5, 6e-5, 4e-4, 0, 4e-5])
+    param_names = np.array([
+        [r"\eta_1", "P_1", "a_1", "e_1", "inc_1", "omega_1", "OHM_1", "phase_lag_1"],
+        [r"\eta_2", "P_2", "a_2", "e_2", "inc_2", "omega_2", "OHM_2", "phase_lag_2"]
+    ])
+
+    true_vals = np.array([
+        [0.1, 8.8, 0.08, 0.208, np.radians(90), 0, 0, 0],
+        [0.3, 12, 0.101, 0.1809, np.radians(90), 0, 0, np.pi / 4]
+    ])
+    initial_params = np.array([
+        [0.1+0.025, 8.8, 0.08, 0.208, np.radians(90), 0, 0, 0],
+        [0.3+0.025, 12, 0.101, 0.1809, np.radians(90), 0, 0, np.pi / 4]
+    ])
+
+    proposal_std = np.array([
+        [3e-5, 5e-4, 5e-6, 1e-6, 0, 4e-5, 0, 4e-6],  # Planet 1
+        [3e-5, 5e-4, 5e-6, 1e-6, 0, 4e-5, 0, 4e-6],   # Planet 2
+    ])
+
     param_bounds = [
-        (0, 1),
-        (0, 1e1000),
-        (1e-6, 1e5),
-        (0, 0.99),
-        (np.radians(86.8), np.pi),
-        (-np.pi, np.pi),
-        (-np.pi, np.pi),
-        (-np.pi, np.pi),
+        [(0.05, 0.25), (0, 1e1000), (0.04, 0.2), (0, 0.3), (np.radians(86.8), np.pi), (-np.pi/8, np.pi/8), (-np.pi/8, np.pi/8), (-np.pi/8, np.pi/8)],
+        [(0.2, 0.4), (0, 1e1000), (0.08, 0.18), (0, 0.3), (np.radians(86.8), np.pi), (-np.pi/8, np.pi/8), (-np.pi/8, np.pi/8), (0, np.pi/2)]
     ]
+
 
     sigma_n = 6 * 1e-4
     fluxes = add_gaussian_error(inp_fluxes, 0, sigma_n)
-    num_iterations = int(1000000)
+    num_iterations = int(1_000_000)
 
     radius_WASP148A = 0.912 * 696.34e6 / 1.496e11
     mass_WASP148A = 0.9540 * 2e30 / 6e24
@@ -128,24 +134,31 @@ def main():
         proposal_std,
         param_names=param_names,
         likelihood_func=likelihood_fn,
-        max_cpu_nodes=4,
+        max_cpu_nodes=1,
     )
 
     mcmc.metropolis_hastings(num_iterations)
     mcmc.chain_to_plot_and_estimate(true_vals)
-    mcmc.corner_plot(true_vals, burn_in_index=30_000)
+    mcmc.corner_plot(true_vals, burn_in_index=350_000)
 
+    plt.title("Difference between true and estimated fluxes")
+    plt.xlabel("Time")
+    plt.ylabel("Difference in Fluxes")
     plt.plot(
         times,
         flux_data_from_params(
             stellar_params, mcmc.chain[-1], times, analytical_bool=True
         )
         - flux_data_from_params(
-            stellar_params, np.array([true_vals]), times, analytical_bool=True
+            stellar_params, true_vals, times, analytical_bool=True
         ),
     )
     plt.show()
 
+
+    plt.title("True and estimated fluxes")
+    plt.xlabel("Time")
+    plt.ylabel("Flux")
     plt.plot(
         times,
         flux_data_from_params(
@@ -156,7 +169,7 @@ def main():
     plt.plot(
         times,
         flux_data_from_params(
-            stellar_params, np.array([true_vals]), times, analytical_bool=True
+            stellar_params, true_vals, times, analytical_bool=True
         ),
         label="True",
     )

@@ -50,7 +50,7 @@ class MCMC:
         self,
         raw_data: ndarray,
         initial_parameters: ndarray,
-        param_bounds: List[Tuple[float, float]],
+        param_bounds: List[List[Tuple[float, float]]],
         proposal_std: ndarray,
         likelihood_func: Callable[[ndarray], float],
         param_names=list[str],
@@ -80,8 +80,8 @@ class MCMC:
         # MCMC-Inputs
         self.raw_data: ndarray = raw_data
         self.param_bounds = np.array(param_bounds)
-        self.lower_bounds = self.param_bounds[:, 0]
-        self.upper_bounds = self.param_bounds[:, 1]
+        self.lower_bounds = self.param_bounds[:, :, 0]
+        self.upper_bounds = self.param_bounds[:, :, 1]
         self.proposal_std: ndarray = proposal_std
         self.likelihood_func: Callable = likelihood_func
 
@@ -207,8 +207,10 @@ class MCMC:
 
             # Keep clipping as easiest solution that works with multiprocessing and
             # negligible run cost
-            for j, (lower, upper) in enumerate(self.param_bounds):
-                proposals[:, :, j] = np.clip(proposals[:, :, j], lower, upper)
+            for planet_index in range(self.param_bounds.shape[0]):  # Number of planets
+                for param_index in range(self.param_bounds.shape[1]):  # Number of parameters per planet
+                    lower, upper = self.param_bounds[planet_index, param_index]
+                    proposals[:, planet_index, param_index] = np.clip(proposals[:, planet_index, param_index], lower, upper)
 
             if self.max_cpu_nodes == 1:
                 proposal_likelihoods = np.atleast_1d(self.likelihood_func(proposals[0]))
@@ -228,7 +230,7 @@ class MCMC:
                 prev_iter += 1
                 pbar.update(1)
                 remaining_iter -= 1
-                if proposal_within_bounds[s] and (
+                if proposal_within_bounds[s].all() and (
                     np.random.rand() < acceptance_probs[s]
                 ):
                     self.acceptance_num += 1
@@ -267,10 +269,12 @@ class MCMC:
     def chain_to_plot_and_estimate(self, true_vals: Optional[np.ndarray[float]] = None):
 
         non_fixed_indexes = np.array(self.proposal_std, dtype=bool)
-        chain = self.chain[:, :, non_fixed_indexes]
-        param_names = self.param_names[non_fixed_indexes]
-        true_vals = true_vals[non_fixed_indexes] if true_vals.any() else None
+        chain = np.stack([self.chain[:, i, non_fixed_indexes[i]] for i in range(self.chain.shape[1])], axis=1)
+        param_names = np.stack([self.param_names[i, non_fixed_indexes[i]] for i in range(self.param_names.shape[0])], axis=0)
+        true_vals = np.stack([true_vals[i, non_fixed_indexes[i]] for i in range(true_vals.shape[0])], axis=0)
         likelihoods = self.likelihood_chain
+
+        # print(f"{chain.shape=}, {param_names.shape=}, {true_vals.shape=}")
 
         print("MCMC sampling completed.")
 
@@ -285,20 +289,20 @@ class MCMC:
         fig, axs = plt.subplots(
             nrows=chain.shape[2], ncols=chain.shape[1], figsize=(10, 8)
         )
-        axs = axs.reshape(chain[0].shape)
+        # axs = axs.reshape(chain[0].shape)
         fig.suptitle("Parameter Iterations")
         plt.xlabel("Iteration #")
         x = np.arange(len(chain))
 
         for body in range(chain.shape[1]):
-            for i, name in enumerate(param_names):
+            for i, name in enumerate(param_names[body]):
                 param_samples = chain[:, body, i]
                 print(
                     f"Estimated {name}: {np.mean(param_samples):.3e}",
-                    f", true {name}: {true_vals[i]}" if true_vals is not None else None,
+                    f", true {name}: {true_vals[body, i]}" if true_vals is not None else None,
                 )
-                axs[body, i].plot(x, param_samples, label=name)
-                axs[body, i].set_ylabel(f"{name}")
+                axs[i, body].plot(x, param_samples, label=name)
+                axs[i, body].set_ylabel(f"{name}")
 
         plt.tight_layout()
         plt.show()
@@ -307,13 +311,34 @@ class MCMC:
         self, true_vals: Optional[np.ndarray] = None, burn_in_index: int = 0
     ):
         non_fixed_indexes = np.array(self.proposal_std, dtype=bool)
-        chain = self.chain[:, :, non_fixed_indexes]
-        param_names = self.param_names[non_fixed_indexes]
-        true_vals = true_vals[non_fixed_indexes] if true_vals.any() else None
+        
+        # Flatten the chain to have shape (samples, parameters)
+        flattened_chain = np.concatenate([
+            self.chain[burn_in_index:, i, non_fixed_indexes[i]]
+            for i in range(self.chain.shape[1])
+        ], axis=1)
+        
+        # Flatten param_names and true_vals to match the flattened_chain dimensions
+        flattened_param_names = np.concatenate([
+            self.param_names[i, non_fixed_indexes[i]]
+            for i in range(self.param_names.shape[0])
+        ])
+        
+        if true_vals is not None:
+            flattened_true_vals = np.concatenate([
+                true_vals[i, non_fixed_indexes[i]]
+                for i in range(true_vals.shape[0])
+            ])
+        else:
+            flattened_true_vals = None
+        
+        print(f"{flattened_chain.shape=}, {flattened_param_names.shape=}, {flattened_true_vals.shape=}")
+
+        # Pass the flattened arrays to the corner plot
         corner(
-            chain[burn_in_index:, 0],
-            labels=param_names,
-            truths=true_vals,
+            flattened_chain[burn_in_index:],
+            labels=flattened_param_names,
+            truths=flattened_true_vals,
             show_titles=True,
             title_kwargs={"fontsize": 18},
             title_fmt=".2e",
