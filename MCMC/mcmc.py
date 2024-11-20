@@ -333,9 +333,11 @@ class MCMC:
         plt.show()
 
     def corner_plot(
-        self, true_vals: Optional[np.ndarray] = None, burn_in_index: int = 0
+        self, true_vals: Optional[np.ndarray] = None, burn_in_index: int = None
     ):
         non_fixed_indexes = np.array(self.proposal_std, dtype=bool)
+        if burn_in_index is None:
+            burn_in_index = self.burn_in_index
         
         # Flatten the chain to have shape (samples, parameters)
         flattened_chain = np.concatenate([
@@ -361,7 +363,7 @@ class MCMC:
 
         # Pass the flattened arrays to the corner plot
         corner(
-            flattened_chain[burn_in_index:],
+            flattened_chain,
             labels=flattened_param_names,
             truths=flattened_true_vals,
             show_titles=True,
