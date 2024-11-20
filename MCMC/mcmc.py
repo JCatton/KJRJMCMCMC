@@ -259,6 +259,10 @@ class MCMC:
             # self.chain[self.iteration_num] = current_params
             # self.likelihood_chain[self.iteration_num] = current_likelihood
 
+
+        #Ignore the last one in chain as this seems to go nan / inf
+        self.chain = self.chain[:-1]
+        self.likelihood_chain = self.likelihood_chain[:-1]
         print(f"{acceptance_rate=}")
         pbar.close()
         self.mean = np.mean(self.chain, axis=0)
