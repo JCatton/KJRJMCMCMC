@@ -123,7 +123,7 @@ def flux_data_from_params(
     return flux_values
 """
 
-
+@TimeMeasure
 def flux_data_from_params(
     stellar_params: np.ndarray,
     planet_params: np.ndarray,
