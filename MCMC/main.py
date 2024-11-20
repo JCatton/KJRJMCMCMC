@@ -1,17 +1,19 @@
 # main.py
-import os
 import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 
 from MCMC.mcmc import Statistics
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
 
 from typing import Callable, Optional
 
 import matplotlib.pyplot as plt
 import numpy as np
 
-from mcmc import MCMC
+# from mcmc import MCMC
 from sim.SimulateAndFlux import flux_data_from_params
 
 # Global Configuration
