@@ -94,8 +94,8 @@ if __name__ == "__main__":
     # planet_params =[ [ eta,   a,     P,   e,               inc, omega, OHM, phase_lag ] ]
     planet_params = np.array(
         [
-            [eta1, 0.08215, 8.8, 0.208, np.radians(90), 0, 0, 0],
-            [eta2, 0.2044, 34, 0.1809, np.radians(90), 0, 0, np.pi / 4]
+            [eta1, 0.08215, 8.8, 0.208, np.radians(90), 0, 0, 0, 0.208],
+            [eta2, 0.2044, 34, 0.1809, np.radians(90), 0, 0, np.pi / 4, 0.1809]
         ]
     )
     # True inclinations are 89.3 and 104.9 +- some
