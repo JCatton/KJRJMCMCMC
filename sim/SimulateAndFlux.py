@@ -39,7 +39,7 @@ def flux_data_from_params(
     """
 
     if analytical_bool:
-        positions = analytical_positions_api(planet_params=planet_params[:,:-1], times=times)
+        positions = analytical_positions_api(planet_params=planet_params[:,1:-1], times=times)
         flux_values = combined_delta_flux(
             x=positions[:, :, 0].transpose(),
             y=positions[:, :, 1].transpose(),
