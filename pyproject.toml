@@ -15,6 +15,7 @@ scipy = "^1.14.1"
 numba = "0.59.1"
 pathos = "^0.3.3"
 tqdm = "^4.66.6"
+dynesty = "^2.1.4"
 
 
 [build-system]

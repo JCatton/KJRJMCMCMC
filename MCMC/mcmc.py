@@ -6,6 +6,8 @@ import dill
 import matplotlib.pyplot as plt
 import numpy as np
 import numba
+import dynesty
+from dynesty import plotting as dyplot
 from corner import corner
 from numpy import ndarray
 from numpy.random import normal
@@ -111,6 +113,9 @@ class MCMC:
         self.chain = empty_chain
         self.likelihood_chain = np.array(self.likelihood_func(initial_parameters))
 
+        # Nested Sampling
+        self.nested_results = None
+
         if kwargs:
             # This is used for re-loading the object from a saved file.
             self.__dict__.update(kwargs)
@@ -169,6 +174,16 @@ class MCMC:
             raise FileNotFoundError(
                 f"{data_folder} is not a valid saved state of {cls.__name__}"
             )
+
+    def nested_sampling(self):
+        li_fn = self.likelihood_func
+        prior_transform =
+        ndim = self.initial_parameters.flatten().shape[0]
+        sampler = dynesty.NestedSampler(loglikelihood=li_fn, prior_transform=prior_transform, ndim=ndim)
+        sampler.run_nested()
+        sresults = sampler.results
+        self.nested_results = sresults
+
 
     def proposal_within_bounds(self, proposals):
         """

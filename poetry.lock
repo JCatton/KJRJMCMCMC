@@ -167,6 +167,17 @@ files = [
 ]
 
 [[package]]
+name = "dynesty"
+version = "2.1.4"
+description = "A dynamic nested sampling package for computing Bayesian posteriors and evidences."
+optional = false
+python-versions = "*"
+files = [
+    {file = "dynesty-2.1.4-py2.py3-none-any.whl", hash = "sha256:110a13ade7323cdfa8dae7faf52d08a1542f8d90c289d549efd4923d9e55dff1"},
+    {file = "dynesty-2.1.4.tar.gz", hash = "sha256:cd98cfded1af86487b76dba2bd89824c803f1e0c451fcb14a0b208c5ca1a8004"},
+]
+
+[[package]]
 name = "filelock"
 version = "3.16.1"
 description = "A platform independent file lock."
@@ -1057,4 +1068,4 @@ test = ["covdefaults (>=2.3)", "coverage (>=7.2.7)", "coverage-enable-subprocess
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12"
-content-hash = "dc272000bb379833d9956854ddca594dc5e616c8256816ea5e452cc1f2ac8ff1"
+content-hash = "6df8cde3dd9cc0e115f6e5027869b8018f47cb8968389a21dba7271e61988c32"
