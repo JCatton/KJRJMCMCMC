@@ -79,20 +79,6 @@ def flux_data_from_params(
 # Example Usage
 if __name__ == "__main__":
 
-    # Define Simulation Parameters
-    # Stellar parameters: [radius, mass]
-    # Stellar_params = [100 * 4.2635e-5, 333000 * 1.12]
-
-    # Planet parameters: [radiusRatios, mass, orbital radius, eccentricity, omega (phase)]
-    # planet_params = [
-    #     [0.1, 90.26, 0.045, 0.000, 0]
-    #     # ,[0.5 * 4.2635e-5, 66, 0.078, 0.021, 90],
-    #     # [2 * 4.2635e-5, 70, 0.1, 0.000, 45],
-    # ]
-
-    """
-    Use below params for analytical positions
-    """
     # Stellar parameters: [radius, mass]
     radius_WASP148A = 0.912 * 696.34e6 / 1.496e11
     mass_WASP148A = 0.9540 * 2e30 / 6e24
@@ -102,33 +88,20 @@ if __name__ == "__main__":
     radius_WASP148_c = (
         9.4 * 6.4e6 / 1.496e11
     )  # assumed similar densities as no values for radius
-    # eta1 = radius_WASP148_B / radius_WASP148A
-    # eta2 = radius_WASP148_c / radius_WASP148A
 
     eta1 = 0.1
     eta2 = 0.3
     # planet_params =[ [ eta,   P,     a,   e,               inc, omega, OHM, phase_lag ] ]
     planet_params = np.array(
         [
-            [eta1, 8.8, 0.08, 0.208, np.radians(90), 0, 0, 0],
-            [eta2, 12, 0.101, 0.1809, np.radians(90), 0, 0, np.pi / 4]
+            [eta1, 8.8, 0.08215, 0.208, np.radians(90), 0, 0, 0],
+            [eta2, 34, 0.2044, 0.1809, np.radians(90), 0, 0, np.pi / 4]
         ]
     )
     # True inclinations are 89.3 and 104.9 +- some
 
-
-
-
-
     SamplesPerOrbit = 60000
     numberMaxPeriod = 4
-
-    # Define some sample times for interpolation
-    # times_input = [
-    #     np.linspace(0, 12, 60000),
-    #     np.linspace(15, 18, 60000),
-    #     np.linspace(20, 30, 60000),
-    # ]
     times_input = np.linspace(0, 4 * 12, 60000)  # Three orbital periods for planet 1
 
 
@@ -140,21 +113,6 @@ if __name__ == "__main__":
     np.save("TestTimesMultiple.npy", times_input)
 
     plt.plot(times_input, ouptut)
-    # plt.ylim(0.999, 1.001)
     plt.show()
 
-    # # Get Flux Values
-    # interpolated_flux_output = simulate_and_interpolate_flux_vectorized(
-    #     Stellar_params=Stellar_params,
-    #     planet_params=planet_params,
-    #     SamplesPerOrbit=SamplesPerOrbit,
-    #     numberMaxPeriod=numberMaxPeriod,
-    #     times_input=[times_input],
-    #     show=True,
-    #     save=True,
-    # )
 
-    # output = flux_data_from_params(
-    #     stellar_params=Stellar_params, planet_params=planet_params, times=times_input
-    # )
-    # print(np.sum(output - interpolated_flux_output))
