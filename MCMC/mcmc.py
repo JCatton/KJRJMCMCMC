@@ -75,6 +75,8 @@ class MCMC:
         likelihood_func: Callable[[ndarray], float],
         param_names=list[str],
         specified_folder_name: Optional[str | Path] = None,
+        priors: Optional[ndarray[Callable]] = None,
+        prior_transforms: Optional[ndarray[Callable]] = None,
         max_cpu_nodes: int = 16,
         **kwargs,
     ):
@@ -115,6 +117,7 @@ class MCMC:
 
         # Nested Sampling
         self.nested_results = None
+        self.prior_transforms = prior_transforms
 
         if kwargs:
             # This is used for re-loading the object from a saved file.
@@ -177,12 +180,19 @@ class MCMC:
 
     def nested_sampling(self):
         li_fn = self.likelihood_func
-        prior_transform =
+        flat_prior_trans = self.prior_transforms.flatten()
+        prior_transform = lambda u: [flat_prior_trans[i](u_i) for i, u_i in enumerate(u)]
         ndim = self.initial_parameters.flatten().shape[0]
         sampler = dynesty.NestedSampler(loglikelihood=li_fn, prior_transform=prior_transform, ndim=ndim)
         sampler.run_nested()
         sresults = sampler.results
         self.nested_results = sresults
+        dyplot.traceplot(sresults)
+        plt.show()
+        dyplot.traceplot(sresults)
+        plt.show()
+        dyplot.traceplot(sresults)
+        plt.show()
 
 
     def proposal_within_bounds(self, proposals):

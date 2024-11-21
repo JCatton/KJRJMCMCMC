@@ -51,6 +51,36 @@ def extract_timeseries_data(file_location: str) -> (np.ndarray, np.ndarray):
     timeseries = np.load(file_location, allow_pickle=True)
     return timeseries[0], timeseries[1]
 
+def uniform_transform(lower_bound: float, upper_bound: float, x: float) -> float:
+    domain = upper_bound - lower_bound
+    return lower_bound + x * domain
+
+def gaussian_truncated_transform(lower_bound: float, upper_bound: float, mean: float, std: float, x: float) -> float:
+    return scipy.stats.truncnorm.ppf(x, lower_bound, upper_bound, loc=mean, scale=std)
+
+def dirac_delta_transform(fixed_val: float, x: float) -> float:
+    return fixed_val
+
+
+def prior_transform_calcs(priors: List[List[Optional[Dict]]],
+                          param_bounds: List[List[Tuple]],
+                          initial_params: List[List[float]]) -> Optional[np.ndarray[Callable]]:
+    prior_transforms = []
+    for body_idx, body_bounds in enumerate(param_bounds):
+        prior_transforms.append([])
+        body = prior_transforms[body_idx]
+
+        for param_idx, param_bounds in enumerate(body_bounds):
+            body.append([None])
+            if body[param_idx] == 0:
+                body[param_idx] = lambda x: dirac_delta_transform(initial_params[body_idx][param_idx], x)
+            elif priors[body_idx][param_idx] is None:
+                body[param_idx] = lambda x: uniform_transform(param_bounds[0],
+                                                              param_bounds[1], x)
+    return np.array(prior_transforms)
+
+
+
 
 def main():
 
@@ -96,6 +126,13 @@ def main():
         [(0.2, 0.4), (0, 1e1000), (0.08, 0.18), (0, 0.3), (np.radians(86.8), np.pi), (-np.pi/8, np.pi/8), (-np.pi/8, np.pi/8), (0, np.pi/2)]
     ]
 
+    priors = [
+        [None, None, None, None, None, None, None, None],
+        [None, None, None, None, None, None, None, None]
+    ]
+
+    prior_transform_funcs = prior_transform_calcs(priors, param_bounds, initial_params)
+
 
     sigma_n = 6 * 1e-4
     fluxes = add_gaussian_error(inp_fluxes, 0, sigma_n)
@@ -136,9 +173,11 @@ def main():
         proposal_std,
         param_names=param_names,
         likelihood_func=likelihood_fn,
+        prior_transforms=prior_transform_funcs,
         max_cpu_nodes=1,
     )
 
+    mcmc.nested_sampling()
     mcmc.metropolis_hastings(num_iterations)
     mcmc.chain_to_plot_and_estimate(true_vals)
     mcmc.corner_plot(true_vals, burn_in_index=350_000)
