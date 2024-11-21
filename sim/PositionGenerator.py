@@ -152,9 +152,8 @@ def n_body_sim_api(
 
 @jit
 def analytical_coordinate_generator(
-    eta: float,
-    p: float,
     a: float,
+    p: float,
     e: float,
     inc: float,
     omega: float,
