@@ -198,7 +198,7 @@ def analytical_positions_api(
     Parameters:
     - planet_params: 2D numpy array where each row represents
                      a planet's parameters as
-                     [eta, a, p, e, inc, omega, big_ohm, phase_lag]
+                     [a, p, e, inc, omega, big_ohm, phase_lag]
     - times: Array of time values
 
     Returns:
@@ -210,9 +210,9 @@ def analytical_positions_api(
     pos = np.empty((sample_num, planet_num, 3), dtype=np.float64)
 
     for i in range(planet_num):
-        eta, a, p, e, inc, omega, big_ohm, phase_lag = planet_params[i]
+        a, p, e, inc, omega, big_ohm, phase_lag = planet_params[i]
         x, y, z = analytical_coordinate_generator(
-            eta, a, p, e, inc, omega, big_ohm, phase_lag, times
+            a, p, e, inc, omega, big_ohm, phase_lag, times
         )
         pos[:, i, 0] = x
         pos[:, i, 1] = y
