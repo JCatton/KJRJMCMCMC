@@ -104,13 +104,16 @@ if __name__ == "__main__":
     number_max_period = 4
     times_input = np.linspace(0, 4 * 34, 60000)  # Three orbital periods for planet 1
 
-
+    planet_params_analytical = planet_params[:, :-1]
     output_analytical = flux_data_from_params(
-        stellar_params=stellar_params, planet_params=planet_params, times=times_input, analytical_bool=True
+        stellar_params=stellar_params, planet_params=planet_params_analytical, times=times_input, analytical_bool=True
     )
 
+    n_body_mask = np.array([True, False, True, True, True, True, True, True, True])
+    planet_params_n_body = planet_params[:, n_body_mask]
+
     output_n_body = flux_data_from_params(
-        stellar_params=stellar_params, planet_params=planet_params, times=times_input, analytical_bool=False
+        stellar_params=stellar_params, planet_params=planet_params_n_body, times=times_input, analytical_bool=False
     )
 
 
