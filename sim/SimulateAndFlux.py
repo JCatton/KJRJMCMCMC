@@ -105,7 +105,7 @@ if __name__ == "__main__":
     times_input = np.linspace(0, 4 * 34, 60000)  # Three orbital periods for planet 1
 
 
-    ouptut_analytical = flux_data_from_params(
+    output_analytical = flux_data_from_params(
         stellar_params=stellar_params, planet_params=planet_params, times=times_input, analytical_bool=True
     )
 
@@ -114,10 +114,10 @@ if __name__ == "__main__":
     )
 
 
-    np.save("TestFluxesMultiple.npy", ouptut_analytical)
+    np.save("TestFluxesMultiple.npy", output_n_body)
     np.save("TestTimesMultiple.npy", times_input)
 
-    plt.plot(times_input, ouptut_analytical, label="Analytical")
+    plt.plot(times_input, output_analytical, label="Analytical")
     plt.plot(times_input, output_n_body, label="N Body")
     plt.legend()
     plt.show()
