@@ -14,7 +14,7 @@ from sim.PositionGenerator import n_body_sim_api, analytical_positions_api
 from sim.FluxCalculation import combined_delta_flux
 from sim.Decorators import TimeMeasure
 
-@TimeMeasure
+# @TimeMeasure
 def flux_data_from_params(
     stellar_params: np.ndarray,
     planet_params: np.ndarray,
