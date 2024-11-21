@@ -208,15 +208,25 @@ def analytical_positions_api(
 
     pos = np.empty((sample_num, planet_num, 3), dtype=np.float64)
 
-    for i in range(planet_num):
-        eta, p, a, e, inc, omega, big_ohm, phase_lag = planet_params[i]
-        x, y, z = GenerateCoordinates(
-            eta, p, a, e, inc, omega, big_ohm, phase_lag, times
-        )
-        pos[:, i, 0] = x
-        pos[:, i, 1] = y
-        pos[:, i, 2] = z
-
+    if len(planet_params.shape) != 1:
+        for i in range(planet_num):
+            eta, p, a, e, inc, omega, big_ohm, phase_lag = planet_params[i]
+            x, y, z = GenerateCoordinates(
+                eta, p, a, e, inc, omega, big_ohm, phase_lag, times
+            )
+            pos[:, i, 0] = x
+            pos[:, i, 1] = y
+            pos[:, i, 2] = z
+    else:
+        bodies = len(planet_params) // 8
+        for i in range(bodies):
+            eta, p, a, e, inc, omega, big_ohm, phase_lag = planet_params[i * 8: (i+1) * 8]
+            x, y, z = GenerateCoordinates(
+                eta, p, a, e, inc, omega, big_ohm, phase_lag, times
+            )
+            pos[:, i, 0] = x
+            pos[:, i, 1] = y
+            pos[:, i, 2] = z
     return pos
 
 
