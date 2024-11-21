@@ -52,7 +52,7 @@ def flux_data_from_params(
     else:
         positions = n_body_sim_api(
             stellar_mass=stellar_params[1],
-            planet_params=planet_params,
+            planet_params=planet_params[:, 2:],
             times=times,
             no_loading_bar=no_loading_bar,
         )
@@ -91,11 +91,11 @@ if __name__ == "__main__":
 
     eta1 = 0.1
     eta2 = 0.3
-    # planet_params =[ [ eta,   P,     a,   e,               inc, omega, OHM, phase_lag ] ]
+    # planet_params =[ [ eta,   a,     P,   e,               inc, omega, OHM, phase_lag ] ]
     planet_params = np.array(
         [
-            [eta1, 8.8, 0.08215, 0.208, np.radians(90), 0, 0, 0],
-            [eta2, 34, 0.2044, 0.1809, np.radians(90), 0, 0, np.pi / 4]
+            [eta1, 0.08215, 8.8, 0.208, np.radians(90), 0, 0, 0],
+            [eta2, 0.2044, 34, 0.1809, np.radians(90), 0, 0, np.pi / 4]
         ]
     )
     # True inclinations are 89.3 and 104.9 +- some
