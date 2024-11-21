@@ -67,36 +67,35 @@ def n_body_sim_api(
     - stellar_mass: Mass of the star
     - planet_params: 2D numpy array where each row represents
                      a planet's parameters as
-                     [a, p, e, inc, omega, big_ohm, phase_lag, mass]
+                     [p, e, inc, omega, big_ohm, phase_lag, mass]
 
     Returns:
     - Array of body, positions of the star and planets across time. [time_idx, body_idx, coord]
     """
     sim = rebound.Simulation()
+    num_steps_for_smallest_period = 50
     sim.units = ["mearth", "day", "AU"]  # Set units to Earth masses, days, and AU
 
     planet_num = len(planet_params)
     sample_num = len(times)
-
+    
     sim.add(m=stellar_mass)
-
-    shortest_period = np.inf
+    
+    shortest_period = np.min(planet_params[:,0])
+    sim.dt = shortest_period / num_steps_for_smallest_period
+    # Add planets to sim
     for params in planet_params:
-        radius, mass, semi_major_axis, eccentricity, omega = params
+        p, e, inc, omega, big_ohm, phase_lag, mass = params
+        mean_anomaly = phase_lag % (2 * np.pi)  
+        sim.add(m=mass, P=p, e=e, inc = inc, omega=omega, Omega = big_ohm, M = mean_anomaly)
 
-        sim.add(m=mass, a=semi_major_axis, e=eccentricity, omega=omega)
-
-        period = sim.particles[-1].P
-        shortest_period = min(shortest_period, period)
+    sim.move_to_com()
 
     # +1 to include the star (particle 0)
     pos = np.empty((sample_num, planet_num + 1, 3), dtype=np.float64)
-
     for time_idx, time in enumerate(tqdm(times, disable=no_loading_bar)):
         sim.integrate(time)
-        for j in range(planet_num + 1):  # Including the star (particle 0)
-            pos[time_idx, :, :] = [[p.x, p.y, p.z] for p in sim.particles]
-
+        pos[time_idx, :, :] = [[p.x, p.y, -p.z] for p in sim.particles]
     return pos
 
 
