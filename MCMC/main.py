@@ -25,17 +25,17 @@ def add_gaussian_error(input_arr: np.ndarray, mu: float, sigma: float) -> np.nda
 
 def gaussian_error_ln_likelihood(
     observed: np.array,
-    prior_funcs: list[Callable[..., float]],
+    prior_funcs: List[List[Callable[..., float]]],
     analytic_func: Callable[..., float],
     params: np.array,
     sigma_n: float,
 ) -> float:
+    log_prior = 0
     if prior_funcs is not None:
-        log_prior = np.sum(
-            np.log([prior_funcs[i](params[i]) for i in range(len(params))])
-        )
-    else:
-        log_prior = 0
+        for p_fns, body_params in zip(prior_funcs, params):
+                log_prior += np.sum(
+                    np.log([p_fn(param) for p_fn, param in zip(p_fns, body_params)])
+                )
     deviation_lh = 1 / 2 * np.log(sigma_n)
     observed_lh = np.power(observed - analytic_func(params), 2) / (2 * sigma_n**2)
     ln_likelihood = log_prior - deviation_lh - np.sum(observed_lh)
