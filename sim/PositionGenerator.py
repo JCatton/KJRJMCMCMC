@@ -13,7 +13,7 @@ from numba import jit
 
 
 @jit(nopython=True)
-def kepler_solver(mean_anomaly, p, e, a, tol=1e-9, max_iter=100):
+def kepler_solver(mean_anomaly, p, e, a, tol=1e-9, max_iter=40):
     """
     Solve Kepler's equation for true anomaly and orbital radius.
 
