@@ -129,7 +129,7 @@ def main():
 
     mcmc.metropolis_hastings(num_iterations)
     mcmc.chain_to_plot_and_estimate(true_vals)
-    mcmc.corner_plot(true_vals, burn_in_index=350_000)
+    mcmc.corner_plot(true_vals)
 
     plt.title("Difference between true and estimated fluxes")
     plt.xlabel("Time")
