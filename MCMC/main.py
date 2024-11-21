@@ -11,7 +11,10 @@ from typing import Callable, Optional
 import matplotlib.pyplot as plt
 import numpy as np
 
-from mcmc import MCMC
+try:
+    from mcmc import MCMC
+except ModuleNotFoundError:
+    from .mcmc import MCMC
 from sim.SimulateAndFlux import flux_data_from_params
 
 # Global Configuration
