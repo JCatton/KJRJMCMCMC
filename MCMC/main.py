@@ -59,24 +59,24 @@ def main():
 
     times = np.load("TestTimesMultiple.npy")
     inp_fluxes = np.load("TestFluxesMultiple.npy")
-    
+
     param_names = np.array([
-        [r"\eta_1", "a_1", "P_1", "e_1", "inc_1", "omega_1", "OHM_1", "phase_lag_1"],
-        [r"\eta_2", "a_2", "P_2", "e_2", "inc_2", "omega_2", "OHM_2", "phase_lag_2"]
+        [r"\eta_1", "a_1", "P_1", "e_1", "inc_1", "omega_1", "OHM_1", "phase_lag_1", "mass_1"],
+        [r"\eta_2", "a_2", "P_2", "e_2", "inc_2", "omega_2", "OHM_2", "phase_lag_2", "mass_2"]
     ])
 
     true_vals = np.array([
-        [0.1, 0.08, 8.8, 0.208, np.radians(90), 0, 0, 0],
-        [0.3, 0.101, 12, 0.1809, np.radians(90), 0, 0, np.pi / 4]
+        [0.1, 0.08, 8.8, 0.208, np.radians(90), 0, 0, 0, 0.208],
+        [0.3, 0.101, 34, 0.1809, np.radians(90), 0, 0, np.pi / 4, 0.1809]
     ])
     initial_params = np.array([
-        [0.1+0.025, 0.08, 8.8, 0.208, np.radians(90), 0, 0, 0],
-        [0.3+0.025, 0.101, 12, 0.1809, np.radians(90), 0, 0, np.pi / 4]
+        [0.1, 0.08-0.003, 8.8 - 0.02, 0.208- 0.03, np.radians(90), 0, 0, 0, 0.208],
+        [0.3, 0.101 + 0.003, 34+0.002, 0.1809 + 0.007, np.radians(90), 0, 0, np.pi / 4 + np.pi/10, 0.1809]
     ])
 
     proposal_std = np.array([
-        [3e-5, 5e-6, 5e-4, 1e-6, 0, 4e-5, 0, 4e-6],  # Planet 1
-        [3e-5, 5e-6, 5e-4, 1e-6, 0, 4e-5, 0, 4e-6],   # Planet 2
+        [3e-5, 5e-6, 5e-4, 1e-6, 0, 4e-5, 0, 4e-6, 0],  # Planet 1
+        [3e-5, 5e-6, 5e-4, 1e-6, 0, 4e-5, 0, 4e-6, 0],   # Planet 2
     ])
 
     param_bounds = [
