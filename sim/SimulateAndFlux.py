@@ -94,8 +94,8 @@ if __name__ == "__main__":
     # planet_params =[ [ eta,   a,     P,   e,               inc, omega, OHM, phase_lag ] ]
     planet_params = np.array(
         [
-            [eta1, 0.08215, 8.8, 0.208, np.radians(90), 0, 0, 0, 0.208],
-            [eta2, 0.2044, 34, 0.1809, np.radians(90), 0, 0, np.pi / 4, 0.1809]
+            [eta1, 0.08215, 8.803809, 0.208, np.radians(90), 0, 0, 0, 0.287],
+            [eta2, 0.2044, 34.525, 0.1809, np.radians(90), 0, 0, np.pi / 4, 0.392]
         ]
     )
     # True inclinations are 89.3 and 104.9 +- some
@@ -117,7 +117,7 @@ if __name__ == "__main__":
     )
 
 
-    np.save("TestFluxesMultiple.npy", output_n_body)
+    np.save("TestFluxesMultiple.npy", output_analytical)
     np.save("TestTimesMultiple.npy", times_input)
 
     plt.plot(times_input, output_analytical, label="Analytical")
