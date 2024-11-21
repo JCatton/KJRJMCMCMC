@@ -178,37 +178,87 @@ if __name__ == "__main__":
     from sim.FluxCalculation import combined_delta_flux
     import matplotlib.pyplot as plt
 
+    # Test case with HD 23472 -> Barros et al., 2022
     times = np.load("TestTimes.npy")
-    radius_WASP148A = 0.912 * 696.34e6 / 1.496e11
-    mass_WASP148A = 0.9540 * 2e30 / 6e24
+    radius_HD23472 = 0.912 * 696.34e6 / 1.496e11
+    mass_HD23472 = 0.67 * 2e30 / 6e24 # random radi for all vals
 
-    stellar_params = [radius_WASP148A, mass_WASP148A]  # Based on WASP 148
+    stellar_params = [radius_HD23472, mass_HD23472]  # Based on WASP 148
 
+    # planet_params =[ [ eta,   a,     P,   e,               inc, omega, OHM, phase_lag, mass ] ]
     planet_params = np.array(
         [
-            [
-                0.1 + 0.001,
-                0.08 + 0.001,
-                8.8,
-                0.208 - 0.0003,
-                np.radians(88 + 0.002),
-                0,
-                0,
-                0 + np.pi / 8,
-            ],
-            [0.1 + 0.1, 0.08 + 0.03, 8.8, 0.208 - 0.001, np.radians(89.5), 0, 0, 0],
+            [0.1, 0.04298, 3.97664, 0.0700, np.radians(90), 0, np.pi/2, 0, 0.55],
+            [0.2, 0.0680, 7.90754, 0.0700, np.radians(90), 0, 0, np.pi/3, 0.72],
+            [0.3, 0.0906, 12.1621839, 0.0700, np.radians(90), 0, 0, np.pi/2, 0.77],
+            [0.4, 0.1162, 17.667087, 0.0720, np.radians(90), 0, 0, 2 * np.pi/3, 8.32],
+            [0.5, 0.1646, 29.79749, 0.063, np.radians(90), 0, 0, 3/5 * np.pi, 3.41]
         ]
     )
-    positions = analytical_positions_api(planet_params=planet_params, times=times)
-    print(positions.shape)
-    flux_values = combined_delta_flux(
-        x=positions[:, :, 0].transpose(),
-        y=positions[:, :, 1].transpose(),
-        z=positions[:, :, 2].transpose(),
+    
+    positions_analytical = analytical_positions_api(planet_params=planet_params[:, 1:-1], times=times)
+    flux_values_analytical = combined_delta_flux(
+        x=positions_analytical[:, :, 0].transpose(),
+        y=positions_analytical[:, :, 1].transpose(),
+        z=positions_analytical[:, :, 2].transpose(),
         radius_star=stellar_params[0],
         eta_values=planet_params[:, 0],
         times=times,
     )
+    print(f"{positions_analytical.shape=}")
+    # plt.show()
 
-    plt.plot(times, flux_values)
+    positions_n_body, a ,fs = n_body_sim_api(
+        stellar_mass=stellar_params[1],
+        planet_params=planet_params[:, 2:],
+        times=times,
+    )
+    x = positions_n_body[:, :, 0].transpose()
+    y = positions_n_body[:, :, 1].transpose()
+    z = positions_n_body[:, :, 2].transpose()
+    print(f"{x.shape=}")
+    print(f"{np.max(y[0])}")
+    print(f"{np.max(y[1])}")
+    # print(f"{np.max(y[2])}")
+    x_s, y_s, z_s = x[0], y[0], z[0]
+    x_p_rel = (x[1:] - x_s)
+    y_p_rel = (y[1:] - y_s)
+    z_p_rel = (z[1:] - z_s)
+    print(f"{y_p_rel.shape=}")
+    print(f"{np.max(y_p_rel[:,0])=}")
+    # print(f"{np.max(y_p_rel[:,1])=}")
+    # print(f"{np.max(y_p_rel[2])=}")
+
+    flux_values_n_body = combined_delta_flux(
+        x=x_p_rel,
+        y=y_p_rel,
+        z=z_p_rel,
+        radius_star=stellar_params[0],
+        eta_values=planet_params[:, 0],
+        times=times,
+    )
+    print(f"{x_p_rel.shape=}")
+    colors = ["r", "g", "b", "black", "purple"]
+    for i in range(x_p_rel.shape[0]):
+        plt.plot(x_p_rel[i, :], y_p_rel[i, :], label = f"Planet {i} n_body", color = colors[i], alpha = 0.5)
+        plt.plot(x_p_rel[i, 0], y_p_rel[i, 0],  marker = "o", ms = 5, color = colors[i], alpha = 0.5)
+        plt.plot(x_p_rel[i, 500], y_p_rel[i, 500],  marker = "x", ms = 5, color = colors[i], alpha = 0.5)
+        plt.plot(x_p_rel[i, 1000], y_p_rel[i, 1000],  marker = "^", ms = 5, color = colors[i], alpha = 0.5)
+    for i in range(positions_analytical.shape[1]):
+        plt.plot(positions_analytical[:, i, 0], positions_analytical[:, i, 1], label = f"Planet {i} analytical, x,y", linestyle = "--", color = colors[i])
+        plt.plot(positions_analytical[0, i, 0], positions_analytical[0, i, 1], marker = "o", ms = 5, color = colors[i])
+
+        plt.plot(positions_analytical[500, i, 0], positions_analytical[500, i, 1], marker = "x", ms = 5, color = colors[i])
+        plt.plot(positions_analytical[1000, i, 0], positions_analytical[1000, i, 1], marker = "^", ms = 5, color = colors[i])
+
+    plt.title("Orbital Paths")
+    plt.legend()
+    plt.show()
+    plt.plot(times, flux_values_analytical, label = "Analytical")
+    plt.plot(times, flux_values_n_body, label = "N-Body", linestyle = "--")
+    plt.legend()
+
+    print(f"{np.max(a)=}, {np.min(a)=}")
+    
+
     plt.show()
