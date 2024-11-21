@@ -51,6 +51,29 @@ def extract_timeseries_data(file_location: str) -> (np.ndarray, np.ndarray):
     timeseries = np.load(file_location, allow_pickle=True)
     return timeseries[0], timeseries[1]
 
+def prepare_arrays_for_mcmc(param_names, true_vals, initial_params, proposal_std, param_bounds, analytical_bool):
+    if analytical_bool is None:
+        raise ValueError("analytical_bool must be set to True or False")
+    
+    if analytical_bool:
+        param_names = param_names[:, :-1]
+        true_vals = true_vals[:, :-1]
+        initial_params = initial_params[:, :-1]
+        proposal_std = proposal_std[:, :-1]
+        param_bounds = param_bounds[:, :-1]
+        return param_names, true_vals, initial_params, proposal_std, param_bounds
+    
+    elif analytical_bool == False:
+        n_body_mask = np.array([True, False, True, True, True, True, True, True, True])
+        param_names = param_names[:, n_body_mask]
+        true_vals = true_vals[:, n_body_mask]
+        initial_params = initial_params[:, n_body_mask]
+        proposal_std = proposal_std[:, n_body_mask]
+        param_bounds = param_bounds[:, n_body_mask]
+        return param_names, true_vals, initial_params, proposal_std, param_bounds
+        
+    
+
 
 def main():
 
@@ -61,8 +84,8 @@ def main():
     inp_fluxes = np.load("TestFluxesMultiple.npy")
 
     param_names = np.array([
-        [r"\eta_1", "a_1", "P_1", "e_1", "inc_1", "omega_1", "OHM_1", "phase_lag_1", "mass_1"],
-        [r"\eta_2", "a_2", "P_2", "e_2", "inc_2", "omega_2", "OHM_2", "phase_lag_2", "mass_2"]
+        [r"\eta_1", "a_1", "P_1", "e_1", "inc_1", "omega_1", "big_ohm_1", "phase_lag_1", "mass_1"],
+        [r"\eta_2", "a_2", "P_2", "e_2", "inc_2", "omega_2", "big_ohm_2", "phase_lag_2", "mass_2"]
     ])
 
     true_vals = np.array([
@@ -80,11 +103,21 @@ def main():
     ])
 
     param_bounds = np.array([
-        [(0.05, 0.25), (0.04, 0.2), (0, 1e1000), (0, 0.3), (np.radians(86.8), np.pi), (-np.pi/8, np.pi/8), (-np.pi/8, np.pi/8), (-np.pi/8, np.pi/8)],
-        [(0.2, 0.4), (0.08, 0.18), (0, 1e1000), (0, 0.3), (np.radians(86.8), np.pi), (-np.pi/8, np.pi/8), (-np.pi/8, np.pi/8), (0, np.pi/2)]
+        [(0.05, 0.25), (0.04, 0.2), (0, 1e1000), (0, 0.3), (np.radians(86.8), np.pi), (-np.pi/8, np.pi/8), (-np.pi/8, np.pi/8), (-np.pi/8, np.pi/8), (0, 6000)],
+        [(0.2, 0.4), (0.08, 0.18), (0, 1e1000), (0, 0.3), (np.radians(86.8), np.pi), (-np.pi/8, np.pi/8), (-np.pi/8, np.pi/8), (0, np.pi/2), (0, 6000)]
     ])
 
 
+    analytical_bool = True
+
+    param_names, true_vals, initial_params, proposal_std, param_bounds = prepare_arrays_for_mcmc(param_names, 
+                                                                                                 true_vals, 
+                                                                                                 initial_params, 
+                                                                                                 proposal_std, 
+                                                                                                 param_bounds,
+                                                                                                 analytical_bool)
+
+    print(param_names.shape, true_vals.shape, initial_params.shape, proposal_std.shape, param_bounds.shape)
     sigma_n = 6 * 1e-4
     fluxes = add_gaussian_error(inp_fluxes, 0, sigma_n)
     num_iterations = int(1_000_00)
@@ -109,7 +142,7 @@ def main():
             fluxes,
             None,
             lambda params: flux_data_from_params(
-                stellar_params, params, times, analytical_bool=False
+                stellar_params, params, times, analytical_bool=analytical_bool
             ),
             params,
             sigma_n,
