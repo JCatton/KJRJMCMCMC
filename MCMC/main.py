@@ -87,7 +87,7 @@ def main():
 
     sigma_n = 6 * 1e-4
     fluxes = add_gaussian_error(inp_fluxes, 0, sigma_n)
-    num_iterations = int(1_000_000)
+    num_iterations = int(1_000_00)
 
     radius_WASP148A = 0.912 * 696.34e6 / 1.496e11
     mass_WASP148A = 0.9540 * 2e30 / 6e24
@@ -109,7 +109,7 @@ def main():
             fluxes,
             None,
             lambda params: flux_data_from_params(
-                stellar_params, params, times, analytical_bool=True
+                stellar_params, params, times, analytical_bool=False
             ),
             params,
             sigma_n,
