@@ -39,7 +39,7 @@ def flux_data_from_params(
     """
 
     if analytical_bool:
-        positions = analytical_positions_api(planet_params=planet_params[:,1:-1], times=times)
+        positions = analytical_positions_api(planet_params=planet_params[:,1:], times=times)
         flux_values = combined_delta_flux(
             x=positions[:, :, 0].transpose(),
             y=positions[:, :, 1].transpose(),
@@ -52,7 +52,7 @@ def flux_data_from_params(
     else:
         positions = n_body_sim_api(
             stellar_mass=stellar_params[1],
-            planet_params=planet_params[:, 2:],
+            planet_params=planet_params[:, 1:],
             times=times,
             no_loading_bar=no_loading_bar,
         )
