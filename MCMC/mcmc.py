@@ -5,12 +5,30 @@ from typing import Callable, List, Optional, Tuple
 import dill
 import matplotlib.pyplot as plt
 import numpy as np
+import numba
 from corner import corner
 from numpy import ndarray
 from numpy.random import normal
 from pathos.multiprocessing import ProcessingPool as Pool
 from tqdm import tqdm
 
+def find_first_greater(arr, x):
+    idx = np.argmax(arr > x)
+    if arr[idx] > x:
+        return idx
+    else:
+        return -1
+
+@numba.jit
+def minmax(x):
+    maximum = x[0]
+    minimum = x[0]
+    for i in x[1:]:
+        if i > maximum:
+            maximum = i
+        elif i < minimum:
+            minimum = i
+    return (minimum, maximum)
 
 def build_folder_name(specified_folder_name: Optional[str | Path] = None):
     if specified_folder_name:
@@ -306,15 +324,21 @@ class MCMC:
                     f", true {name}: {true_vals[body, i]}" if true_vals is not None else None,
                 )
                 axs[i, body].plot(x, param_samples, label=name)
+                min_val, max_val = minmax(param_samples)
+                axs[i, body].vlines(self.burn_in_index, ymin=max_val,
+                                    ymax=min_val, linestyles="dotted",
+                                    color="red")
                 axs[i, body].set_ylabel(f"{name}")
 
         plt.tight_layout()
         plt.show()
 
     def corner_plot(
-        self, true_vals: Optional[np.ndarray] = None, burn_in_index: int = 0
+        self, true_vals: Optional[np.ndarray] = None, burn_in_index: int = None
     ):
         non_fixed_indexes = np.array(self.proposal_std, dtype=bool)
+        if burn_in_index is None:
+            burn_in_index = self.burn_in_index
         
         # Flatten the chain to have shape (samples, parameters)
         flattened_chain = np.concatenate([
@@ -340,7 +364,7 @@ class MCMC:
 
         # Pass the flattened arrays to the corner plot
         corner(
-            flattened_chain[burn_in_index:],
+            flattened_chain,
             labels=flattened_param_names,
             truths=flattened_true_vals,
             show_titles=True,
@@ -355,24 +379,16 @@ class MCMC:
         Returns:
             int: The burn-in cutoff index.
         """
-        num_params = self.chain.shape[1]
-        indices = []
-
-        for i in range(num_params):
-            samples = self.chain[:, i]
-            mean = np.mean(samples)
-            std = np.std(samples)
-            indices_param = np.where(np.abs(samples - mean) < std)[0]
-            if len(indices_param) > 0:
-                index_param = indices_param[0]
-            else:
-                index_param = len(samples)
-            indices.append(index_param)
-
-        burn_in_index = max(indices)
-        self.burn_in_index = burn_in_index
-        self.remaining_chain_length = len(self.chain) - burn_in_index
-        return burn_in_index
+        max_idx = self.likelihood_chain.argmax()
+        max_likelihood = self.likelihood_chain[max_idx]
+        ten_perc_iter = self.iteration_num // 10
+        upper_var_iter = min(self.iteration_num, max_idx + ten_perc_iter)
+        lower_var_iter = max(0, max_idx - ten_perc_iter)
+        var = np.std(self.likelihood_chain[lower_var_iter : upper_var_iter])
+        lower_likelihood = max_likelihood - 5 * var
+        burn_in_idx = find_first_greater(self.likelihood_chain, lower_likelihood)
+        self.burn_in_index = burn_in_idx
+        return burn_in_idx
 
 
 class Statistics:
@@ -404,6 +420,8 @@ class Statistics:
             if f_path.is_dir():
                 mcmcs.append(MCMC.load(f_path))
                 valid_paths.append(f_path)
+            else:
+                print(f"{f_path} is not a valid directory")
 
         self.chain_num = len(valid_paths)
         chain = mcmcs[0].chain
