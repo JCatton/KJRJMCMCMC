@@ -19,7 +19,7 @@ def flux_data_from_params(
     stellar_params: np.ndarray,
     planet_params: np.ndarray,
     times: np.ndarray,
-    no_loading_bar: bool = False,
+    no_loading_bar: bool = True,
     analytical_bool: bool = False,
 ) -> np.ndarray:
     """
