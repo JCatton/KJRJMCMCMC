@@ -10,7 +10,7 @@ from scipy.interpolate import interp1d
 import time
 import sim.FileCheck as fc
 
-from sim.PositionGenerator import n_body_sim, n_body_sim_api, analytical_positions_api
+from sim.PositionGenerator import n_body_sim_api, analytical_positions_api
 from sim.FluxCalculation import combined_delta_flux
 from sim.Decorators import TimeMeasure
 
@@ -100,9 +100,9 @@ if __name__ == "__main__":
     )
     # True inclinations are 89.3 and 104.9 +- some
 
-    SamplesPerOrbit = 60000
-    numberMaxPeriod = 4
-    times_input = np.linspace(0, 4 * 12, 60000)  # Three orbital periods for planet 1
+    num_samples = 60000
+    number_max_period = 4
+    times_input = np.linspace(0, 4 * 34, 60000)  # Three orbital periods for planet 1
 
 
     ouptut = flux_data_from_params(
