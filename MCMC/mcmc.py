@@ -293,7 +293,6 @@ class MCMC:
         non_fixed_indexes = np.array(self.proposal_std, dtype=bool)
         chain = np.stack([self.chain[:, i, non_fixed_indexes[i]] for i in range(self.chain.shape[1])], axis=1)
         param_names = np.stack([self.param_names[i, non_fixed_indexes[i]] for i in range(self.param_names.shape[0])], axis=0)
-        true_vals = np.stack([true_vals[i, non_fixed_indexes[i]] for i in range(true_vals.shape[0])], axis=0)
         likelihoods = self.likelihood_chain
 
         # print(f"{chain.shape=}, {param_names.shape=}, {true_vals.shape=}")
@@ -304,6 +303,12 @@ class MCMC:
         plt.xlabel("Iteration #")
         x = np.arange(len(chain))
         plt.plot(x, likelihoods)
+
+        if true_vals is not None:
+            true_likelihoods = np.array(self.likelihood_func(true_vals))
+            true_vals = np.stack([true_vals[i, non_fixed_indexes[i]] for i in range(true_vals.shape[0])], axis=0)
+            plt.hlines(true_likelihoods, xmin=0, xmax=len(chain), linestyles="--", color="red")
+
         plt.ylabel(r"Log Likelihoods")
         plt.tight_layout()
         plt.show()
@@ -324,6 +329,8 @@ class MCMC:
                     f", true {name}: {true_vals[body, i]}" if true_vals is not None else None,
                 )
                 axs[i, body].plot(x, param_samples, label=name)
+                if true_vals is not None:
+                    axs[i, body].hlines(true_vals[body, i], xmin=0, xmax=len(chain), linestyles="--", color="red")
                 min_val, max_val = minmax(param_samples)
                 axs[i, body].vlines(self.burn_in_index, ymin=max_val,
                                     ymax=min_val, linestyles="dotted",
