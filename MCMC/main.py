@@ -79,10 +79,10 @@ def main():
         [3e-5, 5e-6, 5e-4, 1e-6, 0, 4e-5, 0, 4e-6, 3e-6],   # Planet 2
     ])
 
-    param_bounds = [
+    param_bounds = np.array([
         [(0.05, 0.25), (0.04, 0.2), (0, 1e1000), (0, 0.3), (np.radians(86.8), np.pi), (-np.pi/8, np.pi/8), (-np.pi/8, np.pi/8), (-np.pi/8, np.pi/8)],
         [(0.2, 0.4), (0.08, 0.18), (0, 1e1000), (0, 0.3), (np.radians(86.8), np.pi), (-np.pi/8, np.pi/8), (-np.pi/8, np.pi/8), (0, np.pi/2)]
-    ]
+    ])
 
 
     sigma_n = 6 * 1e-4

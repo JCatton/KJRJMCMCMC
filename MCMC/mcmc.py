@@ -68,7 +68,7 @@ class MCMC:
         self,
         raw_data: ndarray,
         initial_parameters: ndarray,
-        param_bounds: List[List[Tuple[float, float]]],
+        param_bounds: ndarray[List[Tuple[float, float]]],
         proposal_std: ndarray,
         likelihood_func: Callable[[ndarray], float],
         param_names=list[str],
@@ -97,7 +97,7 @@ class MCMC:
 
         # MCMC-Inputs
         self.raw_data: ndarray = raw_data
-        self.param_bounds = np.array(param_bounds)
+        self.param_bounds = param_bounds
         self.lower_bounds = self.param_bounds[:, :, 0]
         self.upper_bounds = self.param_bounds[:, :, 1]
         self.proposal_std: ndarray = proposal_std
