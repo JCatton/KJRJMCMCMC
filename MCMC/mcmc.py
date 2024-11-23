@@ -187,9 +187,9 @@ class MCMC:
         sampler.run_nested()
         sresults = sampler.results
         self.nested_results = sresults
-        dyplot.traceplot(sresults)
+        dyplot.runplot(sresults)
         plt.show()
-        dyplot.traceplot(sresults)
+        dyplot.cornerplot(sresults)
         plt.show()
         dyplot.traceplot(sresults)
         plt.show()
