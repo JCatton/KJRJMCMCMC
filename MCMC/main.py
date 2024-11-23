@@ -64,21 +64,22 @@ def dirac_delta_transform(fixed_val: float, x: float) -> float:
 
 def prior_transform_calcs(priors: List[List[Optional[Dict]]],
                           param_bounds: List[List[Tuple]],
+                          proposal_stds: List[List[float]],
                           initial_params: List[List[float]]) -> Optional[np.ndarray[Callable]]:
     prior_transforms = []
     for body_idx, body_bounds in enumerate(param_bounds):
         prior_transforms.append([])
         body = prior_transforms[body_idx]
 
-        for param_idx, param_bounds in enumerate(body_bounds):
+        for param_idx, p_bounds in enumerate(body_bounds):
             body.append([None])
-            if body[param_idx] == 0:
-                body[param_idx] = lambda x: dirac_delta_transform(initial_params[body_idx][param_idx], x)
+            if proposal_stds[body_idx][param_idx] == 0:
+                initial_param = initial_params[body_idx][param_idx]
+                body[param_idx] = lambda x, initial_param=initial_param: dirac_delta_transform(initial_param, x)
             elif priors[body_idx][param_idx] is None:
-                body[param_idx] = lambda x: uniform_transform(param_bounds[0],
-                                                              param_bounds[1], x)
+                p0, p1 = p_bounds[0], p_bounds[1]
+                body[param_idx] = lambda x, p0=p0, p1=p1: uniform_transform(p0, p1, x)
     return np.array(prior_transforms)
-
 
 
 
@@ -124,6 +125,9 @@ def main():
     param_bounds = [
         [(0.05, 0.25), (0, 1e1000), (0.04, 0.2), (0, 0.3), (np.radians(86.8), np.pi), (-np.pi/8, np.pi/8), (-np.pi/8, np.pi/8), (-np.pi/8, np.pi/8)],
         [(0.2, 0.4), (0, 1e1000), (0.08, 0.18), (0, 0.3), (np.radians(86.8), np.pi), (-np.pi/8, np.pi/8), (-np.pi/8, np.pi/8), (0, np.pi/2)]
+   param_bounds = [
+        [(0.05, 0.25), (0, 1e10), (0.04, 0.2), (0, 0.3), (np.radians(86.8), np.pi), (-np.pi/8, np.pi/8), (-np.pi/8, np.pi/8), (-np.pi/8, np.pi/8)],
+        [(0.2, 0.4), (0, 1e10), (0.08, 0.18), (0, 0.3), (np.radians(86.8), np.pi), (-np.pi/8, np.pi/8), (-np.pi/8, np.pi/8), (0, np.pi/2)]
     ]
 
     priors = [
@@ -131,7 +135,7 @@ def main():
         [None, None, None, None, None, None, None, None]
     ]
 
-    prior_transform_funcs = prior_transform_calcs(priors, param_bounds, initial_params)
+    prior_transform_funcs = prior_transform_calcs(priors, param_bounds, proposal_std, initial_params)
 
 
     sigma_n = 6 * 1e-4
