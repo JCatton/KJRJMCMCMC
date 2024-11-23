@@ -1,6 +1,9 @@
 # main.py
 import sys
 import os
+
+import scipy
+
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 
@@ -8,7 +11,7 @@ from MCMC.mcmc import Statistics
 
 
 
-from typing import Callable, Optional
+from typing import Callable, List, Dict, Optional, Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -122,9 +125,12 @@ def main():
         [3e-5, 5e-4, 5e-6, 1e-6, 0, 4e-5, 0, 4e-6],   # Planet 2
     ])
 
-    param_bounds = [
-        [(0.05, 0.25), (0, 1e1000), (0.04, 0.2), (0, 0.3), (np.radians(86.8), np.pi), (-np.pi/8, np.pi/8), (-np.pi/8, np.pi/8), (-np.pi/8, np.pi/8)],
-        [(0.2, 0.4), (0, 1e1000), (0.08, 0.18), (0, 0.3), (np.radians(86.8), np.pi), (-np.pi/8, np.pi/8), (-np.pi/8, np.pi/8), (0, np.pi/2)]
+    # param_bounds = []
+    # for body_idx, tvs in enumerate(true_vals):
+    #     param_bounds.append([])
+    #     for param_idx, tv in enumerate(tvs):
+    #         param_bounds[body_idx].append((tv - 5 * proposal_std[body_idx, param_idx], tv + 5 * proposal_std[body_idx, param_idx]))
+
    param_bounds = [
         [(0.05, 0.25), (0, 1e10), (0.04, 0.2), (0, 0.3), (np.radians(86.8), np.pi), (-np.pi/8, np.pi/8), (-np.pi/8, np.pi/8), (-np.pi/8, np.pi/8)],
         [(0.2, 0.4), (0, 1e10), (0.08, 0.18), (0, 0.3), (np.radians(86.8), np.pi), (-np.pi/8, np.pi/8), (-np.pi/8, np.pi/8), (0, np.pi/2)]
