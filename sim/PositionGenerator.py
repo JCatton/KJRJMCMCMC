@@ -208,7 +208,7 @@ if __name__ == "__main__":
     print(f"{positions_analytical.shape=}")
     # plt.show()
 
-    positions_n_body, a ,fs = n_body_sim_api(
+    positions_n_body = n_body_sim_api(
         stellar_mass=stellar_params[1],
         planet_params=planet_params[:, 2:],
         times=times,
