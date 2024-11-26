@@ -51,6 +51,29 @@ def extract_timeseries_data(file_location: str) -> (np.ndarray, np.ndarray):
     timeseries = np.load(file_location, allow_pickle=True)
     return timeseries[0], timeseries[1]
 
+def prepare_arrays_for_mcmc(param_names, true_vals, initial_params, proposal_std, param_bounds, analytical_bool):
+    if analytical_bool is None:
+        raise ValueError("analytical_bool must be set to True or False")
+    
+    if analytical_bool:
+        param_names = param_names[:, :-1]
+        true_vals = true_vals[:, :-1]
+        initial_params = initial_params[:, :-1]
+        proposal_std = proposal_std[:, :-1]
+        param_bounds = param_bounds[:, :-1]
+        return param_names, true_vals, initial_params, proposal_std, param_bounds
+    
+    elif analytical_bool == False:
+        n_body_mask = np.array([True, False, True, True, True, True, True, True, True])
+        param_names = param_names[:, n_body_mask]
+        true_vals = true_vals[:, n_body_mask]
+        initial_params = initial_params[:, n_body_mask]
+        proposal_std = proposal_std[:, n_body_mask]
+        param_bounds = param_bounds[:, n_body_mask]
+        return param_names, true_vals, initial_params, proposal_std, param_bounds
+        
+    
+
 
 def main():
 
@@ -60,46 +83,44 @@ def main():
     times = np.load("TestTimesMultiple.npy")
     inp_fluxes = np.load("TestFluxesMultiple.npy")
 
-    # #Stellar params = [radius (in AU), mass]
-    # stellar_params = np.array([100 * 4.2635e-5, 333000 * 1.12])
-    # Initial parameter guesses
-    # param_names = np.array([r"\eta radius", "mass", "orbital radius", "eccentricity", r"\omega (phase)"])
-    # true_vals = np.array([0.1, 90.26, 0.045, 0.000, 0])
-
-    # initial_params = np.array([[0.1 + 0.001, 90.26, 0.045, 0, 0-0.0001]])
-    # proposal_std = np.array([3*1e-4, 0, 5*1e-7, 1e-5, 0])
-    # param_bounds = [(0,1), (0, 1e15), (1e-6, 1e5), (0, 0.99), (-np.pi, np.pi)]
-
-    # planet_params =[ [ eta,   P,     a,   e,               inc, omega, OHM, phase_lag ] ]
-    # planet_params =  np.array([[  eta1, 8.8, 0.08, 0.208, np.radians(90),   0, 0,  0]
     param_names = np.array([
-        [r"\eta_1", "P_1", "a_1", "e_1", "inc_1", "omega_1", "OHM_1", "phase_lag_1"],
-        [r"\eta_2", "P_2", "a_2", "e_2", "inc_2", "omega_2", "OHM_2", "phase_lag_2"]
+        [r"\eta_1", "a_1", "P_1", "e_1", "inc_1", "omega_1", "big_ohm_1", "phase_lag_1", "mass_1"],
+        [r"\eta_2", "a_2", "P_2", "e_2", "inc_2", "omega_2", "big_ohm_2", "phase_lag_2", "mass_2"]
     ])
 
     true_vals = np.array([
-        [0.1, 8.8, 0.08, 0.208, np.radians(90), 0, 0, 0],
-        [0.3, 12, 0.101, 0.1809, np.radians(90), 0, 0, np.pi / 4]
+        [0.1, 0.08215, 8.803809, 0.208, np.radians(90), 0, 0, 0, 0.287],
+        [0.3, 0.2044, 34.525, 0.1809, np.radians(90), 0, 0, np.pi / 4, 0.392]
     ])
     initial_params = np.array([
-        [0.1+0.025, 8.8, 0.08, 0.208, np.radians(90), 0, 0, 0],
-        [0.3+0.025, 12, 0.101, 0.1809, np.radians(90), 0, 0, np.pi / 4]
+        [0.1, 0.08215-0.003, 8.803809 - 0.02, 0.208- 0.03, np.radians(90), 0, 0, 0, 0.287],
+        [0.3, 0.2044 + 0.003, 34.525+0.002, 0.1809 + 0.007, np.radians(90), 0, 0, np.pi / 4 + np.pi/100, 0.392]
     ])
 
     proposal_std = np.array([
-        [3e-5, 5e-4, 5e-6, 1e-6, 0, 4e-5, 0, 4e-6],  # Planet 1
-        [3e-5, 5e-4, 5e-6, 1e-6, 0, 4e-5, 0, 4e-6],   # Planet 2
+        [3e-5, 5e-6, 5e-4, 1e-6, 0, 4e-5, 0, 4e-6, 3e-6],  # Planet 1
+        [3e-5, 5e-6, 5e-4, 1e-6, 0, 4e-5, 0, 4e-4, 3e-6],   # Planet 2
     ])
 
-    param_bounds = [
-        [(0.05, 0.25), (0, 1e1000), (0.04, 0.2), (0, 0.3), (np.radians(86.8), np.pi), (-np.pi/8, np.pi/8), (-np.pi/8, np.pi/8), (-np.pi/8, np.pi/8)],
-        [(0.2, 0.4), (0, 1e1000), (0.08, 0.18), (0, 0.3), (np.radians(86.8), np.pi), (-np.pi/8, np.pi/8), (-np.pi/8, np.pi/8), (0, np.pi/2)]
-    ]
+    param_bounds = np.array([
+        [(0.05, 0.15), (0.04, 0.2), (0, 1e1000), (0, 0.3), (np.radians(86.8), np.pi), (-np.pi/8, np.pi/8), (-np.pi/8, np.pi/8), (-np.pi/8, np.pi/8), (0, 6000)],
+        [(0.2, 0.4), (0.08, 0.3), (0, 1e1000), (0, 0.3), (np.radians(86.8), np.pi), (-np.pi/8, np.pi/8), (-np.pi/8, np.pi/8), (0, np.pi/2), (0, 6000)]
+    ])
 
 
+    analytical_bool = True
+
+    param_names, true_vals, initial_params, proposal_std, param_bounds = prepare_arrays_for_mcmc(param_names, 
+                                                                                                 true_vals, 
+                                                                                                 initial_params, 
+                                                                                                 proposal_std, 
+                                                                                                 param_bounds,
+                                                                                                 analytical_bool)
+
+    print(param_names.shape, true_vals.shape, initial_params.shape, proposal_std.shape, param_bounds.shape)
     sigma_n = 6 * 1e-4
     fluxes = add_gaussian_error(inp_fluxes, 0, sigma_n)
-    num_iterations = int(1_000_000)
+    num_iterations = int(1_000_00)
 
     radius_WASP148A = 0.912 * 696.34e6 / 1.496e11
     mass_WASP148A = 0.9540 * 2e30 / 6e24
@@ -121,7 +142,7 @@ def main():
             fluxes,
             None,
             lambda params: flux_data_from_params(
-                stellar_params, params, times, analytical_bool=True
+                stellar_params, params, times, analytical_bool=analytical_bool
             ),
             params,
             sigma_n,
@@ -141,7 +162,7 @@ def main():
 
     mcmc.metropolis_hastings(num_iterations)
     mcmc.chain_to_plot_and_estimate(true_vals)
-    mcmc.corner_plot(true_vals, burn_in_index=350_000)
+    mcmc.corner_plot(true_vals)
 
     plt.title("Difference between true and estimated fluxes")
     plt.xlabel("Time")
