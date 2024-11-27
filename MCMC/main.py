@@ -54,16 +54,6 @@ def extract_timeseries_data(file_location: str) -> (np.ndarray, np.ndarray):
     timeseries = np.load(file_location, allow_pickle=True)
     return timeseries[0], timeseries[1]
 
-def uniform_transform(lower_bound: float, upper_bound: float, x: float) -> float:
-    domain = upper_bound - lower_bound
-    return lower_bound + x * domain
-
-def gaussian_truncated_transform(lower_bound: float, upper_bound: float, mean: float, std: float, x: float) -> float:
-    return scipy.stats.truncnorm.ppf(x, lower_bound, upper_bound, loc=mean, scale=std)
-
-def dirac_delta_transform(fixed_val: float, x: float) -> float:
-    return fixed_val
-
 
 def prior_transform_calcs(priors: List[List[Optional[Dict]]],
                           param_bounds: List[List[Tuple]],
@@ -125,6 +115,16 @@ def main():
         [3e-5, 5e-4, 5e-6, 1e-6, 0, 4e-5, 0, 4e-6],   # Planet 2
     ])
 
+    # parameters = {
+    #         {
+    #                 "param_name":r"\eta_1",
+    #                 "param_num":1,
+    #                 "true_vals":0.1,
+    #                 "initial_vals":0.1,
+    #                 "proposal_stds":3e-5,
+    #                 "param_bounds":(0.05, 0.25),
+    #         }
+    # }
     # param_bounds = []
     # for body_idx, tvs in enumerate(true_vals):
     #     param_bounds.append([])
