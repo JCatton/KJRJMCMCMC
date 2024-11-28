@@ -72,7 +72,39 @@ def prepare_arrays_for_mcmc(param_names, true_vals, initial_params, proposal_std
         param_bounds = param_bounds[:, n_body_mask]
         return param_names, true_vals, initial_params, proposal_std, param_bounds
         
-    
+
+def inclination_checker(proposals: np.ndarray, indices: tuple[int, int, int, int], r_star: float) -> bool:
+    """
+    Check if the inclinations of the planets are above the critical value.
+
+    Parameters:
+    - proposals: Array of proposals
+    - indices: Tuple of indices (a_idx, e_idx, omega_idx, inc_idx)
+    - r_star: Radius of the star
+
+    Returns:
+    - Boolean indicating if all inclinations are above the critical value
+    """
+
+    # Unpack indices
+    a_idx, e_idx, omega_idx, inc_idx = indices
+
+    # Extract relevant parameters (shape: (num_planets,))
+    a = proposals[0, :, a_idx]
+    e = proposals[0, :, e_idx]
+    omega = proposals[0, :, omega_idx]
+    inc = proposals[0, :, inc_idx]
+
+    # Calculate orbital radius at true anomaly = π/2 - omega (vectorized)
+    r = a * (1 - e**2) / (1 + e * np.cos(3* np.pi / 2 - omega))
+
+    # Calculate critical inclinations (vectorized)
+    critical_inc = np.arccos(r_star / r)  # Clip to avoid numerical issues
+
+    # Check if any inclination is below the critical value
+    return np.all(inc >= critical_inc)  # True if all inclinations pass
+
+
 
 
 def main():
