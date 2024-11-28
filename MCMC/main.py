@@ -157,7 +157,7 @@ def main():
     radius_WASP148A = 0.912 * 696.34e6 / 1.496e11
     mass_WASP148A = 0.9540 * 2e30 / 6e24
 
-    stellar_params = [radius_WASP148A, mass_WASP148A]  # Based on WASP 148
+    stellar_params = [radius_wasp148_a, mass_wasp_a]  # Based on WASP 148
 
     # Plot to check
     plt.subplot(2, 1, 1)
