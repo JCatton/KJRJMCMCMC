@@ -154,8 +154,8 @@ def main():
     fluxes = add_gaussian_error(inp_fluxes, 0, sigma_n)
     num_iterations = int(1_000_00)
 
-    radius_WASP148A = 0.912 * 696.34e6 / 1.496e11
-    mass_WASP148A = 0.9540 * 2e30 / 6e24
+    radius_wasp148_a = 0.912 * 696.34e6 / 1.496e11
+    mass_wasp_a = 0.9540 * 2e30 / 6e24
 
     stellar_params = [radius_wasp148_a, mass_wasp_a]  # Based on WASP 148
 
