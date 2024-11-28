@@ -9,7 +9,7 @@ def uniform_transform(lower_bound: float, upper_bound: float, x: float) -> float
 
 def uniform_density(lower_bound: float, upper_bound: float, x: float) -> float:
     domain = upper_bound - lower_bound
-    return 1/domain
+    return 1/domain if lower_bound <= x <= upper_bound else 0
 
 def gaussian_truncated_transform(lower_bound: float, upper_bound: float, mean: float, std: float, x: float) -> float:
     return scipy.stats.truncnorm.ppf(x, lower_bound, upper_bound, loc=mean, scale=std)
