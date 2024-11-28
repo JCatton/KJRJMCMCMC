@@ -8,6 +8,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 
 from MCMC.mcmc import Statistics
+from MCMC.priors import Priors
 
 
 
@@ -58,21 +59,27 @@ def extract_timeseries_data(file_location: str) -> (np.ndarray, np.ndarray):
 def prior_transform_calcs(priors: List[List[Optional[Dict]]],
                           param_bounds: List[List[Tuple]],
                           proposal_stds: List[List[float]],
-                          initial_params: List[List[float]]) -> Optional[np.ndarray[Callable]]:
+                          initial_params: List[List[float]]) -> Tuple[np.ndarray[Callable],np.ndarray[Callable]]:
     prior_transforms = []
+    prior_densities = []
     for body_idx, body_bounds in enumerate(param_bounds):
         prior_transforms.append([])
+        prior_densities.append([])
         body = prior_transforms[body_idx]
 
         for param_idx, p_bounds in enumerate(body_bounds):
             body.append([None])
+            prior_densities[body_idx].append([None])
             if proposal_stds[body_idx][param_idx] == 0:
                 initial_param = initial_params[body_idx][param_idx]
-                body[param_idx] = lambda x, initial_param=initial_param: dirac_delta_transform(initial_param, x)
+                prior = Priors.get_dirac_prior(initial_param)
+                # body[param_idx] = lambda x, initial_param=initial_param: dirac_delta_transform(initial_param, x)
             elif priors[body_idx][param_idx] is None:
-                p0, p1 = p_bounds[0], p_bounds[1]
-                body[param_idx] = lambda x, p0=p0, p1=p1: uniform_transform(p0, p1, x)
-    return np.array(prior_transforms)
+                prior = Priors.get_uniform_prior(p_bounds[0], p_bounds[1])
+                # body[param_idx] = lambda x, p0=p0, p1=p1: uniform_transform(p0, p1, x)
+            body[param_idx]= prior.transform_func
+            prior_densities[body_idx][param_idx] = prior.prior_func
+    return np.array(prior_densities), np.array(prior_transforms)
 
 
 
@@ -141,7 +148,7 @@ def main():
         [None, None, None, None, None, None, None, None]
     ]
 
-    prior_transform_funcs = prior_transform_calcs(priors, param_bounds, proposal_std, initial_params)
+    _, prior_transform_funcs = prior_transform_calcs(priors, param_bounds, proposal_std, initial_params)
 
 
     sigma_n = 6 * 1e-4
@@ -188,61 +195,61 @@ def main():
     )
 
     mcmc.nested_sampling()
-    mcmc.metropolis_hastings(num_iterations)
-    mcmc.chain_to_plot_and_estimate(true_vals)
-    mcmc.corner_plot(true_vals, burn_in_index=350_000)
-
-    plt.title("Difference between true and estimated fluxes")
-    plt.xlabel("Time")
-    plt.ylabel("Difference in Fluxes")
-    plt.plot(
-        times,
-        flux_data_from_params(
-            stellar_params, mcmc.chain[-1], times, analytical_bool=True
-        )
-        - flux_data_from_params(
-            stellar_params, true_vals, times, analytical_bool=True
-        ),
-    )
-    plt.show()
-
-
-    plt.title("True and estimated fluxes")
-    plt.xlabel("Time")
-    plt.ylabel("Flux")
-    plt.plot(
-        times,
-        flux_data_from_params(
-            stellar_params, mcmc.chain[-1], times, analytical_bool=True
-        ),
-        label="Estimated",
-    )
-    plt.plot(
-        times,
-        flux_data_from_params(
-            stellar_params, true_vals, times, analytical_bool=True
-        ),
-        label="True",
-    )
-    plt.legend()
-    plt.show()
-    print(mcmc.acceptance_num)
+    # mcmc.metropolis_hastings(num_iterations)
+    # mcmc.chain_to_plot_and_estimate(true_vals)
+    # mcmc.corner_plot(true_vals, burn_in_index=350_000)
+    #
+    # plt.title("Difference between true and estimated fluxes")
+    # plt.xlabel("Time")
+    # plt.ylabel("Difference in Fluxes")
+    # plt.plot(
+    #     times,
+    #     flux_data_from_params(
+    #         stellar_params, mcmc.chain[-1], times, analytical_bool=True
+    #     )
+    #     - flux_data_from_params(
+    #         stellar_params, true_vals, times, analytical_bool=True
+    #     ),
+    # )
+    # plt.show()
+    #
+    #
+    # plt.title("True and estimated fluxes")
+    # plt.xlabel("Time")
+    # plt.ylabel("Flux")
+    # plt.plot(
+    #     times,
+    #     flux_data_from_params(
+    #         stellar_params, mcmc.chain[-1], times, analytical_bool=True
+    #     ),
+    #     label="Estimated",
+    # )
+    # plt.plot(
+    #     times,
+    #     flux_data_from_params(
+    #         stellar_params, true_vals, times, analytical_bool=True
+    #     ),
+    #     label="True",
+    # )
+    # plt.legend()
+    # plt.show()
+    # print(mcmc.acceptance_num)
     # mcmc = MCMC(fluxes, initial_params, param_bounds, proposal_std,
     #             param_names=param_names, likelihood_func=likelihood_fn, max_cpu_nodes=4)
     # mcmc.metropolis_hastings(50_000)
     # mcmc.chain_to_plot_and_estimate(true_vals)
     # mcmc.corner_plot(true_vals)
-    folder_names = [
-        "2024-11-06_run1",
-        "2024-11-06_run2",
-        "2024-11-06_run3",
-        "2024-11-06_run4",
-        "2024-11-06_run5",
-    ]
-    stats = Statistics(folder_names)
-    for mcmc in stats.loaded_mcmcs:
+    # folder_names = [
+    #     "2024-11-06_run1",
+    #     "2024-11-06_run2",
+    #     "2024-11-06_run3",
+    #     "2024-11-06_run4",
+    #     "2024-11-06_run5",
+    # ]
+    # stats = Statistics(folder_names)
+    # for mcmc in stats.loaded_mcmcs:
         # mcmc.corner_plot(true_vals=true_vals, burn_in_index=1000)
-        mcmc.chain_to_plot_and_estimate(true_vals=true_vals)
+        # mcmc.chain_to_plot_and_estimate(true_vals=true_vals)
     # gr = stats.calc_gelman_rubin()
     # print(f"The Gelman Rubin Statistic is {gr}")
 
