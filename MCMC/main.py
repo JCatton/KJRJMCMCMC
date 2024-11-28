@@ -86,29 +86,23 @@ def inclination_checker(proposals: np.ndarray, indices: tuple[int, int, int, int
     - Boolean indicating if all inclinations are above the critical value
     """
 
-    # Unpack indices
     a_idx, e_idx, omega_idx, inc_idx = indices
 
-    # Extract relevant parameters (shape: (num_planets,))
     a = proposals[0, :, a_idx]
     e = proposals[0, :, e_idx]
     omega = proposals[0, :, omega_idx]
     inc = proposals[0, :, inc_idx]
 
-    # Calculate orbital radius at true anomaly = π/2 - omega (vectorized)
+    # Calculate the critical inclination
     r = a * (1 - e**2) / (1 + e * np.cos(3* np.pi / 2 - omega))
+    critical_inc = np.arccos(r_star / r)
 
-    # Calculate critical inclinations (vectorized)
-    critical_inc = np.arccos(r_star / r)  # Clip to avoid numerical issues
-
-    # Check if any inclination is below the critical value
-    return np.all(inc >= critical_inc)  # True if all inclinations pass
+    return np.all(inc >= critical_inc) # Return True if all inclinations are above the critical value
 
 
 
 
 def main():
-
     # Generate synthetic data
     # times, inp_fluxes = extract_timeseries_data(r"C:\Users\jonte\PycharmProjects\KJRJMCMCMC\sim\Outputs\Example\timeseries_flux.npy")
 
@@ -125,8 +119,8 @@ def main():
         [0.3, 0.2044, 34.525, 0.1809, np.radians(90), 0, 0, np.pi / 4, 0.392]
     ])
     initial_params = np.array([
-        [0.1, 0.08215-0.003, 8.803809 - 0.02, 0.208- 0.03, np.radians(90), 0, 0, 0, 0.287],
-        [0.3, 0.2044 + 0.003, 34.525+0.002, 0.1809 + 0.007, np.radians(90), 0, 0, np.pi / 4 + np.pi/100, 0.392]
+        [0.1-0.02, 0.08215-0.003, 8.803809 - 0.02, 0.208- 0.03, np.radians(90), 0, 0, 0, 0.287],
+        [0.3 + 0.002, 0.2044 + 0.003, 34.525+0.02, 0.1809 + 0.02, np.radians(90), 0, 0, np.pi / 4 + np.pi/100, 0.392]
     ])
 
     proposal_std = np.array([
@@ -138,7 +132,6 @@ def main():
         [(0.05, 0.15), (0.04, 0.2), (0, 1e1000), (0, 0.3), (np.radians(86.8), np.pi), (-np.pi/8, np.pi/8), (-np.pi/8, np.pi/8), (-np.pi/8, np.pi/8), (0, 6000)],
         [(0.2, 0.4), (0.08, 0.3), (0, 1e1000), (0, 0.3), (np.radians(86.8), np.pi), (-np.pi/8, np.pi/8), (-np.pi/8, np.pi/8), (0, np.pi/2), (0, 6000)]
     ])
-
 
     analytical_bool = True
 
@@ -152,7 +145,7 @@ def main():
     print(param_names.shape, true_vals.shape, initial_params.shape, proposal_std.shape, param_bounds.shape)
     sigma_n = 6 * 1e-4
     fluxes = add_gaussian_error(inp_fluxes, 0, sigma_n)
-    num_iterations = int(1_000_00)
+    num_iterations = int(3_00_000)
 
     radius_wasp148_a = 0.912 * 696.34e6 / 1.496e11
     mass_wasp_a = 0.9540 * 2e30 / 6e24
