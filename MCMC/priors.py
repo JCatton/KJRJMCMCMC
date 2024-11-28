@@ -1,7 +1,6 @@
-from typing import Self
+from typing import Self, Callable
 
 import scipy
-from numba import Callable
 
 
 def uniform_transform(lower_bound: float, upper_bound: float, x: float) -> float:
