@@ -138,7 +138,7 @@ def main():
     #     for param_idx, tv in enumerate(tvs):
     #         param_bounds[body_idx].append((tv - 5 * proposal_std[body_idx, param_idx], tv + 5 * proposal_std[body_idx, param_idx]))
 
-   param_bounds = [
+    param_bounds = [
         [(0.05, 0.25), (0, 1e10), (0.04, 0.2), (0, 0.3), (np.radians(86.8), np.pi), (-np.pi/8, np.pi/8), (-np.pi/8, np.pi/8), (-np.pi/8, np.pi/8)],
         [(0.2, 0.4), (0, 1e10), (0.08, 0.18), (0, 0.3), (np.radians(86.8), np.pi), (-np.pi/8, np.pi/8), (-np.pi/8, np.pi/8), (0, np.pi/2)]
     ]
