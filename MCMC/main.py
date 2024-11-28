@@ -169,10 +169,16 @@ def main():
     plt.title("Data with Gaussian Noise")
     plt.show()
 
+
+    indices = (1, 3, 5, 4)  # Indicies after cutting up (a_idx, e_idx, omega_idx, inc_idx) 
+    r_star = stellar_params[0]  # Stellar radius
+
+
     def likelihood_fn(params):
         return gaussian_error_ln_likelihood(
             fluxes,
             None,
+
             lambda params: flux_data_from_params(
                 stellar_params, params, times, analytical_bool=analytical_bool
             ),
@@ -189,7 +195,8 @@ def main():
         proposal_std,
         param_names=param_names,
         likelihood_func=likelihood_fn,
-        max_cpu_nodes=1,
+        inclination_rejection_func=lambda proposals: inclination_checker(proposals, indices, r_star),
+        max_cpu_nodes=1,    
     )
 
     mcmc.metropolis_hastings(num_iterations)
