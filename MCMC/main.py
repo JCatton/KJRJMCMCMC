@@ -130,8 +130,8 @@ def main():
     ])
 
     proposal_std = np.array([
-        [3e-5, 5e-6, 5e-4, 1e-6, 0, 4e-5, 0, 4e-6, 3e-6],  # Planet 1
-        [3e-5, 5e-6, 5e-4, 1e-6, 0, 4e-5, 0, 4e-4, 3e-6],   # Planet 2
+        [3e-5, 5e-5, 5e-4, 1e-5, 3e-6, 4e-6, 0, 4e-6, 3e-6],  # Planet 1
+        [3e-5, 5e-5, 5e-4, 1e-5, 3e-6, 4e-6, 0, 4e-4, 3e-6],   # Planet 2
     ])
 
     param_bounds = np.array([
