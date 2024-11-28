@@ -167,6 +167,8 @@ def analytical_positions_api(
         x, y, z = analytical_coordinate_generator(
             a, p, e, inc, omega, big_ohm, phase_lag, times
         )
+        omega = omega/np.pi
+        print(f"{omega=} $\pi$")
         pos[:, i, 0] = x
         pos[:, i, 1] = y
         pos[:, i, 2] = z
@@ -180,85 +182,106 @@ if __name__ == "__main__":
 
     # Test case with HD 23472 -> Barros et al., 2022
     times = np.load("TestTimes.npy")
-    radius_HD23472 = 0.912 * 696.34e6 / 1.496e11
-    mass_HD23472 = 0.67 * 2e30 / 6e24 # random radi for all vals
 
-    stellar_params = [radius_HD23472, mass_HD23472]  # Based on WASP 148
+        # Stellar parameters: [radius, mass]
+    radius_wasp148a = 0.912 * 696.34e6 / 1.496e11
+    mass_wasp148a = 0.9540 * 2e30 / 6e24
 
-    # planet_params =[ [ eta,   a,     P,   e,               inc, omega, OHM, phase_lag, mass ] ]
-    planet_params = np.array(
-        [
-            [0.1, 0.04298, 3.97664, 0.0700, np.radians(90), 0, np.pi/2, 0, 0.55],
-            [0.2, 0.0680, 7.90754, 0.0700, np.radians(90), 0, 0, np.pi/3, 0.72],
-            [0.3, 0.0906, 12.1621839, 0.0700, np.radians(90), 0, 0, np.pi/2, 0.77],
-            [0.4, 0.1162, 17.667087, 0.0720, np.radians(90), 0, 0, 2 * np.pi/3, 8.32],
-            [0.5, 0.1646, 29.79749, 0.063, np.radians(90), 0, 0, 3/5 * np.pi, 3.41]
-        ]
-    )
+    stellar_params = [radius_wasp148a, mass_wasp148a]  # Based on WASP 148
+    radius_wasp148_b = 8.47 * 6.4e6 / 1.496e11
+    radius_wasp148_c = (
+        9.4 * 6.4e6 / 1.496e11
+    )  # assumed similar densities as no values for radius
+
+    eta = 0
+
+    theta = np.linspace(0, 2 * np.pi, 500)  # Parameterize the circle
+
+    # Compute the x and y coordinates for the circle
+    x_star = radius_wasp148a * np.cos(theta)
+    y_star = radius_wasp148a * np.sin(theta)
+
+    x_pi_on_2 = radius_wasp148a * np.cos(np.pi / 2)
+    y_pi_on_2 = radius_wasp148a * np.sin(np.pi / 2)
+
+        # [eta, a, p, e, inc, omega, big_ohm, phase_lag, mass (only for N body)]
+    big_omega_list = np.linspace(0, 2 * np.pi, 9)
+    a_list = np.linspace(0.1, 0.5, 5)
+    a = 0.02044
+    e = 0.1809
+    phase_lag = 0
+    small_omega = 0
     
-    positions_analytical = analytical_positions_api(planet_params=planet_params[:, 1:-1], times=times)
-    flux_values_analytical = combined_delta_flux(
-        x=positions_analytical[:, :, 0].transpose(),
-        y=positions_analytical[:, :, 1].transpose(),
-        z=positions_analytical[:, :, 2].transpose(),
-        radius_star=stellar_params[0],
-        eta_values=planet_params[:, 0],
-        times=times,
-    )
-    print(f"{positions_analytical.shape=}")
-    # plt.show()
+    ecc_list = [0.1, 0.4, 0.8]
+    ecc_list = [0.4]
+    small_omega = [0, np.pi/4, np.pi/2, np.pi, 5*np.pi/4, 7*np.pi/4]
+    # small_omega = [0, np.pi/4, np.pi/2, 3*np.pi/4, np.pi, 5*np.pi/4, 3*np.pi/2, 7*np.pi/4]
+    # small_omega = [0]
+    big_omega_list = [0, np.pi/4, np.pi/2, np.pi, 5*np.pi/4, 7*np.pi/4]
+    # big_omega_list = [0, np.pi/4, np.pi/2, 3*np.pi/4, np.pi, 5*np.pi/4, 3*np.pi/2, 7*np.pi/4]
+    # big_omega_list = [0]
 
-    positions_n_body = n_body_sim_api(
-        stellar_mass=stellar_params[1],
-        planet_params=planet_params[:, 2:],
-        times=times,
-    )
-    x = positions_n_body[:, :, 0].transpose()
-    y = positions_n_body[:, :, 1].transpose()
-    z = positions_n_body[:, :, 2].transpose()
-    print(f"{x.shape=}")
-    print(f"{np.max(y[0])}")
-    print(f"{np.max(y[1])}")
-    # print(f"{np.max(y[2])}")
-    x_s, y_s, z_s = x[0], y[0], z[0]
-    x_p_rel = (x[1:] - x_s)
-    y_p_rel = (y[1:] - y_s)
-    z_p_rel = (z[1:] - z_s)
-    print(f"{y_p_rel.shape=}")
-    print(f"{np.max(y_p_rel[:,0])=}")
-    # print(f"{np.max(y_p_rel[:,1])=}")
-    # print(f"{np.max(y_p_rel[2])=}")
+    phase_lag = [0, np.pi/4, np.pi/2, np.pi, 5*np.pi/4, 7*np.pi/4]
+    # phase_lag = [0, np.pi/4, np.pi/2, 3*np.pi/4, np.pi, 5*np.pi/4, 3*np.pi/2, 7*np.pi/4]
+    # phase_lag = [0]
 
-    flux_values_n_body = combined_delta_flux(
-        x=x_p_rel,
-        y=y_p_rel,
-        z=z_p_rel,
-        radius_star=stellar_params[0],
-        eta_values=planet_params[:, 0],
-        times=times,
-    )
-    print(f"{x_p_rel.shape=}")
-    colors = ["r", "g", "b", "black", "purple"]
-    for i in range(x_p_rel.shape[0]):
-        plt.plot(x_p_rel[i, :], y_p_rel[i, :], label = f"Planet {i} n_body", color = colors[i], alpha = 0.5)
-        plt.plot(x_p_rel[i, 0], y_p_rel[i, 0],  marker = "o", ms = 5, color = colors[i], alpha = 0.5)
-        plt.plot(x_p_rel[i, 500], y_p_rel[i, 500],  marker = "x", ms = 5, color = colors[i], alpha = 0.5)
-        plt.plot(x_p_rel[i, 1000], y_p_rel[i, 1000],  marker = "^", ms = 5, color = colors[i], alpha = 0.5)
-    for i in range(positions_analytical.shape[1]):
-        plt.plot(positions_analytical[:, i, 0], positions_analytical[:, i, 1], label = f"Planet {i} analytical, x,y", linestyle = "--", color = colors[i])
-        plt.plot(positions_analytical[0, i, 0], positions_analytical[0, i, 1], marker = "o", ms = 5, color = colors[i])
 
-        plt.plot(positions_analytical[500, i, 0], positions_analytical[500, i, 1], marker = "x", ms = 5, color = colors[i])
-        plt.plot(positions_analytical[1000, i, 0], positions_analytical[1000, i, 1], marker = "^", ms = 5, color = colors[i])
-
-    plt.title("Orbital Paths")
-    plt.legend()
-    plt.show()
-    plt.plot(times, flux_values_analytical, label = "Analytical")
-    plt.plot(times, flux_values_n_body, label = "N-Body", linestyle = "--")
-    plt.legend()
-
-    print(f"{np.max(a)=}, {np.min(a)=}")
+    max = len(ecc_list) * len(small_omega) * len(big_omega_list) * len(phase_lag)
     
+    points = (np.linspace(0, max, 50,dtype=int))
 
-    plt.show()
+
+    count = 0 
+    fig_count = 0
+    for i in range(len(ecc_list)):
+        for j in range(len(small_omega)):
+            for k in range(len(big_omega_list)):
+                for l in range(len(phase_lag)):
+                    e = ecc_list[i]
+                    r_pi_2 = a * (1 - e**2)
+                    r_min = a * (1 - e**2)/(1+ +e* np.cos(3*np.pi/2 - small_omega[j]))
+                    inc = np.arccos(radius_wasp148a * (1 + eta) / r_min)
+                    # inc = np.radians(75)
+                    print(inc/np.pi * 180)
+                    planet_params = np.array(
+                        [
+                            [eta, a, 34.525, e, inc, small_omega[j], big_omega_list[k], phase_lag[l], 0.392]
+                        ]
+                    )
+                    analyitical_positions = analytical_positions_api(planet_params[:, 1:-1], times)
+
+                    rotated_x_pi_on_2 = x_pi_on_2 * np.cos(big_omega_list[k]) - y_pi_on_2 * np.sin(big_omega_list[k])
+                    rotated_y_pi_on_2 = x_pi_on_2 * np.sin(big_omega_list[k]) + y_pi_on_2 * np.cos(big_omega_list[k])
+
+
+                    r = a*(1-e**2)/(1+e*np.cos(np.pi/2))
+                    x_at_point = r * np.cos(big_omega_list[k]) * np.cos(small_omega[j] + np.pi/2) - r * np.sin(big_omega_list[k]) * np.sin(small_omega[j] + np.pi/2) * np.cos(inc)
+                    y_at_point = r * np.sin(big_omega_list[k]) * np.cos(small_omega[j] + np.pi/2) + r * np.cos(big_omega_list[k]) * np.sin(small_omega[j] + np.pi/2) * np.cos(inc)
+
+                    r_little_after = a*(1-e**2)/(1+e*np.cos(np.pi/8))
+                    x_little_after = r_little_after * np.cos(big_omega_list[k]) * np.cos(small_omega[j] + np.pi/8) - r_little_after * np.sin(big_omega_list[k]) * np.sin(small_omega[j] + np.pi/8) * np.cos(inc)
+                    y_little_after = r_little_after * np.sin(big_omega_list[k]) * np.cos(small_omega[j] + np.pi/8) + r_little_after * np.cos(big_omega_list[k]) * np.sin(small_omega[j] + np.pi/8) * np.cos(inc)
+                    
+
+
+                    count += 1
+                    x_start = analyitical_positions[0, 0, 0]
+                    y_start = analyitical_positions[0, 0, 1]
+                    if count in points:
+                        plt.figure(fig_count)
+                        plt.plot(analyitical_positions[:, 0, 0], analyitical_positions[:, 0, 1])
+                        plt.plot(x_start, y_start, "ro", label="Start")
+                        plt.plot(x_star, y_star, color="orange", label="Star")
+                        plt.scatter(rotated_x_pi_on_2, rotated_y_pi_on_2, label="$\pi/4$", color="black")
+                        plt.scatter(x_at_point, y_at_point, label="varied thingy", color="green")
+                        plt.scatter(x_little_after, y_little_after, label="little After", color="blue")
+                        plt.title(f"e: {e}, $\omega$: {small_omega[j]/np.pi} $\pi$, $\Omega$: {big_omega_list[k]/np.pi} $\pi$, $\phi$: {phase_lag[l]/np.pi} $\pi$")
+                        plt.legend()
+                        plt.xlim(-0.025, 0.025)
+                        plt.ylim(-0.025, 0.025)
+                        plt.show()
+                        fig_count +=1 
+
+                    print(count)
+    print(count)
+        
