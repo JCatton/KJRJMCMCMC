@@ -38,7 +38,7 @@ def gaussian_error_ln_likelihood(
     if prior_funcs is not None:
         for p_fns, body_params in zip(prior_funcs, params):
                 log_prior += np.sum(
-                    np.log([p_fn(param) for p_fn, param in zip(p_fns, body_params)])
+                    np.log([p_fn(param) for p_fn, param in zip(p_fns, body_params) if p_fn])
                 )
     deviation_lh = 1 / 2 * np.log(sigma_n)
     observed_lh = np.power(observed - analytic_func(params), 2) / (2 * sigma_n**2)
