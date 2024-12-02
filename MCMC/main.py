@@ -74,6 +74,8 @@ def prior_transform_calcs(priors: List[List[Optional[Dict]]],
                 initial_param = initial_params[body_idx][param_idx]
                 prior = Priors.get_dirac_prior(initial_param)
                 # body[param_idx] = lambda x, initial_param=initial_param: dirac_delta_transform(initial_param, x)
+            elif isinstance(priors[body_idx][param_idx], dict):
+                prior = Priors.get_prior_by_config(priors[body_idx][param_idx])
             elif priors[body_idx][param_idx] is None:
                 prior = Priors.get_uniform_prior(p_bounds[0], p_bounds[1])
                 # body[param_idx] = lambda x, p0=p0, p1=p1: uniform_transform(p0, p1, x)
@@ -109,17 +111,17 @@ def main():
     ])
 
     true_vals = np.array([
-        [0.1, 8.8, 0.08, 0.208, np.radians(90), 0, 0, 0],
-        [0.3, 12, 0.101, 0.1809, np.radians(90), 0, 0, np.pi / 4]
+            [0.1, 8.8, 0.08, 0.208, np.radians(90), 0, 0, 0],
+            [0.3, 12, 0.101, 0.1809, np.radians(90), 0, 0, np.pi / 4]
     ])
     initial_params = np.array([
-        [0.1+0.025, 8.8, 0.08, 0.208, np.radians(90), 0, 0, 0],
-        [0.3+0.025, 12, 0.101, 0.1809, np.radians(90), 0, 0, np.pi / 4]
+            [0.1+0.05, 8.8, 0.08, 0.208, np.radians(90), 0, 0, 0],
+            [0.3-0.05, 12, 0.101, 0.1809, np.radians(90), 0, 0, np.pi / 4]
     ])
 
     proposal_std = np.array([
-        [3e-5, 5e-4, 5e-6, 1e-6, 0, 4e-5, 0, 4e-6],  # Planet 1
-        [3e-5, 5e-4, 5e-6, 1e-6, 0, 4e-5, 0, 4e-6],   # Planet 2
+        [3e-4, 0, 0, 0, 0, 0, 0, 1e-6],  # Planet 1
+        [3e-4, 0, 0, 0, 0, 0, 0, 1e-6],  # Planet 2
     ])
 
     # parameters = {
@@ -144,11 +146,11 @@ def main():
     ]
 
     priors = [
-        [None, None, None, None, None, None, None, None],
-        [None, None, None, None, None, None, None, None]
+        [{"distribution": "gaussian", "lower_bound": 0.05, "upper_bound":0.15, "mean": 0.1, "std":5*1e-2}, None, None, None, None, None, None, None],
+        [{"distribution": "gaussian", "lower_bound": 0.25, "upper_bound":0.35, "mean": 0.3, "std":5*1e-2}, None, None, None, None, None, None, None]
     ]
 
-    _, prior_transform_funcs = prior_transform_calcs(priors, param_bounds, proposal_std, initial_params)
+    priors, prior_transform_funcs = prior_transform_calcs(priors, param_bounds, proposal_std, initial_params)
 
 
     sigma_n = 6 * 1e-4
@@ -173,7 +175,7 @@ def main():
     def likelihood_fn(params):
         return gaussian_error_ln_likelihood(
             fluxes,
-            None,
+            priors,
             lambda params: flux_data_from_params(
                 stellar_params, params, times, analytical_bool=True
             ),
