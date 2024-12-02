@@ -17,7 +17,6 @@ def gaussian_truncated_transform(lower_bound: float, upper_bound: float, mean: f
     return scipy.stats.truncnorm.ppf(x, lb_std, ub_std, loc=mean, scale=std)
 
 def gaussian_truncated_density(lower_bound: float, upper_bound: float, mean: float, std: float, x: float) -> float:
-    return scipy.stats.truncnorm.pdf(x, lower_bound, upper_bound, loc=mean, scale=std)
     lb_std = (lower_bound - mean) / std
     ub_std = (upper_bound - mean) / std
     return scipy.stats.truncnorm.pdf(x, lb_std, ub_std, loc=mean, scale=std)
@@ -34,6 +33,18 @@ class Priors:
         self.prior_func = prior_func
         self.transform_func = transform_func
         self.config = config
+
+    @classmethod
+    def get_prior_by_config(cls, prior_config: dict[str, ]) -> Self:
+        if not (dist := prior_config.get("distribution")):
+            raise ValueError("Prior distribution not provided, please provide in form {'distribution': ____ }")
+        match dist:
+            case "uniform":
+                return cls.get_uniform_prior(prior_config["lower_bound"], prior_config["upper_bound"])
+            case "gaussian":
+                return cls.get_truncated_gaussian_prior(prior_config["lower_bound"], prior_config["upper_bound"],
+                                                        prior_config["mean"], prior_config["std"])
+
 
     @classmethod
     def get_truncated_gaussian_prior(cls, lower_bound: float, upper_bound: float, mean: float, std: float) -> Self:
