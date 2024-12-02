@@ -412,8 +412,8 @@ class MCMC:
         var = np.std(self.likelihood_chain[lower_var_iter : upper_var_iter])
         lower_likelihood = max_likelihood - 5 * var
         burn_in_idx = find_first_greater(self.likelihood_chain, lower_likelihood)
-        self.burn_in_index = burn_in_idx
-        return burn_in_idx
+        self.burn_in_index = burn_in_idx if burn_in_idx > 0 else None
+        return self.burn_in_index
 
 
 class Statistics:
