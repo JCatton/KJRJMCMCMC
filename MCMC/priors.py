@@ -18,6 +18,9 @@ def gaussian_truncated_transform(lower_bound: float, upper_bound: float, mean: f
 
 def gaussian_truncated_density(lower_bound: float, upper_bound: float, mean: float, std: float, x: float) -> float:
     return scipy.stats.truncnorm.pdf(x, lower_bound, upper_bound, loc=mean, scale=std)
+    lb_std = (lower_bound - mean) / std
+    ub_std = (upper_bound - mean) / std
+    return scipy.stats.truncnorm.pdf(x, lb_std, ub_std, loc=mean, scale=std)
 
 def dirac_delta_transform(fixed_val: float, x: float) -> float:
     return fixed_val
