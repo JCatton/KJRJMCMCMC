@@ -1,30 +1,31 @@
 from typing import Self, Callable
 
+import numpy as np
 import scipy
 
 
-def uniform_transform(lower_bound: float, upper_bound: float, x: float) -> float:
+def uniform_transform(x: float, lower_bound: float, upper_bound: float) -> float:
     domain = upper_bound - lower_bound
     return lower_bound + x * domain
 
-def uniform_density(lower_bound: float, upper_bound: float, x: float) -> float:
+def uniform_density(x: float, lower_bound: float, upper_bound: float) -> float:
     domain = upper_bound - lower_bound
     return 1/domain if lower_bound <= x <= upper_bound else 0
 
-def gaussian_truncated_transform(lower_bound: float, upper_bound: float, mean: float, std: float, x: float) -> float:
-    lb_std = (lower_bound - mean) / std
-    ub_std = (upper_bound - mean) / std
+def gaussian_truncated_transform(x: float, mean: float, std: float, lower_bound: float = None, upper_bound: float = None) -> float:
+    lb_std = (lower_bound - mean) / std if lower_bound else -np.inf
+    ub_std = (upper_bound - mean) / std if upper_bound else np.inf
     return scipy.stats.truncnorm.ppf(x, lb_std, ub_std, loc=mean, scale=std)
 
-def gaussian_truncated_density(lower_bound: float, upper_bound: float, mean: float, std: float, x: float) -> float:
-    lb_std = (lower_bound - mean) / std
-    ub_std = (upper_bound - mean) / std
+def gaussian_truncated_density(x: float, mean: float, std: float, lower_bound: float = None, upper_bound: float = None) -> float:
+    lb_std = (lower_bound - mean) / std if lower_bound else -np.inf
+    ub_std = (upper_bound - mean) / std if upper_bound else np.inf
     return scipy.stats.truncnorm.pdf(x, lb_std, ub_std, loc=mean, scale=std)
 
-def dirac_delta_transform(fixed_val: float, x: float) -> float:
+def dirac_delta_transform(x: float, fixed_val: float) -> float:
     return fixed_val
 
-def dirac_delta_density(fixed_val: float, x: float) -> float:
+def dirac_delta_density(x: float, fixed_val: float) -> float:
     return float(fixed_val == x)
 
 
@@ -42,12 +43,18 @@ class Priors:
             case "uniform":
                 return cls.get_uniform_prior(prior_config["lower_bound"], prior_config["upper_bound"])
             case "gaussian":
-                return cls.get_truncated_gaussian_prior(prior_config["lower_bound"], prior_config["upper_bound"],
-                                                        prior_config["mean"], prior_config["std"])
+                return cls.get_truncated_gaussian_prior(prior_config["mean"],
+                                                        prior_config["std"],
+                                                        prior_config.get("lower_bound"),
+                                                        prior_config.get("upper_bound"),
+                                                        )
 
 
     @classmethod
-    def get_truncated_gaussian_prior(cls, lower_bound: float, upper_bound: float, mean: float, std: float) -> Self:
+    def get_truncated_gaussian_prior(cls, mean: float,
+                                     std: float,
+                                     lower_bound: float = None,
+                                     upper_bound: float = None) -> Self:
         config = {
                 "lower_bound":lower_bound,
                 "upper_bound": upper_bound,
