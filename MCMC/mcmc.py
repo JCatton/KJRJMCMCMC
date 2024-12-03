@@ -73,6 +73,7 @@ class MCMC:
         likelihood_func: Callable[[ndarray], float],
         param_names=list[str],
         specified_folder_name: Optional[str | Path] = None,
+        inclination_rejection_func: Optional[Callable[[ndarray], bool]] = None,
         max_cpu_nodes: int = 16,
         **kwargs,
     ):
@@ -102,6 +103,7 @@ class MCMC:
         self.upper_bounds = self.param_bounds[:, :, 1]
         self.proposal_std: ndarray = proposal_std
         self.likelihood_func: Callable = likelihood_func
+        self.inclination_rejection_func: Callable = inclination_rejection_func
 
         # MCMC-Runtime
         empty_chain = np.empty_like(
@@ -216,12 +218,19 @@ class MCMC:
         while self.iteration_num < (max_iteration_number - 1):
             current_params = self.chain[prev_iter]
             current_likelihood = self.likelihood_chain[prev_iter]
-
             proposals = current_params + normal(
                 0, self.proposal_std, size=(self.sim_number, *self.chain[0].shape)
             )
 
             proposal_within_bounds = self.proposal_within_bounds(proposals)
+
+            if self.inclination_rejection_func and not self.inclination_rejection_func(proposals):
+                self.rejection_num += 1
+                self.chain[prev_iter + 1] = current_params
+                self.likelihood_chain[prev_iter + 1] = current_likelihood
+                self.iteration_num += 1
+                prev_iter += 1
+                continue  # Skip to the next iteration
 
             # Keep clipping as easiest solution that works with multiprocessing and
             # negligible run cost
