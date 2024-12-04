@@ -84,13 +84,13 @@ def main():
     inp_fluxes = np.load("TestFluxesMultiple.npy")
     loop_list = [
         #  eta,    a,    p,    e,  inc, omega, big_ohm, phase_lag, mass
-        [ 3e-5,    0,    0,    0,    0,     0,       0,         0,    0],
-        [    0, 5e-6,    0,    0,    0,     0,       0,         0,    0],
-        [    0,    0, 5e-4,    0,    0,     0,       0,         0,    0],
-        [    0,    0,    0, 1e-6,    0,     0,       0,         0,    0],
-        [    0,    0,    0,    0,    0,     0,       0,         0,    0],
-        [    0,    0,    0,    0,    0,     0,       0,         0,    0],
-        [    0,    0,    0,    0,    0,     0,       0,         0,    0],
+        # [ 3e-5,    0,    0,    0,    0,     0,       0,         0,    0],
+        # [    0, 5e-6,    0,    0,    0,     0,       0,         0,    0],
+        # [    0,    0, 5e-4,    0,    0,     0,       0,         0,    0],
+        # [    0,    0,    0, 1e-6,    0,     0,       0,         0,    0],
+        # [    0,    0,    0,    0,    0,     0,       0,         0,    0],
+        # [    0,    0,    0,    0,    0,     0,       0,         0,    0],
+        # [    0,    0,    0,    0,    0,     0,       0,         0,    0],
         [    0,    0,    0,    0,    0,     0,       0,      4e-6,    0],
         [ 3e-5, 5e-6,    0,    0,    0,     0,       0,         0,    0],
         [ 3e-5,    0, 5e-4,    0,    0,     0,       0,         0,    0],
@@ -139,7 +139,7 @@ def main():
         mass_std = 0
         
         param_names = np.array([
-            # [r"\eta_1", "a_1", "P_1", "e_1", "inc_1", "omega_1", "big_ohm_1", "phase_lag_1", "mass_1"],
+            [r"\eta_1", "a_1", "P_1", "e_1", "inc_1", "omega_1", "big_ohm_1", "phase_lag_1", "mass_1"],
             [r"\eta_2", "a_2", "P_2", "e_2", "inc_2", "omega_2", "big_ohm_2", "phase_lag_2", "mass_2"]
         ])
         true_vals = np.array([
@@ -172,7 +172,7 @@ def main():
                                                                                                     param_bounds,
                                                                                                     analytical_bool)
         
-        num_iterations = int(1_00_00)
+        num_iterations = int(500_000)
 
         radius_WASP148A = 0.912 * 696.34e6 / 1.496e11
         mass_WASP148A = 0.9540 * 2e30 / 6e24
