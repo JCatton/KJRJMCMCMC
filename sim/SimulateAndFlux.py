@@ -89,8 +89,8 @@ if __name__ == "__main__":
         9.4 * 6.4e6 / 1.496e11
     )  # assumed similar densities as no values for radius
 
-    eta1 = 0.1
-    eta2 = 0.3
+    eta1 = 0.3
+    eta2 = 0.4
     # planet_params =[ [ eta,   a,     P,   e,               inc, omega, OHM, phase_lag ] ]
     planet_params = np.array(
         [

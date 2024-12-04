@@ -292,6 +292,7 @@ class MCMC:
 
         non_fixed_indexes = np.array(self.proposal_std, dtype=bool)
         chain = np.stack([self.chain[:, i, non_fixed_indexes[i]] for i in range(self.chain.shape[1])], axis=1)
+        print(f"{self.param_names=}")
         param_names = np.stack([self.param_names[i, non_fixed_indexes[i]] for i in range(self.param_names.shape[0])], axis=0)
         likelihoods = self.likelihood_chain
 
@@ -311,7 +312,9 @@ class MCMC:
 
         plt.ylabel(r"Log Likelihoods")
         plt.tight_layout()
-        plt.show()
+        plt.savefig(self.data_folder / "Liklihood_plot.pdf")
+        # plt.show()
+        plt.close()
 
         fig, axs = plt.subplots(
             nrows=chain.shape[2], ncols=chain.shape[1], figsize=(10, 8)
@@ -324,7 +327,6 @@ class MCMC:
         elif chain.shape[2] == 1:
             axs = np.expand_dims(axs, axis=0)  # Add row dimension
 
-        print(f"nrows = {chain.shape[2]=}, ncols={chain.shape[1]=}")
         # axs = axs.reshape(chain[0].shape)
         fig.suptitle("Parameter Iterations")
         plt.xlabel("Iteration #")
@@ -337,6 +339,7 @@ class MCMC:
                     f"Estimated {name}: {np.mean(param_samples):.3e}",
                     f", true {name}: {true_vals[body, i]}" if true_vals is not None else None,
                 )
+
                 axs[i, body].plot(x, param_samples, label=name)
                 if true_vals is not None:
                     axs[i, body].hlines(true_vals[body, i], xmin=0, xmax=len(chain), linestyles="--", color="red")
@@ -347,7 +350,8 @@ class MCMC:
                 axs[i, body].set_ylabel(f"{name}")
 
         plt.tight_layout()
-        plt.show()
+        plt.savefig(self.data_folder / "Parameters_plot.pdf")
+        plt.close()
 
     def corner_plot(
         self, true_vals: Optional[np.ndarray] = None, burn_in_index: int = None
@@ -376,7 +380,7 @@ class MCMC:
         else:
             flattened_true_vals = None
         
-        print(f"{flattened_chain.shape=}, {flattened_param_names.shape=}, {flattened_true_vals.shape=}")
+        # print(f"{flattened_chain.shape=}, {flattened_param_names.shape=}, {flattened_true_vals.shape=}")
 
         # Pass the flattened arrays to the corner plot
         corner(
@@ -387,7 +391,9 @@ class MCMC:
             title_kwargs={"fontsize": 18},
             title_fmt=".2e",
         )
-        plt.show()
+        plt.savefig(self.data_folder / "corner_plot.pdf")
+        # plt.show()
+        plt.close()
 
     def determine_burn_in_index(self) -> int:
         """

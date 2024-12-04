@@ -82,141 +82,195 @@ def main():
 
     times = np.load("TestTimesMultiple.npy")
     inp_fluxes = np.load("TestFluxesMultiple.npy")
-
-    param_names = np.array([
-        [r"\eta_1", "a_1", "P_1", "e_1", "inc_1", "omega_1", "big_ohm_1", "phase_lag_1", "mass_1"],
-        [r"\eta_2", "a_2", "P_2", "e_2", "inc_2", "omega_2", "big_ohm_2", "phase_lag_2", "mass_2"]
-    ])
-
-    true_vals = np.array([
-        [0.1, 0.08215, 8.803809, 0.208, np.radians(90), 0, 0, 0, 0.287],
-        [0.3, 0.2044, 34.525, 0.1809, np.radians(90), 0, 0, np.pi / 4, 0.392]
-    ])
-    initial_params = np.array([
-        [0.1, 0.08215-0.003, 8.803809 - 0.02, 0.208- 0.03, np.radians(90), 0, 0, 0, 0.287],
-        [0.3, 0.2044 + 0.003, 34.525+0.002, 0.1809 + 0.007, np.radians(90), 0, 0, np.pi / 4 + np.pi/100, 0.392]
-    ])
-
-    proposal_std = np.array([
-        [3e-5, 5e-6, 5e-4, 1e-6, 0, 4e-5, 0, 4e-6, 3e-6],  # Planet 1
-        [3e-5, 5e-6, 5e-4, 1e-6, 0, 4e-5, 0, 4e-4, 3e-6],   # Planet 2
-    ])
-
-    param_bounds = np.array([
-        [(0.05, 0.15), (0.04, 0.2), (0, 1e1000), (0, 0.3), (np.radians(86.8), np.pi), (-np.pi/8, np.pi/8), (-np.pi/8, np.pi/8), (-np.pi/8, np.pi/8), (0, 6000)],
-        [(0.2, 0.4), (0.08, 0.3), (0, 1e1000), (0, 0.3), (np.radians(86.8), np.pi), (-np.pi/8, np.pi/8), (-np.pi/8, np.pi/8), (0, np.pi/2), (0, 6000)]
-    ])
-
-
-    analytical_bool = True
-
-    param_names, true_vals, initial_params, proposal_std, param_bounds = prepare_arrays_for_mcmc(param_names, 
-                                                                                                 true_vals, 
-                                                                                                 initial_params, 
-                                                                                                 proposal_std, 
-                                                                                                 param_bounds,
-                                                                                                 analytical_bool)
-
-    print(param_names.shape, true_vals.shape, initial_params.shape, proposal_std.shape, param_bounds.shape)
-    sigma_n = 6 * 1e-4
-    fluxes = add_gaussian_error(inp_fluxes, 0, sigma_n)
-    num_iterations = int(1_000_00)
-
-    radius_WASP148A = 0.912 * 696.34e6 / 1.496e11
-    mass_WASP148A = 0.9540 * 2e30 / 6e24
-
-    stellar_params = [radius_WASP148A, mass_WASP148A]  # Based on WASP 148
-
-    # Plot to check
-    plt.subplot(2, 1, 1)
-    plt.plot(times, inp_fluxes)
-    plt.title("Original Data")
-    plt.subplot(2, 1, 2)
-    fluxes = add_gaussian_error(fluxes, 0, sigma_n)
-    plt.plot(times, fluxes)
-    plt.title("Data with Gaussian Noise")
-    plt.show()
-
-    def likelihood_fn(params):
-        return gaussian_error_ln_likelihood(
-            fluxes,
-            None,
-            lambda params: flux_data_from_params(
-                stellar_params, params, times, analytical_bool=analytical_bool
-            ),
-            params,
-            sigma_n,
-        )
-
-    from mcmc import MCMC
-
-    mcmc = MCMC(
-        fluxes,
-        initial_params,
-        param_bounds,
-        proposal_std,
-        param_names=param_names,
-        likelihood_func=likelihood_fn,
-        max_cpu_nodes=1,
-    )
-
-    mcmc.metropolis_hastings(num_iterations)
-    mcmc.chain_to_plot_and_estimate(true_vals)
-    mcmc.corner_plot(true_vals)
-
-    plt.title("Difference between true and estimated fluxes")
-    plt.xlabel("Time")
-    plt.ylabel("Difference in Fluxes")
-    plt.plot(
-        times,
-        flux_data_from_params(
-            stellar_params, mcmc.chain[-1], times, analytical_bool=True
-        )
-        - flux_data_from_params(
-            stellar_params, true_vals, times, analytical_bool=True
-        ),
-    )
-    plt.show()
-
-
-    plt.title("True and estimated fluxes")
-    plt.xlabel("Time")
-    plt.ylabel("Flux")
-    plt.plot(
-        times,
-        flux_data_from_params(
-            stellar_params, mcmc.chain[-1], times, analytical_bool=True
-        ),
-        label="Estimated",
-    )
-    plt.plot(
-        times,
-        flux_data_from_params(
-            stellar_params, true_vals, times, analytical_bool=True
-        ),
-        label="True",
-    )
-    plt.legend()
-    plt.show()
-    print(mcmc.acceptance_num)
-    # mcmc = MCMC(fluxes, initial_params, param_bounds, proposal_std,
-    #             param_names=param_names, likelihood_func=likelihood_fn, max_cpu_nodes=4)
-    # mcmc.metropolis_hastings(50_000)
-    # mcmc.chain_to_plot_and_estimate(true_vals)
-    # mcmc.corner_plot(true_vals)
-    folder_names = [
-        "2024-11-06_run1",
-        "2024-11-06_run2",
-        "2024-11-06_run3",
-        "2024-11-06_run4",
-        "2024-11-06_run5",
+    loop_list = [
+        #  eta,    a,    p,    e,  inc, omega, big_ohm, phase_lag, mass
+        [ 3e-5,    0,    0,    0,    0,     0,       0,         0,    0],
+        [    0, 5e-6,    0,    0,    0,     0,       0,         0,    0],
+        [    0,    0, 5e-4,    0,    0,     0,       0,         0,    0],
+        [    0,    0,    0, 1e-6,    0,     0,       0,         0,    0],
+        [    0,    0,    0,    0,    0,     0,       0,         0,    0],
+        [    0,    0,    0,    0,    0,     0,       0,         0,    0],
+        [    0,    0,    0,    0,    0,     0,       0,         0,    0],
+        [    0,    0,    0,    0,    0,     0,       0,      4e-6,    0],
+        [ 3e-5, 5e-6,    0,    0,    0,     0,       0,         0,    0],
+        [ 3e-5,    0, 5e-4,    0,    0,     0,       0,         0,    0],
+        [ 3e-5,    0,    0, 1e-6,    0,     0,       0,         0,    0],
+        [ 3e-5,    0,    0,    0,    0,     0,       0,      4e-6,    0],
+        [ 3e-5, 5e-6, 5e-4,    0,    0,     0,       0,         0,    0],
+        [ 3e-5, 5e-6,    0, 1e-6,    0,     0,       0,         0,    0],
+        [ 3e-5, 5e-6,    0,    0,    0,     0,       0,      4e-6,    0],
+        [ 3e-5, 5e-6, 5e-4, 1e-6,    0,     0,       0,         0,    0],
+        [ 3e-5, 5e-6, 5e-4,    0,    0,     0,       0,      4e-6,    0],
+        [ 3e-5, 5e-6, 5e-4, 1e-6,    0,     0,       0,      4e-6,    0],
     ]
-    stats = Statistics(folder_names)
-    for mcmc in stats.loaded_mcmcs:
-        # mcmc.corner_plot(true_vals=true_vals, burn_in_index=1000)
-        mcmc.chain_to_plot_and_estimate(true_vals=true_vals)
-    # gr = stats.calc_gelman_rubin()
-    # print(f"The Gelman Rubin Statistic is {gr}")
+
+    print(f"{len(loop_list)=}")
+
+
+    sigma_n = 6 * 1e-3
+    fluxes = add_gaussian_error(inp_fluxes, 0, sigma_n)
+    
+    for loop_params in loop_list:
+        eta_std = 3e-5
+        eta_std = loop_params[0]
+
+        a_std = 5e-6
+        a_std = loop_params[1]
+
+        p_std = 5e-4
+        p_std = loop_params[2]
+        
+        e_std = 1e-6
+        e_std = loop_params[3]
+
+        inc_std = 0
+        inc_std = loop_params[4]
+
+        omega_std = 4e-5
+        omega_std = loop_params[5]
+
+        big_ohm_std = 0
+        big_ohm_std = loop_params[6]
+
+        phase_lag_std = 4e-6
+        phase_lag_std = loop_params[7]
+
+        mass_std = 3e-6 
+        mass_std = 0
+        
+        param_names = np.array([
+            # [r"\eta_1", "a_1", "P_1", "e_1", "inc_1", "omega_1", "big_ohm_1", "phase_lag_1", "mass_1"],
+            [r"\eta_2", "a_2", "P_2", "e_2", "inc_2", "omega_2", "big_ohm_2", "phase_lag_2", "mass_2"]
+        ])
+        true_vals = np.array([
+            [0.3, 0.08215, 8.803809, 0.208, np.radians(90), 0, 0, 0, 0.287],
+            [0.4, 0.2044, 34.525, 0.1809, np.radians(90), 0, 0, np.pi / 4, 0.392]
+        ])
+        initial_params = np.array([
+            [0.3 + 10 * eta_std, 0.08215 + 10 * a_std, 8.803809 + 10 * p_std, 0.208 + 10 * e_std, np.radians(90) + 10 * inc_std, 0 + 10 * omega_std, 0 + 10 * big_ohm_std, 0 + 10 * phase_lag_std, 0.287 + 10 * mass_std], 
+            [0.4 + 10 * eta_std, 0.2044 + 10 * a_std, 34.525+ 10*p_std, 0.1809 + 10 * e_std , np.radians(90) + 10 * inc_std, 0 + 10 * omega_std, 0 + 10 * big_ohm_std, np.pi / 4 + 10 * phase_lag_std, 0.392 + 10 * mass_std]
+        ])
+
+        proposal_std = np.array([
+            [eta_std, a_std, p_std, e_std, inc_std, omega_std, big_ohm_std, phase_lag_std, mass_std],  # Planet 1
+            [eta_std, a_std, p_std, e_std, inc_std, omega_std, big_ohm_std, phase_lag_std, mass_std],  # Planet 2
+        ])
+
+        param_bounds = np.array([
+            [(0.2, 0.7), (0.08, 0.3), (0, 1e1000), (0, 0.3), (np.radians(86.8), np.pi), (-np.pi/8, np.pi/8), (-np.pi/8, np.pi/8), (-np.pi/8, np.pi/8), (0, 6000)],
+            [(0.2, 0.7), (0.08, 0.3), (0, 1e1000), (0, 0.3), (np.radians(86.8), np.pi), (-np.pi/8, np.pi/8), (-np.pi/8, np.pi/8), (0, np.pi/2), (0, 6000)]
+        ])
+
+
+
+        analytical_bool = True
+
+        param_names, true_vals, initial_params, proposal_std, param_bounds = prepare_arrays_for_mcmc(param_names, 
+                                                                                                    true_vals, 
+                                                                                                    initial_params, 
+                                                                                                    proposal_std, 
+                                                                                                    param_bounds,
+                                                                                                    analytical_bool)
+        
+        num_iterations = int(1_00_00)
+
+        radius_WASP148A = 0.912 * 696.34e6 / 1.496e11
+        mass_WASP148A = 0.9540 * 2e30 / 6e24
+
+        stellar_params = [radius_WASP148A, mass_WASP148A]  # Based on WASP 148
+
+        # Plot to check
+        plt.subplot(2, 1, 1)
+        plt.plot(times, inp_fluxes)
+        plt.title("Original Data")
+        plt.subplot(2, 1, 2)
+        fluxes = add_gaussian_error(fluxes, 0, sigma_n)
+        plt.plot(times, fluxes)
+        plt.title("Data with Gaussian Noise")
+        # plt.show()
+
+        def likelihood_fn(params):
+            return gaussian_error_ln_likelihood(
+                fluxes,
+                None,
+                lambda params: flux_data_from_params(
+                    stellar_params, params, times, analytical_bool=analytical_bool
+                ),
+                params,
+                sigma_n,
+            )
+
+        from mcmc import MCMC
+
+        mcmc = MCMC(
+            fluxes,
+            initial_params,
+            param_bounds,
+            proposal_std,
+            param_names=param_names,
+            likelihood_func=likelihood_fn,
+            max_cpu_nodes=1,
+        )
+
+        mcmc.metropolis_hastings(num_iterations)
+        mcmc.chain_to_plot_and_estimate(true_vals)
+        mcmc.corner_plot(true_vals)
+
+        plt.title("Difference between true and estimated fluxes")
+        plt.xlabel("Time")
+        plt.ylabel("Difference in Fluxes")
+        plt.plot(
+            times,
+            flux_data_from_params(
+                stellar_params, mcmc.chain[-1], times, analytical_bool=True
+            )
+            - flux_data_from_params(
+                stellar_params, true_vals, times, analytical_bool=True
+            ),
+        )
+        # plt.show()
+        plt.close()
+
+
+        plt.title("True and estimated fluxes")
+        plt.xlabel("Time")
+        plt.ylabel("Flux")
+        plt.plot(
+            times,
+            flux_data_from_params(
+                stellar_params, mcmc.chain[-1], times, analytical_bool=True
+            ),
+            label="Estimated",
+        )
+        plt.plot(
+            times,
+            flux_data_from_params(
+                stellar_params, true_vals, times, analytical_bool=True
+            ),
+            label="True",
+        )
+        plt.legend()
+        # plt.show()
+        plt.close()
+        print(mcmc.acceptance_num)
+        # mcmc = MCMC(fluxes, initial_params, param_bounds, proposal_std,
+        #             param_names=param_names, likelihood_func=likelihood_fn, max_cpu_nodes=4)
+        # mcmc.metropolis_hastings(50_000)
+        # mcmc.chain_to_plot_and_estimate(true_vals)
+        # mcmc.corner_plot(true_vals)
+        # folder_names = [
+        #     "2024-11-06_run1",
+        #     "2024-11-06_run2",
+        #     "2024-11-06_run3",
+        #     "2024-11-06_run4",
+        #     "2024-11-06_run5",
+        # ]
+        # stats = Statistics(folder_names)
+        # for mcmc in stats.loaded_mcmcs:
+        #     # mcmc.corner_plot(true_vals=true_vals, burn_in_index=1000)
+        #     mcmc.chain_to_plot_and_estimate(true_vals=true_vals)
+        # gr = stats.calc_gelman_rubin()
+        # print(f"The Gelman Rubin Statistic is {gr}")
 
 
 if __name__ == "__main__":
