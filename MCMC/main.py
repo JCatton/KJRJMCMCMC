@@ -35,7 +35,9 @@ def gaussian_error_ln_likelihood(
     sigma_n: float,
 ) -> float:
     log_prior = 0
+
     if prior_funcs is not None:
+        params = np.reshape(params, prior_funcs.shape)
         for p_fns, body_params in zip(prior_funcs, params):
                 log_prior += np.sum(
                     np.log([p_fn(param) for p_fn, param in zip(p_fns, body_params) if p_fn])
@@ -141,8 +143,8 @@ def main():
     #         param_bounds[body_idx].append((tv - 5 * proposal_std[body_idx, param_idx], tv + 5 * proposal_std[body_idx, param_idx]))
 
     param_bounds = [
-        [(0.05, 0.25), (0, 1e10), (0.04, 0.2), (0, 0.3), (np.radians(86.8), np.pi), (-np.pi/8, np.pi/8), (-np.pi/8, np.pi/8), (-np.pi/8, np.pi/8)],
-        [(0.2, 0.4), (0, 1e10), (0.08, 0.18), (0, 0.3), (np.radians(86.8), np.pi), (-np.pi/8, np.pi/8), (-np.pi/8, np.pi/8), (0, np.pi/2)]
+        [(0.05, 0.25), (0, 1), (0.04, 0.2), (0, 0.4), (np.radians(80), np.pi), (-np.pi/4, np.pi/4), (-np.pi/4, np.pi/4), (-np.pi/2, np.pi/2)],
+        [(0.20, 0.40), (0, 1), (0.08, 0.18), (0, 0.4), (np.radians(80), np.pi), (-np.pi/4, np.pi/4), (-np.pi/4, np.pi/4), (-np.pi/2, np.pi/2)]
     ]
 
     priors = [
