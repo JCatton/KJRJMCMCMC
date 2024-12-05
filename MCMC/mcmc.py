@@ -54,6 +54,7 @@ class MCMC:
         proposal_std: ndarray,
         likelihood_func: Callable[[ndarray], float],
         param_names=list[str],
+        true_vals: Optional[ndarray] = None,
         specified_folder_name: Optional[str | Path] = None,
         max_cpu_nodes: int = 16,
         **kwargs,
@@ -65,6 +66,7 @@ class MCMC:
         self.data_folder = build_folder_name(specified_folder_name)
         self.param_names = param_names
         self.initial_parameters = initial_parameters
+        self.true_vals = true_vals
 
         # Diagnostics
         self.acceptance_num = 0
