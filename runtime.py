@@ -111,6 +111,50 @@ class RuntimePage(QWidget):
 
         main_layout.addLayout(right_layout)
 
+    def populate_input_fields(self) -> None:
+        """Populates the input fields with data from the loaded MCMC object."""
+        if self.mcmc is None:
+            return
+
+        num_bodies = self.mcmc.initial_parameters.shape[0]
+        num_parameters = len(self.parameter_names)
+
+        # Ensure the input fields are available
+        if not self.input_fields:
+            return
+
+        for body_index in range(num_bodies):
+            # True Values
+            if hasattr(self.mcmc, 'true_vals'):
+                true_vals = self.mcmc.true_vals[body_index]
+                for param_index in range(num_parameters):
+                    input_field = self.input_fields[body_index]["True Values"][param_index]
+                    input_field.setText(str(true_vals[param_index]))
+
+            # Initial Parameters
+            initial_params = self.mcmc.initial_parameters[body_index]
+            for param_index in range(num_parameters):
+                input_field = self.input_fields[body_index]["Initial Values"][param_index]
+                input_field.setText(str(initial_params[param_index]))
+
+            # Proposal Std
+            proposal_std = self.mcmc.proposal_std[body_index]
+            for param_index in range(num_parameters):
+                input_field = self.input_fields[body_index]["Proposal Std"][param_index]
+                input_field.setText(str(proposal_std[param_index]))
+
+            # Param Bounds
+            param_bounds = self.mcmc.param_bounds[body_index]
+            for param_index in range(num_parameters):
+                bounds_fields = self.input_fields[body_index]["Param Bounds"][param_index]
+                lower_field = bounds_fields['lower']
+                upper_field = bounds_fields['upper']
+                lower_bound = param_bounds[param_index][0]
+                upper_bound = param_bounds[param_index][1]
+                lower_field.setText(str(lower_bound))
+                upper_field.setText(str(upper_bound))
+
+
     @Slot()
     def load_mcmc(self) -> None:
         """Opens a dialog to select an existing MCMC directory and loads the MCMC object."""
@@ -119,6 +163,18 @@ class RuntimePage(QWidget):
             try:
                 self.mcmc = MCMC.load(Path(dir_path))
                 self.console.append(f"Loaded MCMC from {dir_path}")
+
+                # Get the number of bodies from the loaded MCMC object
+                num_bodies = self.mcmc.initial_parameters.shape[0]
+
+                # Update the bodies spinbox and body widgets
+                self.bodies_spinbox.blockSignals(True)  # Block signals to prevent unnecessary updates
+                self.bodies_spinbox.setValue(num_bodies)
+                self.bodies_spinbox.blockSignals(False)
+                self.update_body_widgets()
+
+                # Populate input fields with data from the MCMC object
+                self.populate_input_fields()
             except Exception as e:
                 self.console.append(f"Error loading MCMC: {e}")
 
@@ -147,8 +203,10 @@ class RuntimePage(QWidget):
         """Updates the body widgets based on the number of bodies selected."""
         # Clear existing widgets and layouts
         self.clear_layout(self.parameter_layout)
+        self.input_fields.clear()  # Clear the input fields dictionary
 
         num_bodies = self.bodies_spinbox.value()
+        self.input_fields = {}  # Reset the input fields dictionary
 
         grid_layout = QGridLayout()
 
@@ -161,6 +219,9 @@ class RuntimePage(QWidget):
         current_row = 1  # Start from row 1 since row 0 is for parameter names
 
         for body_index in range(num_bodies):
+            # Initialize the body index in input_fields
+            self.input_fields[body_index] = {}
+
             # Add "Body N" label spanning multiple rows
             body_label = QLabel(f"Body {body_index + 1}")
             body_label.setAlignment(Qt.AlignCenter)
@@ -170,6 +231,9 @@ class RuntimePage(QWidget):
             # Rows: True Values, Initial Values, Proposal Std, Param Bounds
             row_labels = ["True Values", "Initial Values", "Proposal Std", "Param Bounds"]
             for row_offset, row_label in enumerate(row_labels):
+                # Initialize the row label in input_fields
+                self.input_fields[body_index][row_label] = {}
+
                 # Add row label
                 label = QLabel(row_label)
                 label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
@@ -189,9 +253,18 @@ class RuntimePage(QWidget):
                         container_widget = QWidget()
                         container_widget.setLayout(bounds_layout)
                         grid_layout.addWidget(container_widget, current_row + row_offset, col_index)
+
+                        # Store references to the lower and upper bound input fields
+                        self.input_fields[body_index][row_label][col] = {
+                            'lower': lower_input,
+                            'upper': upper_input
+                        }
                     else:
                         input_field = QLineEdit()
                         grid_layout.addWidget(input_field, current_row + row_offset, col_index)
+
+                        # Store reference to the input field
+                        self.input_fields[body_index][row_label][col] = input_field
 
             current_row += row_span  # Move to the next set of rows for the next body
 
