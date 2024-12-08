@@ -349,6 +349,30 @@ class MCMC:
         plt.tight_layout()
         plt.show()
 
+        fig.suptitle("Parameter Iterations After Burn In")
+        plt.xlabel("Iteration #")
+        chain = chain[self.burn_in_index:]
+        x = np.arange(len(chain))
+
+        for body in range(chain.shape[1]):
+            for i, name in enumerate(param_names[body]):
+                param_samples = chain[:, body, i]
+                print(
+                    f"Estimated {name}: {np.mean(param_samples):.3e}",
+                    f", true {name}: {true_vals[body, i]}" if true_vals is not None else None,
+                )
+                axs[i, body].plot(x, param_samples, label=name)
+                if true_vals is not None:
+                    axs[i, body].hlines(true_vals[body, i], xmin=0, xmax=len(chain), linestyles="--", color="red")
+                min_val, max_val = minmax(param_samples)
+                axs[i, body].vlines(self.burn_in_index, ymin=max_val,
+                                    ymax=min_val, linestyles="dotted",
+                                    color="red")
+                axs[i, body].set_ylabel(f"{name}")
+
+        plt.tight_layout()
+        plt.show()
+
     def corner_plot(
         self, true_vals: Optional[np.ndarray] = None, burn_in_index: int = None
     ):
