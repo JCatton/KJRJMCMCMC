@@ -73,7 +73,7 @@ def prepare_arrays_for_mcmc(param_names, true_vals, initial_params, proposal_std
         return param_names, true_vals, initial_params, proposal_std, param_bounds
         
 
-def inclination_checker(proposals: np.ndarray, indices: tuple[int, int, int, int], r_star: float) -> bool:
+def inclination_checker(proposals: np.ndarray, indices: tuple[int, int, int, int, int], r_star: float) -> bool:
     """
     Check if the inclinations of the planets are above the critical value.
 
@@ -86,8 +86,8 @@ def inclination_checker(proposals: np.ndarray, indices: tuple[int, int, int, int
     - Boolean indicating if all inclinations are above the critical value
     """
 
-    a_idx, e_idx, omega_idx, inc_idx = indices
-
+    eta_idx, a_idx, e_idx, omega_idx, inc_idx = indices
+    eta = proposals[0, :, eta_idx]
     a = proposals[0, :, a_idx]
     e = proposals[0, :, e_idx]
     omega = proposals[0, :, omega_idx]
@@ -95,7 +95,7 @@ def inclination_checker(proposals: np.ndarray, indices: tuple[int, int, int, int
 
     # Calculate the critical inclination
     r = a * (1 - e**2) / (1 + e * np.cos(3* np.pi / 2 - omega))
-    critical_inc = np.arccos(r_star / r)
+    critical_inc = np.arccos((r_star*(1+eta)) / r)
 
     return np.all(inc >= critical_inc) # Return True if all inclinations are above the critical value
 
@@ -163,7 +163,7 @@ def main():
     plt.show()
 
 
-    indices = (1, 3, 5, 4)  # Indicies after cutting up (a_idx, e_idx, omega_idx, inc_idx) 
+    indices = (0, 1, 3, 5, 4)  # Indicies after cutting up (eta_idx, a_idx, e_idx, omega_idx, inc_idx) 
     r_star = stellar_params[0]  # Stellar radius
 
 
