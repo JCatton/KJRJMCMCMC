@@ -70,11 +70,12 @@ class MCMC:
         self,
         raw_data: ndarray,
         initial_parameters: ndarray,
-        param_bounds: List[List[Tuple[float, float]]],
+        param_bounds: ndarray[List[Tuple[float, float]]],
         proposal_std: ndarray,
         likelihood_func: Callable[[ndarray], float],
         param_names=list[str],
         specified_folder_name: Optional[str | Path] = None,
+        inclination_rejection_func: Optional[Callable[[ndarray], bool]] = None,
         priors: Optional[ndarray[Callable]] = None,
         prior_transforms: Optional[ndarray[Callable]] = None,
         max_cpu_nodes: int = 16,
@@ -98,14 +99,16 @@ class MCMC:
         self.var: Optional[np.ndarray] = None
         self.burn_in_index: Optional[int] = None
         self.remaining_chain_length = None
+        self.fisher_information: Optional[np.ndarray] = None
 
         # MCMC-Inputs
         self.raw_data: ndarray = raw_data
-        self.param_bounds = np.array(param_bounds)
+        self.param_bounds = param_bounds
         self.lower_bounds = self.param_bounds[:, :, 0]
         self.upper_bounds = self.param_bounds[:, :, 1]
         self.proposal_std: ndarray = proposal_std
         self.likelihood_func: Callable = likelihood_func
+        self.inclination_rejection_func: Callable = inclination_rejection_func
 
         # MCMC-Runtime
         empty_chain = np.empty_like(
@@ -225,8 +228,8 @@ class MCMC:
             self.likelihood_chain, shape=max_iteration_number
         )
 
-        empty_chain[: self.iteration_num + 1] = self.chain
-        empty_likelihood[: self.iteration_num + 1] = self.likelihood_chain
+        empty_chain[: len(self.chain)] = self.chain
+        empty_likelihood[: len(self.chain)] = self.likelihood_chain
 
         self.chain = empty_chain
         self.likelihood_chain = empty_likelihood
@@ -234,19 +237,26 @@ class MCMC:
         prev_iter = self.iteration_num - 1
 
         pbar = tqdm(
-            initial=self.iteration_num, total=max_iteration_number - 1, desc="MCMC Run "
+            initial=1, total=num_of_new_iterations, desc="MCMC Run "
         )
 
         remaining_iter = num_of_new_iterations
         while self.iteration_num < (max_iteration_number - 1):
             current_params = self.chain[prev_iter]
             current_likelihood = self.likelihood_chain[prev_iter]
-
             proposals = current_params + normal(
                 0, self.proposal_std, size=(self.sim_number, *self.chain[0].shape)
             )
 
             proposal_within_bounds = self.proposal_within_bounds(proposals)
+
+            if self.inclination_rejection_func and not self.inclination_rejection_func(proposals):
+                self.rejection_num += 1
+                self.chain[prev_iter + 1] = current_params
+                self.likelihood_chain[prev_iter + 1] = current_likelihood
+                self.iteration_num += 1
+                prev_iter += 1
+                continue  # Skip to the next iteration
 
             # Keep clipping as easiest solution that works with multiprocessing and
             # negligible run cost
@@ -308,18 +318,18 @@ class MCMC:
         self.likelihood_chain = self.likelihood_chain[:-1]
         print(f"{acceptance_rate=}")
         pbar.close()
-        self.mean = np.mean(self.chain, axis=0)
-        self.var = np.var(self.chain, axis=0)
         self.determine_burn_in_index()
+        self.mean = np.mean(self.chain[self.burn_in_index:], axis=0)
+        self.var = np.var(self.chain[self.burn_in_index:], axis=0)
         self.save()
 
-    def chain_to_plot_and_estimate(self, true_vals: Optional[np.ndarray[float]] = None):
-
+    def chain_to_plot_and_estimate(self, true_vals: Optional[np.ndarray[float]] = None, manual_burn_in_idx: int = 0):
+        if not isinstance(manual_burn_in_idx, np.int64 | int):
+            raise TypeError(f"{manual_burn_in_idx=} is not an integer")
         non_fixed_indexes = np.array(self.proposal_std, dtype=bool)
-        chain = np.stack([self.chain[:, i, non_fixed_indexes[i]] for i in range(self.chain.shape[1])], axis=1)
+        chain = np.stack([self.chain[manual_burn_in_idx:, i, non_fixed_indexes[i]] for i in range(self.chain.shape[1])], axis=1)
         param_names = np.stack([self.param_names[i, non_fixed_indexes[i]] for i in range(self.param_names.shape[0])], axis=0)
-        true_vals = np.stack([true_vals[i, non_fixed_indexes[i]] for i in range(true_vals.shape[0])], axis=0)
-        likelihoods = self.likelihood_chain
+        likelihoods = self.likelihood_chain[manual_burn_in_idx:]
 
         # print(f"{chain.shape=}, {param_names.shape=}, {true_vals.shape=}")
 
@@ -329,6 +339,12 @@ class MCMC:
         plt.xlabel("Iteration #")
         x = np.arange(len(chain))
         plt.plot(x, likelihoods)
+
+        if true_vals is not None:
+            true_likelihoods = np.array(self.likelihood_func(true_vals))
+            true_vals = np.stack([true_vals[i, non_fixed_indexes[i]] for i in range(true_vals.shape[0])], axis=0)
+            plt.hlines(true_likelihoods, xmin=0, xmax=len(chain), linestyles="--", color="red")
+
         plt.ylabel(r"Log Likelihoods")
         plt.tight_layout()
         plt.show()
@@ -336,9 +352,18 @@ class MCMC:
         fig, axs = plt.subplots(
             nrows=chain.shape[2], ncols=chain.shape[1], figsize=(10, 8)
         )
+            # Ensure axs is always 2D
+        if chain.shape[2] == 1 and chain.shape[1] == 1:
+            axs = np.array([[axs]])  # Wrap single axes into a 2D array
+        elif chain.shape[1] == 1:
+            axs = np.expand_dims(axs, axis=1)  # Add column dimension
+        elif chain.shape[2] == 1:
+            axs = np.expand_dims(axs, axis=0)  # Add row dimension
+
+        print(f"nrows = {chain.shape[2]=}, ncols={chain.shape[1]=}")
         # axs = axs.reshape(chain[0].shape)
         fig.suptitle("Parameter Iterations")
-        plt.xlabel("Iteration #")
+
         x = np.arange(len(chain))
 
         for body in range(chain.shape[1]):
@@ -349,14 +374,43 @@ class MCMC:
                     f", true {name}: {true_vals[body, i]}" if true_vals is not None else None,
                 )
                 axs[i, body].plot(x, param_samples, label=name)
+                if true_vals is not None:
+                    axs[i, body].hlines(true_vals[body, i], xmin=0, xmax=len(chain), linestyles="--", color="red")
                 min_val, max_val = minmax(param_samples)
                 axs[i, body].vlines(self.burn_in_index, ymin=max_val,
                                     ymax=min_val, linestyles="dotted",
                                     color="red")
                 axs[i, body].set_ylabel(f"{name}")
-
+        plt.xlabel("Iteration #")
         plt.tight_layout()
         plt.show()
+
+        # fig, axs = plt.subplots(
+        #     nrows=chain.shape[2], ncols=chain.shape[1], figsize=(10, 8)
+        # )
+        # fig.suptitle("Parameter Iterations After Burn In")
+        # plt.xlabel("Iteration #")
+        # chain = chain[self.burn_in_index:]
+        # x = np.arange(len(chain))
+        #
+        # for body in range(chain.shape[1]):
+        #     for i, name in enumerate(param_names[body]):
+        #         param_samples = chain[:, body, i]
+        #         print(
+        #             f"Estimated {name}: {np.mean(param_samples):.3e}",
+        #             f", true {name}: {true_vals[body, i]}" if true_vals is not None else None,
+        #         )
+        #         axs[i, body].plot(x, param_samples, label=name)
+        #         if true_vals is not None:
+        #             axs[i, body].hlines(true_vals[body, i], xmin=0, xmax=len(chain), linestyles="--", color="red")
+        #         min_val, max_val = minmax(param_samples)
+        #         axs[i, body].vlines(self.burn_in_index, ymin=max_val,
+        #                             ymax=min_val, linestyles="dotted",
+        #                             color="red")
+        #         axs[i, body].set_ylabel(f"{name}")
+        #
+        # plt.tight_layout()
+        # plt.show()
 
     def corner_plot(
         self, true_vals: Optional[np.ndarray] = None, burn_in_index: int = None
@@ -406,14 +460,14 @@ class MCMC:
         """
         max_idx = self.likelihood_chain.argmax()
         max_likelihood = self.likelihood_chain[max_idx]
-        ten_perc_iter = self.iteration_num // 10
-        upper_var_iter = min(self.iteration_num, max_idx + ten_perc_iter)
-        lower_var_iter = max(0, max_idx - ten_perc_iter)
+        two_perc_iter = self.iteration_num // 50
+        upper_var_iter = min(self.iteration_num, max_idx + two_perc_iter)
+        lower_var_iter = max(0, max_idx - two_perc_iter)
         var = np.std(self.likelihood_chain[lower_var_iter : upper_var_iter])
-        lower_likelihood = max_likelihood - 5 * var
+        lower_likelihood = max_likelihood - var
         burn_in_idx = find_first_greater(self.likelihood_chain, lower_likelihood)
-        self.burn_in_index = burn_in_idx if burn_in_idx > 0 else None
-        return self.burn_in_index
+        self.burn_in_index = int(burn_in_idx)
+        return burn_in_idx
 
 
 class Statistics:

@@ -57,6 +57,56 @@ def extract_timeseries_data(file_location: str) -> (np.ndarray, np.ndarray):
     timeseries = np.load(file_location, allow_pickle=True)
     return timeseries[0], timeseries[1]
 
+def prepare_arrays_for_mcmc(param_names, true_vals, initial_params, proposal_std, param_bounds, analytical_bool):
+    if analytical_bool is None:
+        raise ValueError("analytical_bool must be set to True or False")
+
+    if analytical_bool:
+        param_names = param_names[:, :-1]
+        true_vals = true_vals[:, :-1]
+        initial_params = initial_params[:, :-1]
+        proposal_std = proposal_std[:, :-1]
+        param_bounds = param_bounds[:, :-1]
+        return param_names, true_vals, initial_params, proposal_std, param_bounds
+
+    elif analytical_bool == False:
+        n_body_mask = np.array([True, False, True, True, True, True, True, True, True])
+        param_names = param_names[:, n_body_mask]
+        true_vals = true_vals[:, n_body_mask]
+        initial_params = initial_params[:, n_body_mask]
+        proposal_std = proposal_std[:, n_body_mask]
+        param_bounds = param_bounds[:, n_body_mask]
+        return param_names, true_vals, initial_params, proposal_std, param_bounds
+
+
+def inclination_checker(proposals: np.ndarray, indices: tuple[int, int, int, int, int], r_star: float) -> bool:
+    """
+    Check if the inclinations of the planets are above the critical value.
+
+    Parameters:
+    - proposals: Array of proposals
+    - indices: Tuple of indices (a_idx, e_idx, omega_idx, inc_idx)
+    - r_star: Radius of the star
+
+    Returns:
+    - Boolean indicating if all inclinations are above the critical value
+    """
+
+    eta_idx, a_idx, e_idx, omega_idx, inc_idx = indices
+    eta = proposals[0, :, eta_idx]
+    a = proposals[0, :, a_idx]
+    e = proposals[0, :, e_idx]
+    omega = proposals[0, :, omega_idx]
+    inc = proposals[0, :, inc_idx]
+
+    # Calculate the critical inclination
+    r = a * (1 - e**2) / (1 + e * np.cos(3* np.pi / 2 - omega))
+    critical_inc = np.arccos((r_star*(1+eta)) / r)
+
+    return np.all(inc >= critical_inc) # Return True if all inclinations are above the critical value
+
+
+
 
 def prior_transform_calcs(priors: List[List[Optional[Dict]]],
                           param_bounds: List[List[Tuple]],
@@ -88,65 +138,37 @@ def prior_transform_calcs(priors: List[List[Optional[Dict]]],
 
 
 def main():
-
     # Generate synthetic data
     # times, inp_fluxes = extract_timeseries_data(r"C:\Users\jonte\PycharmProjects\KJRJMCMCMC\sim\Outputs\Example\timeseries_flux.npy")
 
     times = np.load("TestTimesMultiple.npy")
     inp_fluxes = np.load("TestFluxesMultiple.npy")
 
-    # #Stellar params = [radius (in AU), mass]
-    # stellar_params = np.array([100 * 4.2635e-5, 333000 * 1.12])
-    # Initial parameter guesses
-    # param_names = np.array([r"\eta radius", "mass", "orbital radius", "eccentricity", r"\omega (phase)"])
-    # true_vals = np.array([0.1, 90.26, 0.045, 0.000, 0])
-
-    # initial_params = np.array([[0.1 + 0.001, 90.26, 0.045, 0, 0-0.0001]])
-    # proposal_std = np.array([3*1e-4, 0, 5*1e-7, 1e-5, 0])
-    # param_bounds = [(0,1), (0, 1e15), (1e-6, 1e5), (0, 0.99), (-np.pi, np.pi)]
-
-    # planet_params =[ [ eta,   P,     a,   e,               inc, omega, OHM, phase_lag ] ]
-    # planet_params =  np.array([[  eta1, 8.8, 0.08, 0.208, np.radians(90),   0, 0,  0]
     param_names = np.array([
-        [r"\eta_1", "P_1", "a_1", "e_1", "inc_1", "omega_1", "OHM_1", "phase_lag_1"],
-        [r"\eta_2", "P_2", "a_2", "e_2", "inc_2", "omega_2", "OHM_2", "phase_lag_2"]
+        [r"\eta_1", "a_1", "P_1", "e_1", "inc_1", "omega_1", "big_ohm_1", "phase_lag_1", "mass_1"],
+        [r"\eta_2", "a_2", "P_2", "e_2", "inc_2", "omega_2", "big_ohm_2", "phase_lag_2", "mass_2"]
     ])
 
     true_vals = np.array([
-            [0.1, 8.8, 0.08, 0.208, np.radians(90), 0, 0, 0],
-            [0.3, 12, 0.101, 0.1809, np.radians(90), 0, 0, np.pi / 4]
+        [0.1, 0.08215, 8.803809, 0.208, np.radians(90), 0, 0, 0, 0.287],
+        [0.3, 0.2044, 34.525, 0.1809, np.radians(90), 0, 0, np.pi / 4, 0.392]
     ])
     initial_params = np.array([
-            [0.1+0.05, 8.8, 0.08, 0.208, np.radians(90), 0, 0, 0],
-            [0.3-0.05, 12, 0.101, 0.1809, np.radians(90), 0, 0, np.pi / 4]
+        [0.1+0.05, 0.08215-0.003, 8.803809 - 0.02, 0.208- 0.03, np.radians(90), 0, 0, 0, 0.287],
+        [0.3+0.1, 0.2044 + 0.003, 34.525+0.002, 0.1809 + 0.007, np.radians(90), 0, 0, np.pi / 4 + np.pi/100, 0.392]
     ])
 
     proposal_std = np.array([
-        [3e-4, 0, 0, 0, 0, 0, 0, 1e-6],  # Planet 1
-        [3e-4, 0, 0, 0, 0, 0, 0, 1e-6],  # Planet 2
+        [1e-5, 1e-5, 1e-5, 1e-5, 0, 0, 0, 0, 0],  # Planet 1
+        [1e-5, 1e-5, 1e-5, 1e-5, 0, 0, 0, 0, 0],   # Planet 2
     ])
 
-    # parameters = {
-    #         {
-    #                 "param_name":r"\eta_1",
-    #                 "param_num":1,
-    #                 "true_vals":0.1,
-    #                 "initial_vals":0.1,
-    #                 "proposal_stds":3e-5,
-    #                 "param_bounds":(0.05, 0.25),
-    #         }
-    # }
-    # param_bounds = []
-    # for body_idx, tvs in enumerate(true_vals):
-    #     param_bounds.append([])
-    #     for param_idx, tv in enumerate(tvs):
-    #         param_bounds[body_idx].append((tv - 5 * proposal_std[body_idx, param_idx], tv + 5 * proposal_std[body_idx, param_idx]))
 
-    param_bounds = [
-        [(0.05, 0.25), (0, 1), (0.04, 0.2), (0, 0.4), (np.radians(80), np.pi), (-np.pi/4, np.pi/4), (-np.pi/4, np.pi/4), (-np.pi/2, np.pi/2)],
-        [(0.20, 0.40), (0, 1), (0.08, 0.18), (0, 0.4), (np.radians(80), np.pi), (-np.pi/4, np.pi/4), (-np.pi/4, np.pi/4), (-np.pi/2, np.pi/2)]
-    ]
-
+    analytical_bool = True
+    param_bounds = np.array([
+        [(0.05, 0.15), (0.04, 0.2), (0, 1e10), (0, 0.3), (np.radians(86.8), np.pi), (-np.pi/8, np.pi/8), (-np.pi/8, np.pi/8), (-np.pi/8, np.pi/8), (0, 6000)],
+        [(0.2, 0.4), (0.08, 0.3), (0, 1e10), (0, 0.3), (np.radians(86.8), np.pi), (-np.pi/8, np.pi/8), (-np.pi/8, np.pi/8), (0, np.pi/2), (0, 6000)]
+    ])
     priors = [
         [{"distribution": "gaussian", "lower_bound": 0.05, "upper_bound":0.15, "mean": 0.1, "std":5*1e-2}, None, None, None, None, None, None, None],
         [{"distribution": "gaussian", "lower_bound": 0.25, "upper_bound":0.35, "mean": 0.3, "std":5*1e-2}, None, None, None, None, None, None, None]
@@ -154,15 +176,22 @@ def main():
 
     priors, prior_transform_funcs = prior_transform_calcs(priors, param_bounds, proposal_std, initial_params)
 
+    param_names, true_vals, initial_params, proposal_std, param_bounds = prepare_arrays_for_mcmc(param_names,
+                                                                                                 true_vals,
+                                                                                                 initial_params,
+                                                                                                 proposal_std,
+                                                                                                 param_bounds,
+                                                                                                 analytical_bool)
 
-    sigma_n = 6 * 1e-4
+    print(param_names.shape, true_vals.shape, initial_params.shape, proposal_std.shape, param_bounds.shape)
+    sigma_n = 1e-3
     fluxes = add_gaussian_error(inp_fluxes, 0, sigma_n)
-    num_iterations = int(1_000_000)
+    num_iterations = int(5_000_000)
 
-    radius_WASP148A = 0.912 * 696.34e6 / 1.496e11
-    mass_WASP148A = 0.9540 * 2e30 / 6e24
+    radius_wasp148_a = 0.912 * 696.34e6 / 1.496e11
+    mass_wasp_a = 0.9540 * 2e30 / 6e24
 
-    stellar_params = [radius_WASP148A, mass_WASP148A]  # Based on WASP 148
+    stellar_params = [radius_wasp148_a, mass_wasp_a]  # Based on WASP 148
 
     # Plot to check
     plt.subplot(2, 1, 1)
@@ -174,12 +203,17 @@ def main():
     plt.title("Data with Gaussian Noise")
     plt.show()
 
+
+    indices = (0, 1, 3, 5, 4)  # Indicies after cutting up (eta_idx, a_idx, e_idx, omega_idx, inc_idx)
+    r_star = stellar_params[0]  # Stellar radius
+
+
     def likelihood_fn(params):
         return gaussian_error_ln_likelihood(
             fluxes,
             priors,
             lambda params: flux_data_from_params(
-                stellar_params, params, times, analytical_bool=True
+                stellar_params, params, times, analytical_bool=analytical_bool
             ),
             params,
             sigma_n,
@@ -194,50 +228,51 @@ def main():
         proposal_std,
         param_names=param_names,
         likelihood_func=likelihood_fn,
+        inclination_rejection_func=lambda proposals: inclination_checker(proposals, indices, r_star),
+        max_cpu_nodes=8,
         prior_transforms=prior_transform_funcs,
-        max_cpu_nodes=1,
     )
 
     mcmc.nested_sampling()
-    # mcmc.metropolis_hastings(num_iterations)
-    # mcmc.chain_to_plot_and_estimate(true_vals)
-    # mcmc.corner_plot(true_vals, burn_in_index=350_000)
-    #
-    # plt.title("Difference between true and estimated fluxes")
-    # plt.xlabel("Time")
-    # plt.ylabel("Difference in Fluxes")
-    # plt.plot(
-    #     times,
-    #     flux_data_from_params(
-    #         stellar_params, mcmc.chain[-1], times, analytical_bool=True
-    #     )
-    #     - flux_data_from_params(
-    #         stellar_params, true_vals, times, analytical_bool=True
-    #     ),
-    # )
-    # plt.show()
-    #
-    #
-    # plt.title("True and estimated fluxes")
-    # plt.xlabel("Time")
-    # plt.ylabel("Flux")
-    # plt.plot(
-    #     times,
-    #     flux_data_from_params(
-    #         stellar_params, mcmc.chain[-1], times, analytical_bool=True
-    #     ),
-    #     label="Estimated",
-    # )
-    # plt.plot(
-    #     times,
-    #     flux_data_from_params(
-    #         stellar_params, true_vals, times, analytical_bool=True
-    #     ),
-    #     label="True",
-    # )
-    # plt.legend()
-    # plt.show()
-    # print(mcmc.acceptance_num)
+    mcmc.metropolis_hastings(num_iterations)
+    mcmc.chain_to_plot_and_estimate(true_vals)
+    mcmc.corner_plot(true_vals)
+
+    plt.title("Difference between true and estimated fluxes")
+    plt.xlabel("Time")
+    plt.ylabel("Difference in Fluxes")
+    plt.plot(
+        times,
+        flux_data_from_params(
+            stellar_params, mcmc.chain[-1], times, analytical_bool=True
+        )
+        - flux_data_from_params(
+            stellar_params, true_vals, times, analytical_bool=True
+        ),
+    )
+    plt.show()
+
+
+    plt.title("True and estimated fluxes")
+    plt.xlabel("Time")
+    plt.ylabel("Flux")
+    plt.plot(
+        times,
+        flux_data_from_params(
+            stellar_params, mcmc.chain[-1], times, analytical_bool=True
+        ),
+        label="Estimated",
+    )
+    plt.plot(
+        times,
+        flux_data_from_params(
+            stellar_params, true_vals, times, analytical_bool=True
+        ),
+        label="True",
+    )
+    plt.legend()
+    plt.show()
+    print(mcmc.acceptance_num)
     # mcmc = MCMC(fluxes, initial_params, param_bounds, proposal_std,
     #             param_names=param_names, likelihood_func=likelihood_fn, max_cpu_nodes=4)
     # mcmc.metropolis_hastings(50_000)

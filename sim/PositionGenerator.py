@@ -12,96 +12,46 @@ import os
 from numba import jit
 
 
-def n_body_sim(
-    stellar_mass: float,
-    planet_params: np.ndarray,
-    samples_per_orbit: int = 60,
-    number_max_period: int = 4,
-    save_loc: str = None,
-) -> (np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray):
+@jit(nopython=True)
+def kepler_solver(mean_anomaly, p, e, a, tol=1e-9, max_iter=40):
     """
-    Simulate the N-body system of a star and multiple planets over time.
+    Solve Kepler's equation for true anomaly and orbital radius.
 
     Parameters:
-    - stellar_mass: Mass of the star
-    - planet_params: List of planet parameters [radius, mass, orbital radius, eccentricity, omega (phase)]
-    - samples_per_orbit: Number of samples per orbit for the shortest period planet
-    - number_max_period: Number of periods to simulate
-    - save_loc: Path to save the N-body outputs
+    - mean_anomaly: Mean anomaly of the planet
+    - p: Orbital period of the planet
+    - e: Eccentricity of the planet
+    - a: Semi-major axis of the planet
+    - tol: Tolerance for convergence
+    - max_iter: Maximum number of iterations
 
     Returns:
-    - Arrays of x, y, and z positions of the star and planets over time
-    - Unperturbed x and y positions of the planets
-    - Array of time values
+    - r: Orbital radius of the planet
+    - f: True anomaly of the planet
 
-    If save_loc is provided, the N-body outputs are saved as a .npz file
+
     """
-    sim = rebound.Simulation()
-    sim.units = ["mearth", "day", "AU"]  # Set units to Earth masses, days, and AU
+    # Initial guess for eccentric anomaly
+    eccentric_anomaly = mean_anomaly.copy()
+    for _ in range(max_iter):
+        # Newton-Raphson iteration
+        delta_e = (eccentric_anomaly - e * np.sin(eccentric_anomaly) - mean_anomaly) / \
+                  (1 - e * np.cos(eccentric_anomaly))
+        eccentric_anomaly -= delta_e
 
-    N = len(planet_params)
+        # Check for convergence
+        if np.all(np.abs(delta_e) < tol):
+            break
 
-    # Generate lists for unperturbed orbits for each planet
-    theta = np.linspace(0, 2 * np.pi, 100)
-    orbits_x = np.empty((N, len(theta)))
-    orbits_y = np.empty((N, len(theta)))
+    # true anomaly from Eccentric anomaly
+    sin_f = np.sqrt(1 - e**2) * np.sin(eccentric_anomaly) / (1 - e * np.cos(eccentric_anomaly))
+    cos_f = (np.cos(eccentric_anomaly) - e) / (1 - e * np.cos(eccentric_anomaly))
+    f = np.arctan2(sin_f, cos_f)
 
-    longest_period = 0
-    shortest_period = None
+    # Compute radius
+    r = a * (1 - e**2) / (1 + e * np.cos(f))
 
-    sim.add(m=stellar_mass)
-
-    # Add each planet to the simulation
-    for i, params in enumerate(planet_params):
-        radius, mass, semi_major_axis, eccentricity, omega = params
-
-        sim.add(
-            m=mass, a=semi_major_axis, e=eccentricity, omega=omega
-        )  # Add planet to simulation
-
-        r = (semi_major_axis * (1 - eccentricity**2)) / (
-            1 + eccentricity * np.cos(theta - omega)
-        )  # Calculate unperturbed orbit
-        x_orbit = r * np.cos(theta)
-        y_orbit = r * np.sin(theta)
-        orbits_x[i, :] = x_orbit
-        orbits_y[i, :] = y_orbit
-
-        period = sim.particles[-1].P  # Calculate period of planet
-        longest_period = max(longest_period, period)  # Update longest period
-        shortest_period = (
-            min(shortest_period, period) if shortest_period is not None else period
-        )  # Update shortest period
-
-    # Ensure a the smallest orbit is sampled enough (30 times is suggested in Pearson 2019)
-    time_step = 1 / samples_per_orbit * shortest_period
-    total_time = longest_period * number_max_period
-    number_steps = int(np.ceil(total_time / time_step))
-
-    x_pos = np.empty((N + 1, number_steps))  # N+1 to include the star (particle 0)
-    y_pos = np.empty((N + 1, number_steps))
-    times = np.linspace(0, total_time, number_steps)
-
-    # Integrate the simulation over time and save the positions
-    for i, t in tqdm(enumerate(times), total=len(times)):
-        sim.integrate(t)
-        for j in range(N + 1):  # Including the star (particle 0)
-            x_pos[j, i] = sim.particles[j].x
-            y_pos[j, i] = sim.particles[j].y
-
-    # Save the N-body outputs if save_loc is provided
-    if save_loc:
-        full_saveloc = fc.check_and_create_folder(save_loc)
-        np.savez(
-            os.path.join(full_saveloc, "N_body_outputs.npz"),
-            x_pos=x_pos,
-            y_pos=y_pos,
-            orbits_x=orbits_x,
-            orbits_y=orbits_y,
-            times=times,
-        )
-
-    return x_pos, y_pos, orbits_x, orbits_y, times
+    return r, f
 
 
 def n_body_sim_api(
@@ -115,13 +65,15 @@ def n_body_sim_api(
 
     Parameters:
     - stellar_mass: Mass of the star
-    - planet_params: List of array planet parameters
-                    [radius, mass, orbital radius, eccentricity, omega (phase)]
+    - planet_params: 2D numpy array where each row represents
+                     a planet's parameters as
+                     [p, e, inc, omega, big_ohm, phase_lag, mass]
 
     Returns:
     - Array of body, positions of the star and planets across time. [time_idx, body_idx, coord]
     """
     sim = rebound.Simulation()
+    num_steps_for_smallest_period = 50
     sim.units = ["mearth", "day", "AU"]  # Set units to Earth masses, days, and AU
 
     planet_num = len(planet_params)
@@ -129,31 +81,28 @@ def n_body_sim_api(
 
     sim.add(m=stellar_mass)
 
-    shortest_period = np.inf
+    shortest_period = np.min(planet_params[:,0])
+    sim.dt = shortest_period / num_steps_for_smallest_period
+    # Add planets to sim
     for params in planet_params:
-        radius, mass, semi_major_axis, eccentricity, omega = params
+        p, e, inc, omega, big_ohm, phase_lag, mass = params
+        mean_anomaly = phase_lag % (2 * np.pi)
+        sim.add(m=mass, P=p, e=e, inc = inc, omega=omega, Omega = big_ohm, M = mean_anomaly)
 
-        sim.add(m=mass, a=semi_major_axis, e=eccentricity, omega=omega)
-
-        period = sim.particles[-1].P
-        shortest_period = min(shortest_period, period)
+    sim.move_to_com()
 
     # +1 to include the star (particle 0)
     pos = np.empty((sample_num, planet_num + 1, 3), dtype=np.float64)
-
     for time_idx, time in enumerate(tqdm(times, disable=no_loading_bar)):
         sim.integrate(time)
-        for j in range(planet_num + 1):  # Including the star (particle 0)
-            pos[time_idx, :, :] = [[p.x, p.y, p.z] for p in sim.particles]
-
+        pos[time_idx, :, :] = [[p.x, p.y, -p.z] for p in sim.particles]
     return pos
 
 
 @jit
-def GenerateCoordinates(
-    eta: float,
-    p: float,
+def analytical_coordinate_generator(
     a: float,
+    p: float,
     e: float,
     inc: float,
     omega: float,
@@ -165,14 +114,19 @@ def GenerateCoordinates(
     Generate the x, y, and z coordinates of a planet over time.
 
     Parameters:
-    - eta, p, a, e, inc, omega, big_ohm, phase_lag: Planetary parameters
-    - time_array: Array of time values
+    - eta, a, p, e, inc, omega, big_ohm, phase_lag: Planetary parameters
+    - time_array: Array of time values in units of days
 
     Returns:
     - Arrays of x, y, and z coordinates of the planet over time
     """
-    f = 2 * np.pi * ((time_array) / p + phase_lag)
-    r = a * (1 - e**2) / (1 + e * np.cos(f))
+    mean_anomaly = 2 * np.pi * (time_array / p) + phase_lag
+    mean_anomaly = mean_anomaly % (2 * np.pi)  # Wrap to [0, 2π]
+
+    # Solve Kepler's equation to get radius and true anomaly
+    r, f = kepler_solver(
+        mean_anomaly, p, e, a
+    )
 
     x = r * (
         np.cos(big_ohm) * np.cos(omega + f)
@@ -197,7 +151,7 @@ def analytical_positions_api(
     Parameters:
     - planet_params: 2D numpy array where each row represents
                      a planet's parameters as
-                     [eta, p, a, e, inc, omega, big_ohm, phase_lag]
+                     [a, p, e, inc, omega, big_ohm, phase_lag]
     - times: Array of time values
 
     Returns:
@@ -208,25 +162,15 @@ def analytical_positions_api(
 
     pos = np.empty((sample_num, planet_num, 3), dtype=np.float64)
 
-    if len(planet_params.shape) != 1:
-        for i in range(planet_num):
-            eta, p, a, e, inc, omega, big_ohm, phase_lag = planet_params[i]
-            x, y, z = GenerateCoordinates(
-                eta, p, a, e, inc, omega, big_ohm, phase_lag, times
-            )
-            pos[:, i, 0] = x
-            pos[:, i, 1] = y
-            pos[:, i, 2] = z
-    else:
-        bodies = len(planet_params) // 8
-        for i in range(bodies):
-            eta, p, a, e, inc, omega, big_ohm, phase_lag = planet_params[i * 8: (i+1) * 8]
-            x, y, z = GenerateCoordinates(
-                eta, p, a, e, inc, omega, big_ohm, phase_lag, times
-            )
-            pos[:, i, 0] = x
-            pos[:, i, 1] = y
-            pos[:, i, 2] = z
+    for i in range(planet_num):
+        a, p, e, inc, omega, big_ohm, phase_lag = planet_params[i]
+        x, y, z = analytical_coordinate_generator(
+            a, p, e, inc, omega, big_ohm, phase_lag, times
+        )
+        pos[:, i, 0] = x
+        pos[:, i, 1] = y
+        pos[:, i, 2] = z
+
     return pos
 
 
@@ -234,37 +178,87 @@ if __name__ == "__main__":
     from sim.FluxCalculation import combined_delta_flux
     import matplotlib.pyplot as plt
 
+    # Test case with HD 23472 -> Barros et al., 2022
     times = np.load("TestTimes.npy")
-    radius_WASP148A = 0.912 * 696.34e6 / 1.496e11
-    mass_WASP148A = 0.9540 * 2e30 / 6e24
+    radius_HD23472 = 0.912 * 696.34e6 / 1.496e11
+    mass_HD23472 = 0.67 * 2e30 / 6e24 # random radi for all vals
 
-    stellar_params = [radius_WASP148A, mass_WASP148A]  # Based on WASP 148
+    stellar_params = [radius_HD23472, mass_HD23472]  # Based on WASP 148
 
+    # planet_params =[ [ eta,   a,     P,   e,               inc, omega, OHM, phase_lag, mass ] ]
     planet_params = np.array(
         [
-            [
-                0.1 + 0.001,
-                8.8,
-                0.08 + 0.001,
-                0.208 - 0.0003,
-                np.radians(88 + 0.002),
-                0,
-                0,
-                0 + np.pi / 8,
-            ],
-            [0.1 + 0.1, 8.8, 0.08 + 0.03, 0.208 - 0.001, np.radians(89.5), 0, 0, 0],
+            [0.1, 0.04298, 3.97664, 0.0700, np.radians(90), 0, np.pi/2, 0, 0.55],
+            [0.2, 0.0680, 7.90754, 0.0700, np.radians(90), 0, 0, np.pi/3, 0.72],
+            [0.3, 0.0906, 12.1621839, 0.0700, np.radians(90), 0, 0, np.pi/2, 0.77],
+            [0.4, 0.1162, 17.667087, 0.0720, np.radians(90), 0, 0, 2 * np.pi/3, 8.32],
+            [0.5, 0.1646, 29.79749, 0.063, np.radians(90), 0, 0, 3/5 * np.pi, 3.41]
         ]
     )
-    positions = analytical_positions_api(planet_params=planet_params, times=times)
-    print(positions.shape)
-    flux_values = combined_delta_flux(
-        x=positions[:, :, 0].transpose(),
-        y=positions[:, :, 1].transpose(),
-        z=positions[:, :, 2].transpose(),
+
+    positions_analytical = analytical_positions_api(planet_params=planet_params[:, 1:-1], times=times)
+    flux_values_analytical = combined_delta_flux(
+        x=positions_analytical[:, :, 0].transpose(),
+        y=positions_analytical[:, :, 1].transpose(),
+        z=positions_analytical[:, :, 2].transpose(),
         radius_star=stellar_params[0],
         eta_values=planet_params[:, 0],
         times=times,
     )
+    print(f"{positions_analytical.shape=}")
+    # plt.show()
 
-    plt.plot(times, flux_values)
+    positions_n_body = n_body_sim_api(
+        stellar_mass=stellar_params[1],
+        planet_params=planet_params[:, 2:],
+        times=times,
+    )
+    x = positions_n_body[:, :, 0].transpose()
+    y = positions_n_body[:, :, 1].transpose()
+    z = positions_n_body[:, :, 2].transpose()
+    print(f"{x.shape=}")
+    print(f"{np.max(y[0])}")
+    print(f"{np.max(y[1])}")
+    # print(f"{np.max(y[2])}")
+    x_s, y_s, z_s = x[0], y[0], z[0]
+    x_p_rel = (x[1:] - x_s)
+    y_p_rel = (y[1:] - y_s)
+    z_p_rel = (z[1:] - z_s)
+    print(f"{y_p_rel.shape=}")
+    print(f"{np.max(y_p_rel[:,0])=}")
+    # print(f"{np.max(y_p_rel[:,1])=}")
+    # print(f"{np.max(y_p_rel[2])=}")
+
+    flux_values_n_body = combined_delta_flux(
+        x=x_p_rel,
+        y=y_p_rel,
+        z=z_p_rel,
+        radius_star=stellar_params[0],
+        eta_values=planet_params[:, 0],
+        times=times,
+    )
+    print(f"{x_p_rel.shape=}")
+    colors = ["r", "g", "b", "black", "purple"]
+    for i in range(x_p_rel.shape[0]):
+        plt.plot(x_p_rel[i, :], y_p_rel[i, :], label = f"Planet {i} n_body", color = colors[i], alpha = 0.5)
+        plt.plot(x_p_rel[i, 0], y_p_rel[i, 0],  marker = "o", ms = 5, color = colors[i], alpha = 0.5)
+        plt.plot(x_p_rel[i, 500], y_p_rel[i, 500],  marker = "x", ms = 5, color = colors[i], alpha = 0.5)
+        plt.plot(x_p_rel[i, 1000], y_p_rel[i, 1000],  marker = "^", ms = 5, color = colors[i], alpha = 0.5)
+    for i in range(positions_analytical.shape[1]):
+        plt.plot(positions_analytical[:, i, 0], positions_analytical[:, i, 1], label = f"Planet {i} analytical, x,y", linestyle = "--", color = colors[i])
+        plt.plot(positions_analytical[0, i, 0], positions_analytical[0, i, 1], marker = "o", ms = 5, color = colors[i])
+
+        plt.plot(positions_analytical[500, i, 0], positions_analytical[500, i, 1], marker = "x", ms = 5, color = colors[i])
+        plt.plot(positions_analytical[1000, i, 0], positions_analytical[1000, i, 1], marker = "^", ms = 5, color = colors[i])
+
+    plt.title("Orbital Paths")
+    plt.legend()
+    plt.show()
+    plt.plot(times, flux_values_analytical, label = "Analytical")
+    plt.plot(times, flux_values_n_body, label = "N-Body", linestyle = "--")
+    plt.legend()
+
+    print(f"{np.max(a)=}, {np.min(a)=}")
+
+
     plt.show()
