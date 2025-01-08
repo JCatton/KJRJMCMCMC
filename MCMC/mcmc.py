@@ -325,6 +325,15 @@ class MCMC:
         fig, axs = plt.subplots(
             nrows=chain.shape[2], ncols=chain.shape[1], figsize=(10, 8)
         )
+            # Ensure axs is always 2D
+        if chain.shape[2] == 1 and chain.shape[1] == 1:
+            axs = np.array([[axs]])  # Wrap single axes into a 2D array
+        elif chain.shape[1] == 1:
+            axs = np.expand_dims(axs, axis=1)  # Add column dimension
+        elif chain.shape[2] == 1:
+            axs = np.expand_dims(axs, axis=0)  # Add row dimension
+
+        print(f"nrows = {chain.shape[2]=}, ncols={chain.shape[1]=}")
         # axs = axs.reshape(chain[0].shape)
         fig.suptitle("Parameter Iterations")
         plt.xlabel("Iteration #")
