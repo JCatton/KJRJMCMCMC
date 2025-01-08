@@ -119,20 +119,19 @@ def main():
         [0.3, 0.2044, 34.525, 0.1809, np.radians(90), 0, 0, np.pi / 4, 0.392]
     ])
     initial_params = np.array([
-        [0.1, 0.08215-0.003, 8.803809 - 0.02, 0.208- 0.03, np.radians(90), 0, 0, 0, 0.287],
-        [0.3, 0.2044 + 0.003, 34.525+0.002, 0.1809 + 0.007, np.radians(90), 0, 0, np.pi / 4 + np.pi/100, 0.392]
+        [0.1+0.05, 0.08215-0.003, 8.803809 - 0.02, 0.208- 0.03, np.radians(90), 0, 0, 0, 0.287],
+        [0.3+0.1, 0.2044 + 0.003, 34.525+0.002, 0.1809 + 0.007, np.radians(90), 0, 0, np.pi / 4 + np.pi/100, 0.392]
     ])
 
     proposal_std = np.array([
-        [3e-5, 5e-6, 5e-4, 1e-6, 0, 4e-5, 0, 4e-6, 3e-6],  # Planet 1
-        [3e-5, 5e-6, 5e-4, 1e-6, 0, 4e-5, 0, 4e-4, 3e-6],   # Planet 2
+        [1e-5, 1e-5, 1e-5, 1e-5, 0, 0, 0, 0, 0],  # Planet 1
+        [1e-5, 1e-5, 1e-5, 1e-5, 0, 0, 0, 0, 0],   # Planet 2
     ])
 
     param_bounds = np.array([
-        [(0.05, 0.15), (0.04, 0.2), (0, 1e1000), (0, 0.3), (np.radians(86.8), np.pi), (-np.pi/8, np.pi/8), (-np.pi/8, np.pi/8), (-np.pi/8, np.pi/8), (0, 6000)],
-        [(0.2, 0.4), (0.08, 0.3), (0, 1e1000), (0, 0.3), (np.radians(86.8), np.pi), (-np.pi/8, np.pi/8), (-np.pi/8, np.pi/8), (0, np.pi/2), (0, 6000)]
+        [(0.05, 0.15), (0.04, 0.2), (0, 1e10), (0, 0.3), (np.radians(86.8), np.pi), (-np.pi/8, np.pi/8), (-np.pi/8, np.pi/8), (-np.pi/8, np.pi/8), (0, 6000)],
+        [(0.2, 0.4), (0.08, 0.3), (0, 1e10), (0, 0.3), (np.radians(86.8), np.pi), (-np.pi/8, np.pi/8), (-np.pi/8, np.pi/8), (0, np.pi/2), (0, 6000)]
     ])
-
 
     analytical_bool = True
 
@@ -144,9 +143,9 @@ def main():
                                                                                                  analytical_bool)
 
     print(param_names.shape, true_vals.shape, initial_params.shape, proposal_std.shape, param_bounds.shape)
-    sigma_n = 6 * 1e-4
+    sigma_n = 1e-3
     fluxes = add_gaussian_error(inp_fluxes, 0, sigma_n)
-    num_iterations = int(1_000_00)
+    num_iterations = int(5_000_000)
 
     radius_wasp148_a = 0.912 * 696.34e6 / 1.496e11
     mass_wasp_a = 0.9540 * 2e30 / 6e24
@@ -164,7 +163,7 @@ def main():
     plt.show()
 
 
-    indices = (0, 1, 3, 5, 4)  # Indicies after cutting up (eta_idx, a_idx, e_idx, omega_idx, inc_idx) 
+    indices = (0, 1, 3, 5, 4)  # Indicies after cutting up (eta_idx, a_idx, e_idx, omega_idx, inc_idx)
     r_star = stellar_params[0]  # Stellar radius
 
 
@@ -172,7 +171,6 @@ def main():
         return gaussian_error_ln_likelihood(
             fluxes,
             None,
-
             lambda params: flux_data_from_params(
                 stellar_params, params, times, analytical_bool=analytical_bool
             ),
@@ -190,7 +188,7 @@ def main():
         param_names=param_names,
         likelihood_func=likelihood_fn,
         inclination_rejection_func=lambda proposals: inclination_checker(proposals, indices, r_star),
-        max_cpu_nodes=1,    
+        max_cpu_nodes=8,
     )
 
     mcmc.metropolis_hastings(num_iterations)

@@ -117,8 +117,8 @@ if __name__ == "__main__":
     )
 
 
-    np.save("TestFluxesMultiple.npy", output_analytical)
-    np.save("TestTimesMultiple.npy", times_input)
+    np.save("../TestFluxesMultiple.npy", output_analytical)
+    np.save("../TestTimesMultiple.npy", times_input)
 
     plt.plot(times_input, output_analytical, label="Analytical")
     plt.plot(times_input, output_n_body, label="N Body")
