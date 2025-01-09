@@ -91,3 +91,35 @@ def search_for_transits(data: np.ndarray, times_input: np.ndarray, signal_detect
         results_list.append(iteration_list)
     
     return results_list
+
+def main():
+    from sim.SimulateAndFlux import flux_data_from_params
+    from MCMC.main import add_gaussian_error
+
+    # Stellar parameters: [radius, mass]
+    radius_wasp148a = 0.912 * 696.34e6 / 1.496e11
+    mass_wasp148a = 0.9540 * 2e30 / 6e24
+
+    eta1 = 0.3
+    eta2 = 0.4
+    # planet_params =[ [ eta,   a,     P,   e,               inc, omega, OHM, phase_lag ] ]
+    planet_params = np.array(
+        [
+            [eta1, 0.08215, 8.803809, 0.208, np.radians(90), 0, 0, 0, 0.287],
+            [eta2, 0.2044, 34.525, 0.1809, np.radians(90), 0, 0, np.pi / 4, 0.392]
+        ]
+    )
+    # True inclinations are 89.3 and 104.9 +- some
+
+    times_input = np.linspace(0, 4 * 34, 60000)  # Three orbital periods for planet 1
+
+    planet_params_analytical = planet_params[:, :-1]
+    output_analytical = flux_data_from_params(
+        stellar_params=[radius_wasp148a, mass_wasp148a], planet_params=planet_params_analytical, times=times_input, analytical_bool=True
+    )
+
+    sigma_n = 1e-3
+    fluxes = add_gaussian_error(output_analytical, 0, sigma_n)
+
+    search_for_transits(fluxes, times_input, signal_detection_efficiency=10.0, plot_bool=True)
+
