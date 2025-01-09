@@ -1,6 +1,76 @@
 from transitleastsquares import transitleastsquares, transit_mask, cleaned_array
 import numpy as np
 import matplotlib.pyplot as plt
+
+def run_tls(data: np.ndarray, times_input: np.ndarray, plot_bool = False):
+    """
+    """
+    model = transitleastsquares(times_input, data)
+    results = model.power()
+
+    period = results.period
+    transit_times = results.transit_times
+    transit_depth = results.depth
+    duration = results.duration
+    SDE = results.SDE
+
+    output_list = [period, transit_times, transit_depth, duration, SDE]
+
+    intransit = transit_mask(times_input, results.period, 2*results.duration, results.T0)
+    y_second_run = data[~intransit]
+    t_second_run = times_input[~intransit]
+    t_second_run, y_second_run = cleaned_array(t_second_run, y_second_run)
+
+    if plot_bool:
+        plt.figure(1)
+        from transitleastsquares import transit_mask
+        plt.figure()
+        in_transit = transit_mask(
+            times_input,
+            results.period,
+            results.duration,
+            results.T0)
+        plt.scatter(
+            times_input[in_transit],
+            data[in_transit],
+            color='red',
+            s=2,
+            zorder=0)
+        plt.scatter(
+            times_input[~in_transit],
+            data[~in_transit],
+            color='blue',
+            alpha=0.5,
+            s=2,
+            zorder=0)
+        plt.plot(
+            results.model_lightcurve_time,
+            results.model_lightcurve_model, alpha=0.5, color='red', zorder=1)
+        plt.xlim(min(times_input), max(times_input))
+        plt.ylim(min(data*0.98), max(data*1.02))
+        plt.xlabel('Time (days)')
+        plt.ylabel('Relative flux')
+        plt.show()
+
+        plt.figure(2)
+        ax = plt.gca()
+        ax.axvline(results.period, alpha=0.4, lw=3)
+        plt.title(f"Power spectrum of the data with period {results.period}")
+        plt.xlim(np.min(results.periods), np.max(results.periods))
+        for n in range(2, 10):
+            ax.axvline(n*results.period, alpha=0.4, lw=1, linestyle="dashed")
+            ax.axvline(results.period / n, alpha=0.4, lw=1, linestyle="dashed")
+        plt.ylabel(r'SDE')
+        plt.xlabel('Period (days)')
+        plt.plot(results.periods, results.power, color='black', lw=0.5)
+        plt.xlim(0, max(results.periods))
+        plt.show()
+                
+
+
+    return y_second_run, t_second_run, output_list
+
+
 def search_for_transits(data: np.ndarray, times_input: np.ndarray, signal_detection_efficiency: float = 10.0, plot_bool = False):
     """
     """
