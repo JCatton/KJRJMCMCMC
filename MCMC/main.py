@@ -57,26 +57,23 @@ def extract_timeseries_data(file_location: str) -> (np.ndarray, np.ndarray):
     timeseries = np.load(file_location, allow_pickle=True)
     return timeseries[0], timeseries[1]
 
-def prepare_arrays_for_mcmc(param_names, true_vals, initial_params, proposal_std, param_bounds, analytical_bool):
+def prepare_arrays_for_mcmc(param_names, true_vals, initial_params, proposal_std, param_bounds,
+                            analytical_bool, priors, prior_transform_funcs):
     if analytical_bool is None:
         raise ValueError("analytical_bool must be set to True or False")
 
-    if analytical_bool:
-        param_names = param_names[:, :-1]
-        true_vals = true_vals[:, :-1]
-        initial_params = initial_params[:, :-1]
-        proposal_std = proposal_std[:, :-1]
-        param_bounds = param_bounds[:, :-1]
-        return param_names, true_vals, initial_params, proposal_std, param_bounds
+    # Mask gets rid of mass or semi-major axis depending on analytical_bool
+    n_body_mask = np.array([True, False, True, True, True, True, True, True, True])
+    slc = (slice(None), slice(None, -1)) if analytical_bool else (slice(None), n_body_mask)
 
-    elif analytical_bool == False:
-        n_body_mask = np.array([True, False, True, True, True, True, True, True, True])
-        param_names = param_names[:, n_body_mask]
-        true_vals = true_vals[:, n_body_mask]
-        initial_params = initial_params[:, n_body_mask]
-        proposal_std = proposal_std[:, n_body_mask]
-        param_bounds = param_bounds[:, n_body_mask]
-        return param_names, true_vals, initial_params, proposal_std, param_bounds
+    param_names = param_names[slc]
+    true_vals = true_vals[slc]
+    initial_params = initial_params[slc]
+    proposal_std = proposal_std[slc]
+    param_bounds = param_bounds[slc]
+    priors = priors[slc]
+    prior_transform_funcs = prior_transform_funcs[slc]
+    return param_names, true_vals, initial_params, proposal_std, param_bounds, priors, prior_transform_funcs
 
 
 def inclination_checker(proposals: np.ndarray, indices: tuple[int, int, int, int, int], r_star: float) -> bool:
@@ -141,8 +138,8 @@ def main():
     # Generate synthetic data
     # times, inp_fluxes = extract_timeseries_data(r"C:\Users\jonte\PycharmProjects\KJRJMCMCMC\sim\Outputs\Example\timeseries_flux.npy")
 
-    times = np.load("TestTimesMultiple.npy")
-    inp_fluxes = np.load("TestFluxesMultiple.npy")
+    times = np.load("../TestTimesMultiple.npy")
+    inp_fluxes = np.load("../TestFluxesMultiple.npy")
 
     param_names = np.array([
         [r"\eta_1", "a_1", "P_1", "e_1", "inc_1", "omega_1", "big_ohm_1", "phase_lag_1", "mass_1"],
@@ -170,23 +167,27 @@ def main():
         [(0.2, 0.4), (0.08, 0.3), (0, 1e10), (0, 0.3), (np.radians(86.8), np.pi), (-np.pi/8, np.pi/8), (-np.pi/8, np.pi/8), (0, np.pi/2), (0, 6000)]
     ])
     priors = [
-        [{"distribution": "gaussian", "lower_bound": 0.05, "upper_bound":0.15, "mean": 0.1, "std":5*1e-2}, None, None, None, None, None, None, None],
-        [{"distribution": "gaussian", "lower_bound": 0.25, "upper_bound":0.35, "mean": 0.3, "std":5*1e-2}, None, None, None, None, None, None, None]
+        [{"distribution": "gaussian", "lower_bound": 0.05, "upper_bound":0.15, "mean": 0.1, "std":5*1e-2}, None, None, None, None, None, None, None, None],
+        [{"distribution": "gaussian", "lower_bound": 0.1, "upper_bound":0.5, "mean": 0.3, "std":5*1e-2}, None, None, None, None, None, None, None, None]
     ]
 
     priors, prior_transform_funcs = prior_transform_calcs(priors, param_bounds, proposal_std, initial_params)
 
-    param_names, true_vals, initial_params, proposal_std, param_bounds = prepare_arrays_for_mcmc(param_names,
-                                                                                                 true_vals,
-                                                                                                 initial_params,
-                                                                                                 proposal_std,
-                                                                                                 param_bounds,
-                                                                                                 analytical_bool)
+    (param_names, true_vals, initial_params, proposal_std,
+     param_bounds, priors, prior_transform_funcs) = prepare_arrays_for_mcmc(param_names,
+                                                                             true_vals,
+                                                                             initial_params,
+                                                                             proposal_std,
+                                                                             param_bounds,
+                                                                             analytical_bool,
+                                                                             priors,
+                                                                             prior_transform_funcs)
+
 
     print(param_names.shape, true_vals.shape, initial_params.shape, proposal_std.shape, param_bounds.shape)
     sigma_n = 1e-3
     fluxes = add_gaussian_error(inp_fluxes, 0, sigma_n)
-    num_iterations = int(5_000_000)
+    num_iterations = int(50_000)
 
     radius_wasp148_a = 0.912 * 696.34e6 / 1.496e11
     mass_wasp_a = 0.9540 * 2e30 / 6e24
@@ -233,7 +234,7 @@ def main():
         prior_transforms=prior_transform_funcs,
     )
 
-    mcmc.nested_sampling()
+    # mcmc.nested_sampling()
     mcmc.metropolis_hastings(num_iterations)
     mcmc.chain_to_plot_and_estimate(true_vals)
     mcmc.corner_plot(true_vals)
