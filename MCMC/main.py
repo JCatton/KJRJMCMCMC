@@ -133,7 +133,7 @@ def main():
         [(0.2, 0.4), (0.08, 0.3), (0, 1e10), (0, 0.3), (np.radians(86.8), np.pi), (-np.pi/8, np.pi/8), (-np.pi/8, np.pi/8), (0, np.pi/2), (0, 6000)]
     ])
 
-        analytical_bool = True
+    analytical_bool = True
 
     param_names, true_vals, initial_params, proposal_std, param_bounds = prepare_arrays_for_mcmc(param_names, 
                                                                                                  true_vals, 
@@ -166,18 +166,18 @@ def main():
     r_star = stellar_params[0]  # Stellar radius
 
 
-        def likelihood_fn(params):
-            return gaussian_error_ln_likelihood(
-                fluxes,
-                None,
-                lambda params: flux_data_from_params(
-                    stellar_params, params, times, analytical_bool=analytical_bool
-                ),
-                params,
-                sigma_n,
-            )
+    def likelihood_fn(params):
+        return gaussian_error_ln_likelihood(
+            fluxes,
+            None,
+            lambda params: flux_data_from_params(
+                stellar_params, params, times, analytical_bool=analytical_bool
+            ),
+            params,
+            sigma_n,
+        )
 
-        from mcmc import MCMC
+    from mcmc import MCMC
 
     mcmc = MCMC(
         fluxes,
@@ -190,65 +190,65 @@ def main():
         max_cpu_nodes=8,
     )
 
-        mcmc.metropolis_hastings(num_iterations)
-        mcmc.chain_to_plot_and_estimate(true_vals)
-        mcmc.corner_plot(true_vals)
+    mcmc.metropolis_hastings(num_iterations)
+    mcmc.chain_to_plot_and_estimate(true_vals)
+    mcmc.corner_plot(true_vals)
 
-        plt.title("Difference between true and estimated fluxes")
-        plt.xlabel("Time")
-        plt.ylabel("Difference in Fluxes")
-        plt.plot(
-            times,
-            flux_data_from_params(
-                stellar_params, mcmc.chain[-1], times, analytical_bool=True
-            )
-            - flux_data_from_params(
-                stellar_params, true_vals, times, analytical_bool=True
-            ),
+    plt.title("Difference between true and estimated fluxes")
+    plt.xlabel("Time")
+    plt.ylabel("Difference in Fluxes")
+    plt.plot(
+        times,
+        flux_data_from_params(
+            stellar_params, mcmc.chain[-1], times, analytical_bool=True
         )
-        # plt.show()
-        plt.close()
+        - flux_data_from_params(
+            stellar_params, true_vals, times, analytical_bool=True
+        ),
+    )
+    # plt.show()
+    plt.close()
 
 
-        plt.title("True and estimated fluxes")
-        plt.xlabel("Time")
-        plt.ylabel("Flux")
-        plt.plot(
-            times,
-            flux_data_from_params(
-                stellar_params, mcmc.chain[-1], times, analytical_bool=True
-            ),
-            label="Estimated",
-        )
-        plt.plot(
-            times,
-            flux_data_from_params(
-                stellar_params, true_vals, times, analytical_bool=True
-            ),
-            label="True",
-        )
-        plt.legend()
-        # plt.show()
-        plt.close()
-        print(mcmc.acceptance_num)
-        # mcmc = MCMC(fluxes, initial_params, param_bounds, proposal_std,
-        #             param_names=param_names, likelihood_func=likelihood_fn, max_cpu_nodes=4)
-        # mcmc.metropolis_hastings(50_000)
-        # mcmc.chain_to_plot_and_estimate(true_vals)
-        # mcmc.corner_plot(true_vals)
-        # folder_names = [
-        #     "2024-11-06_run1",
-        #     "2024-11-06_run2",
-        #     "2024-11-06_run3",
-        #     "2024-11-06_run4",
-        #     "2024-11-06_run5",
-        # ]
-        # stats = Statistics(folder_names)
-        # for mcmc in stats.loaded_mcmcs:
-        #     # mcmc.corner_plot(true_vals=true_vals, burn_in_index=1000)
-        #     mcmc.chain_to_plot_and_estimate(true_vals=true_vals)
-        # gr = stats.calc_gelman_rubin()
-        # print(f"The Gelman Rubin Statistic is {gr}")
+    plt.title("True and estimated fluxes")
+    plt.xlabel("Time")
+    plt.ylabel("Flux")
+    plt.plot(
+        times,
+        flux_data_from_params(
+            stellar_params, mcmc.chain[-1], times, analytical_bool=True
+        ),
+        label="Estimated",
+    )
+    plt.plot(
+        times,
+        flux_data_from_params(
+            stellar_params, true_vals, times, analytical_bool=True
+        ),
+        label="True",
+    )
+    plt.legend()
+    # plt.show()
+    plt.close()
+    print(mcmc.acceptance_num)
+    # mcmc = MCMC(fluxes, initial_params, param_bounds, proposal_std,
+    #             param_names=param_names, likelihood_func=likelihood_fn, max_cpu_nodes=4)
+    # mcmc.metropolis_hastings(50_000)
+    # mcmc.chain_to_plot_and_estimate(true_vals)
+    # mcmc.corner_plot(true_vals)
+    # folder_names = [
+    #     "2024-11-06_run1",
+    #     "2024-11-06_run2",
+    #     "2024-11-06_run3",
+    #     "2024-11-06_run4",
+    #     "2024-11-06_run5",
+    # ]
+    # stats = Statistics(folder_names)
+    # for mcmc in stats.loaded_mcmcs:
+    #     # mcmc.corner_plot(true_vals=true_vals, burn_in_index=1000)
+    #     mcmc.chain_to_plot_and_estimate(true_vals=true_vals)
+    # gr = stats.calc_gelman_rubin()
+    # print(f"The Gelman Rubin Statistic is {gr}")
 
 
 if __name__ == "__main__":
