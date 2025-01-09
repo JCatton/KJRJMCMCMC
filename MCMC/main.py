@@ -72,122 +72,99 @@ def prepare_arrays_for_mcmc(param_names, true_vals, initial_params, proposal_std
         param_bounds = param_bounds[:, n_body_mask]
         return param_names, true_vals, initial_params, proposal_std, param_bounds
         
-    
+
+def inclination_checker(proposals: np.ndarray, r_star: float, indices: tuple[int, int, int, int, int] = (0, 1, 3, 5, 4)) -> bool:
+    """
+    Check if the inclinations of the planets are above the critical value.
+
+    Parameters:
+    - proposals: Array of proposals
+    - indices: Tuple of indices (a_idx, e_idx, omega_idx, inc_idx)
+    - r_star: Radius of the star
+
+    Returns:
+    - Boolean indicating if all inclinations are above the critical value
+    """
+
+    eta_idx, a_idx, e_idx, omega_idx, inc_idx = indices
+    eta = proposals[0, :, eta_idx]
+    a = proposals[0, :, a_idx]
+    e = proposals[0, :, e_idx]
+    omega = proposals[0, :, omega_idx]
+    inc = proposals[0, :, inc_idx]
+
+    # Calculate the critical inclination
+    r = a * (1 - e**2) / (1 + e * np.cos(3* np.pi / 2 - omega))
+    critical_inc = np.arccos((r_star*(1+eta)) / r)
+
+    return np.all(inc >= critical_inc) # Return True if all inclinations are above the critical value
+
+
 
 
 def main():
-
     # Generate synthetic data
     # times, inp_fluxes = extract_timeseries_data(r"C:\Users\jonte\PycharmProjects\KJRJMCMCMC\sim\Outputs\Example\timeseries_flux.npy")
 
     times = np.load("TestTimesMultiple.npy")
     inp_fluxes = np.load("TestFluxesMultiple.npy")
-    loop_list = [
-        #  eta,    a,    p,    e,  inc, omega, big_ohm, phase_lag, mass
-        # [ 3e-5,    0,    0,    0,    0,     0,       0,         0,    0],
-        # [    0, 5e-6,    0,    0,    0,     0,       0,         0,    0],
-        # [    0,    0, 5e-4,    0,    0,     0,       0,         0,    0],
-        # [    0,    0,    0, 1e-6,    0,     0,       0,         0,    0],
-        # [    0,    0,    0,    0,    0,     0,       0,         0,    0],
-        # [    0,    0,    0,    0,    0,     0,       0,         0,    0],
-        # [    0,    0,    0,    0,    0,     0,       0,         0,    0],
-        [    0,    0,    0,    0,    0,     0,       0,      4e-6,    0],
-        [ 3e-5, 5e-6,    0,    0,    0,     0,       0,         0,    0],
-        [ 3e-5,    0, 5e-4,    0,    0,     0,       0,         0,    0],
-        [ 3e-5,    0,    0, 1e-6,    0,     0,       0,         0,    0],
-        [ 3e-5,    0,    0,    0,    0,     0,       0,      4e-6,    0],
-        [ 3e-5, 5e-6, 5e-4,    0,    0,     0,       0,         0,    0],
-        [ 3e-5, 5e-6,    0, 1e-6,    0,     0,       0,         0,    0],
-        [ 3e-5, 5e-6,    0,    0,    0,     0,       0,      4e-6,    0],
-        [ 3e-5, 5e-6, 5e-4, 1e-6,    0,     0,       0,         0,    0],
-        [ 3e-5, 5e-6, 5e-4,    0,    0,     0,       0,      4e-6,    0],
-        [ 3e-5, 5e-6, 5e-4, 1e-6,    0,     0,       0,      4e-6,    0],
-    ]
 
-    print(f"{len(loop_list)=}")
+    param_names = np.array([
+        [r"\eta_1", "a_1", "P_1", "e_1", "inc_1", "omega_1", "big_ohm_1", "phase_lag_1", "mass_1"],
+        [r"\eta_2", "a_2", "P_2", "e_2", "inc_2", "omega_2", "big_ohm_2", "phase_lag_2", "mass_2"]
+    ])
 
+    true_vals = np.array([
+        [0.1, 0.08215, 8.803809, 0.208, np.radians(90), 0, 0, 0, 0.287],
+        [0.3, 0.2044, 34.525, 0.1809, np.radians(90), 0, 0, np.pi / 4, 0.392]
+    ])
+    initial_params = np.array([
+        [0.1+0.05, 0.08215-0.003, 8.803809 - 0.02, 0.208- 0.03, np.radians(90), 0, 0, 0, 0.287],
+        [0.3+0.1, 0.2044 + 0.003, 34.525+0.002, 0.1809 + 0.007, np.radians(90), 0, 0, np.pi / 4 + np.pi/100, 0.392]
+    ])
 
-    sigma_n = 6 * 1e-3
-    fluxes = add_gaussian_error(inp_fluxes, 0, sigma_n)
-    
-    for loop_params in loop_list:
-        eta_std = 3e-5
-        eta_std = loop_params[0]
+    proposal_std = np.array([
+        [1e-5, 1e-5, 1e-5, 1e-5, 0, 0, 0, 0, 0],  # Planet 1
+        [1e-5, 1e-5, 1e-5, 1e-5, 0, 0, 0, 0, 0],   # Planet 2
+    ])
 
-        a_std = 5e-6
-        a_std = loop_params[1]
-
-        p_std = 5e-4
-        p_std = loop_params[2]
-        
-        e_std = 1e-6
-        e_std = loop_params[3]
-
-        inc_std = 0
-        inc_std = loop_params[4]
-
-        omega_std = 4e-5
-        omega_std = loop_params[5]
-
-        big_ohm_std = 0
-        big_ohm_std = loop_params[6]
-
-        phase_lag_std = 4e-6
-        phase_lag_std = loop_params[7]
-
-        mass_std = 3e-6 
-        mass_std = 0
-        
-        param_names = np.array([
-            [r"\eta_1", "a_1", "P_1", "e_1", "inc_1", "omega_1", "big_ohm_1", "phase_lag_1", "mass_1"],
-            [r"\eta_2", "a_2", "P_2", "e_2", "inc_2", "omega_2", "big_ohm_2", "phase_lag_2", "mass_2"]
-        ])
-        true_vals = np.array([
-            [0.3, 0.08215, 8.803809, 0.208, np.radians(90), 0, 0, 0, 0.287],
-            [0.4, 0.2044, 34.525, 0.1809, np.radians(90), 0, 0, np.pi / 4, 0.392]
-        ])
-        initial_params = np.array([
-            [0.3 + 10 * eta_std, 0.08215 + 10 * a_std, 8.803809 + 10 * p_std, 0.208 + 10 * e_std, np.radians(90) + 10 * inc_std, 0 + 10 * omega_std, 0 + 10 * big_ohm_std, 0 + 10 * phase_lag_std, 0.287 + 10 * mass_std], 
-            [0.4 + 10 * eta_std, 0.2044 + 10 * a_std, 34.525+ 10*p_std, 0.1809 + 10 * e_std , np.radians(90) + 10 * inc_std, 0 + 10 * omega_std, 0 + 10 * big_ohm_std, np.pi / 4 + 10 * phase_lag_std, 0.392 + 10 * mass_std]
-        ])
-
-        proposal_std = np.array([
-            [eta_std, a_std, p_std, e_std, inc_std, omega_std, big_ohm_std, phase_lag_std, mass_std],  # Planet 1
-            [eta_std, a_std, p_std, e_std, inc_std, omega_std, big_ohm_std, phase_lag_std, mass_std],  # Planet 2
-        ])
-
-        param_bounds = np.array([
-            [(0.2, 0.7), (0.08, 0.3), (0, 1e1000), (0, 0.3), (np.radians(86.8), np.pi), (-np.pi/8, np.pi/8), (-np.pi/8, np.pi/8), (-np.pi/8, np.pi/8), (0, 6000)],
-            [(0.2, 0.7), (0.08, 0.3), (0, 1e1000), (0, 0.3), (np.radians(86.8), np.pi), (-np.pi/8, np.pi/8), (-np.pi/8, np.pi/8), (0, np.pi/2), (0, 6000)]
-        ])
-
-
+    param_bounds = np.array([
+        [(0.05, 0.15), (0.04, 0.2), (0, 1e10), (0, 0.3), (np.radians(86.8), np.pi), (-np.pi/8, np.pi/8), (-np.pi/8, np.pi/8), (-np.pi/8, np.pi/8), (0, 6000)],
+        [(0.2, 0.4), (0.08, 0.3), (0, 1e10), (0, 0.3), (np.radians(86.8), np.pi), (-np.pi/8, np.pi/8), (-np.pi/8, np.pi/8), (0, np.pi/2), (0, 6000)]
+    ])
 
         analytical_bool = True
 
-        param_names, true_vals, initial_params, proposal_std, param_bounds = prepare_arrays_for_mcmc(param_names, 
-                                                                                                    true_vals, 
-                                                                                                    initial_params, 
-                                                                                                    proposal_std, 
-                                                                                                    param_bounds,
-                                                                                                    analytical_bool)
-        
-        num_iterations = int(500_000)
+    param_names, true_vals, initial_params, proposal_std, param_bounds = prepare_arrays_for_mcmc(param_names, 
+                                                                                                 true_vals, 
+                                                                                                 initial_params, 
+                                                                                                 proposal_std, 
+                                                                                                 param_bounds,
+                                                                                                 analytical_bool)
 
-        radius_WASP148A = 0.912 * 696.34e6 / 1.496e11
-        mass_WASP148A = 0.9540 * 2e30 / 6e24
+    print(param_names.shape, true_vals.shape, initial_params.shape, proposal_std.shape, param_bounds.shape)
+    sigma_n = 1e-3
+    fluxes = add_gaussian_error(inp_fluxes, 0, sigma_n)
+    num_iterations = int(5_000_000)
 
-        stellar_params = [radius_WASP148A, mass_WASP148A]  # Based on WASP 148
+    radius_wasp148_a = 0.912 * 696.34e6 / 1.496e11
+    mass_wasp_a = 0.9540 * 2e30 / 6e24
 
-        # Plot to check
-        plt.subplot(2, 1, 1)
-        plt.plot(times, inp_fluxes)
-        plt.title("Original Data")
-        plt.subplot(2, 1, 2)
-        fluxes = add_gaussian_error(fluxes, 0, sigma_n)
-        plt.plot(times, fluxes)
-        plt.title("Data with Gaussian Noise")
-        # plt.show()
+    stellar_params = [radius_wasp148_a, mass_wasp_a]  # Based on WASP 148
+
+    # Plot to check
+    plt.subplot(2, 1, 1)
+    plt.plot(times, inp_fluxes)
+    plt.title("Original Data")
+    plt.subplot(2, 1, 2)
+    fluxes = add_gaussian_error(fluxes, 0, sigma_n)
+    plt.plot(times, fluxes)
+    plt.title("Data with Gaussian Noise")
+    plt.show()
+
+
+    r_star = stellar_params[0]  # Stellar radius
+
 
         def likelihood_fn(params):
             return gaussian_error_ln_likelihood(
@@ -202,15 +179,16 @@ def main():
 
         from mcmc import MCMC
 
-        mcmc = MCMC(
-            fluxes,
-            initial_params,
-            param_bounds,
-            proposal_std,
-            param_names=param_names,
-            likelihood_func=likelihood_fn,
-            max_cpu_nodes=1,
-        )
+    mcmc = MCMC(
+        fluxes,
+        initial_params,
+        param_bounds,
+        proposal_std,
+        param_names=param_names,
+        likelihood_func=likelihood_fn,
+        inclination_rejection_func=lambda proposals: inclination_checker(proposals, r_star),
+        max_cpu_nodes=8,
+    )
 
         mcmc.metropolis_hastings(num_iterations)
         mcmc.chain_to_plot_and_estimate(true_vals)
