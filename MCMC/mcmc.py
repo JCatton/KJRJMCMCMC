@@ -116,7 +116,8 @@ class MCMC:
         )
         empty_chain[0] = initial_parameters
         self.chain = empty_chain
-        self.likelihood_chain = np.array(self.likelihood_func(initial_parameters))
+        self.likelihood_chain = np.atleast_1d(self.likelihood_func(initial_parameters))
+        self.momentum = None
 
         # Nested Sampling
         self.nested_results = None
