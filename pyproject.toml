@@ -16,6 +16,7 @@ numba = "0.59.1"
 pathos = "^0.3.3"
 tqdm = "^4.66.6"
 transitleastsquares = "^1.32"
+lightkurve = "^2.5.0"
 
 
 [build-system]
