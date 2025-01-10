@@ -151,13 +151,13 @@ def main():
         [0.3, 0.2044, 34.525, 0.1809, np.radians(90), 0, 0, np.pi / 4, 0.392]
     ])
     initial_params = np.array([
-        [0.1+0.05, 0.08215-0.003, 8.803809 - 0.02, 0.208- 0.03, np.radians(90), 0, 0, 0, 0.287],
-        [0.3+0.1, 0.2044 + 0.003, 34.525+0.002, 0.1809 + 0.007, np.radians(90), 0, 0, np.pi / 4 + np.pi/100, 0.392]
+        [0.1, 0.08215-0.003, 8.803809 - 0.02, 0.208- 0.03, np.radians(90), 0, 0, 0, 0.287],
+        [0.3, 0.2044 + 0.003, 34.525+0.002, 0.1809 + 0.007, np.radians(90), 0, 0, np.pi / 4 + np.pi/100, 0.392]
     ])
 
     proposal_std = np.array([
-        [1e-5, 1e-5, 1e-5, 1e-5, 0, 0, 0, 0, 0],  # Planet 1
-        [1e-5, 1e-5, 1e-5, 1e-5, 0, 0, 0, 0, 0],   # Planet 2
+        [1e-5, 1e-6, 1e-5, 1e-5, 0, 0, 0, 0, 0],  # Planet 1
+        [1e-5, 1e-6, 1e-5, 1e-5, 0, 0, 0, 0, 0],   # Planet 2
     ])
 
 
@@ -187,7 +187,7 @@ def main():
     print(param_names.shape, true_vals.shape, initial_params.shape, proposal_std.shape, param_bounds.shape)
     sigma_n = 1e-3
     fluxes = add_gaussian_error(inp_fluxes, 0, sigma_n)
-    num_iterations = int(50_000)
+    num_iterations = int(25_000)
 
     radius_wasp148_a = 0.912 * 696.34e6 / 1.496e11
     mass_wasp_a = 0.9540 * 2e30 / 6e24
@@ -235,6 +235,9 @@ def main():
     )
 
     # mcmc.nested_sampling()
+    mcmc.run_hmc(num_iterations=num_iterations, step_size=0.005, n_leapfrog=10)
+    mcmc.chain_to_plot_and_estimate(true_vals)
+    mcmc.corner_plot(true_vals)
     mcmc.metropolis_hastings(num_iterations)
     mcmc.chain_to_plot_and_estimate(true_vals)
     mcmc.corner_plot(true_vals)
