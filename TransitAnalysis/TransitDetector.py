@@ -26,7 +26,7 @@ def run_tls(data: np.ndarray, times_input: np.ndarray, limb_darkening_model: str
     if plot_bool:
         plot_tls_stuff(results, times_input, data, save_loc, index)
                 
-    return y_second_run, t_second_run, output_list
+    return y_second_run, t_second_run, output_dict
 
 def plot_tls_stuff(results, times_input, data, save_loc = None, index = None):
     """
