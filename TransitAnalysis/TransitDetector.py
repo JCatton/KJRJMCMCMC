@@ -2,11 +2,11 @@ from transitleastsquares import transitleastsquares, transit_mask, cleaned_array
 import numpy as np
 import matplotlib.pyplot as plt
 
-def run_tls(data: np.ndarray, times_input: np.ndarray, plot_bool = False, save_loc = None, index = None):
+def run_tls(data: np.ndarray, times_input: np.ndarray, limb_darkening_model: str, limb_darkening_coefficients: list, plot_bool = False, save_loc = None, index = None):
     """
     """
     model = transitleastsquares(times_input, data)
-    results = model.power()
+    results = model.power(limb_dark = limb_darkening_model, u = limb_darkening_coefficients)
 
     period = results.period
     transit_times = results.transit_times
