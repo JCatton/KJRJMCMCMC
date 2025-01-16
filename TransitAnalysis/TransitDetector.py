@@ -90,6 +90,23 @@ def plot_tls_stuff(results, times_input, data, save_loc = None, index = None, du
 
 def search_for_transits(data: np.ndarray, times_input: np.ndarray, limb_darkening_model: str, limb_darkening_coefficients: list, signal_detection_efficiency: float = 10.0, plot_bool = False, save_loc = None, duration_multiplier = 4):
     """
+    Search for transits in the data by running TLS until the signal detection efficiency is below a certain threshold
+
+    Parameters:
+    - data: Array of flux values
+    - times_input: Array of time values
+    - limb_darkening_model: String representing the limb darkening model
+    - limb_darkening_coefficients: List of limb darkening coefficients
+    - signal_detection_efficiency: Float representing the signal detection efficiency threshold
+    - plot_bool: Boolean representing whether to plot the results
+    - save_loc: String representing the location to save the plots
+    - duration_multiplier: Float representing the duration multiplier for the transit
+
+    Returns:
+    - results_list: List of dictionaries containing the transit information
+    - background_mean: Float representing the mean of the background
+    - background_std: Float representing the standard deviation of the background
+
     """
     # list of dictionaries: [dict([Period, transit_times, transit_depth, duration, SDE])]
     results_list = [] 
