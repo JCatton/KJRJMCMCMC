@@ -1,5 +1,6 @@
 import datetime
 from pathlib import Path
+from random import random
 from typing import Callable, List, Optional, Tuple
 
 import dill
@@ -10,7 +11,7 @@ import dynesty
 from dynesty import plotting as dyplot
 from corner import corner
 from numpy import ndarray
-from numpy.random import normal
+from numpy.random import normal, multivariate_normal
 from pathos.multiprocessing import ProcessingPool as Pool
 from tqdm import tqdm
 
