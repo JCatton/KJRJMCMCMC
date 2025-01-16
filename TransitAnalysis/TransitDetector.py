@@ -2,7 +2,7 @@ from transitleastsquares import transitleastsquares, transit_mask, cleaned_array
 import numpy as np
 import matplotlib.pyplot as plt
 
-def run_tls(data: np.ndarray, times_input: np.ndarray, limb_darkening_model: str, limb_darkening_coefficients: list, plot_bool = False, save_loc = None, index = None):
+def run_tls(data: np.ndarray, times_input: np.ndarray, limb_darkening_model: str, limb_darkening_coefficients: list, plot_bool = False, save_loc = None, index = None, duration_multiplier = 4):
     """
     """
     from transitleastsquares import transitleastsquares, transit_mask, cleaned_array
@@ -18,7 +18,7 @@ def run_tls(data: np.ndarray, times_input: np.ndarray, limb_darkening_model: str
 
     output_dict = {"Period": period, "Transit_times": transit_times, "Transit_depth": transit_depth, "Duration": duration, "SDE": SDE, "t_0": t_0}
 
-    intransit = transit_mask(times_input, results.period, 2*results.duration, results.T0)
+    intransit = transit_mask(times_input, results.period, results.duration * duration_multiplier, results.T0)
     y_second_run = data[~intransit]
     t_second_run = times_input[~intransit]
     t_second_run, y_second_run = cleaned_array(t_second_run, y_second_run)
@@ -28,7 +28,7 @@ def run_tls(data: np.ndarray, times_input: np.ndarray, limb_darkening_model: str
                 
     return y_second_run, t_second_run, output_dict
 
-def plot_tls_stuff(results, times_input, data, save_loc = None, index = None):
+def plot_tls_stuff(results, times_input, data, save_loc = None, index = None, duration_multiplier = 4):
     """
     Plot useful information from the TLS results
 
@@ -44,7 +44,7 @@ def plot_tls_stuff(results, times_input, data, save_loc = None, index = None):
     in_transit = transit_mask(
         times_input,
         results.period,
-        results.duration,
+        results.duration * duration_multiplier,
         results.T0)
     plt.scatter(
         times_input[in_transit],
@@ -88,7 +88,7 @@ def plot_tls_stuff(results, times_input, data, save_loc = None, index = None):
         plt.show()
 
 
-def search_for_transits(data: np.ndarray, times_input: np.ndarray, limb_darkening_model: str, limb_darkening_coefficients: list, signal_detection_efficiency: float = 10.0, plot_bool = False, save_loc = None):
+def search_for_transits(data: np.ndarray, times_input: np.ndarray, limb_darkening_model: str, limb_darkening_coefficients: list, signal_detection_efficiency: float = 10.0, plot_bool = False, save_loc = None, duration_multiplier = 4):
     """
     """
     # list of dictionaries: [dict([Period, transit_times, transit_depth, duration, SDE])]
@@ -96,7 +96,7 @@ def search_for_transits(data: np.ndarray, times_input: np.ndarray, limb_darkenin
     # Run TLS on the data
     current_signal_detection_efficiency = 1000
     while current_signal_detection_efficiency > signal_detection_efficiency:
-        data, times_input, dictionary_entry = run_tls(data, times_input, limb_darkening_model, limb_darkening_coefficients, plot_bool, save_loc, len(results_list))
+        data, times_input, dictionary_entry = run_tls(data, times_input, limb_darkening_model, limb_darkening_coefficients, plot_bool, save_loc, len(results_list), duration_multiplier)
         current_signal_detection_efficiency = dictionary_entry["SDE"]
 
         if current_signal_detection_efficiency < signal_detection_efficiency:
@@ -145,7 +145,7 @@ if __name__ == "__main__":
     sigma_n = 1e-3
     fluxes = add_gaussian_error(output_analytical, 0, sigma_n)
 
-    results = search_for_transits(fluxes, times_input, signal_detection_efficiency=10.0, plot_bool=True)
+    results = search_for_transits(fluxes, times_input,  "linear", [0], signal_detection_efficiency=10.0, plot_bool=True, save_loc=None, duration_multiplier=4)
 
     print(f"{results=}")
     print(f"shape of results: {len(results)}")
