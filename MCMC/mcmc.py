@@ -329,6 +329,43 @@ class MCMC:
         self.var = np.var(self.chain[self.burn_in_index:], axis=0)
         self.save()
 
+    def do_gaussian_hmc_step(self, initial_pos: np.ndarray, timestep: float, hessian: np.matrix, gradient: np.ndarray):
+
+        covariance_mat = - np.linalg.inv(hessian)
+        expected_mean = initial_pos + covariance_mat @ gradient
+        a_i = velocity_sample = multivariate_normal(0, covariance_mat, size=expected_mean.shape)
+        b_i = initial_pos - expected_mean
+        new_pos = expected_mean + a_i * np.sin(timestep) + b_i * np.cos(timestep)
+        new_likelihood = self.likelihood_func(initial_pos)
+        acceptance_prob = np.exp(self.likelihood_func(new_pos) - self.likelihood_func(initial_pos))
+        accept = random() < acceptance_prob
+        if accept:
+            return new_pos, accept
+        return initial_pos, accept
+
+
+    def gaussian_hmc(self, num_of_new_iterations: int, timestep: float, hessian: np.matrix, gradient: np.ndarray):
+
+        max_iteration_number = self.prepare_chains_for_new_iters(num_of_new_iterations)
+        current_position = self.chain[-1]
+
+        pbar = tqdm(
+            initial=1, total=num_of_new_iterations, desc="MCMC Run "
+        )
+        prev_iter = self.iteration_num - 1
+
+        for i in range(num_of_new_iterations):
+            self.iteration_num += 1
+            prev_iter += 1
+            pbar.update(1)
+            new_pos, accept = self.do_gaussian_hmc_step(current_position, timestep, hessian, gradient)
+            self.chain[prev_iter] = new_pos
+            if accept:
+                self.acceptance_num += 1
+            else:
+                self.rejection_num += 1
+
+
     def chain_to_plot_and_estimate(self, true_vals: Optional[np.ndarray[float]] = None, manual_burn_in_idx: int = 0):
         if not isinstance(manual_burn_in_idx, np.int64 | int):
             raise TypeError(f"{manual_burn_in_idx=} is not an integer")
