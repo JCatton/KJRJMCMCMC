@@ -124,7 +124,7 @@ def gaussian_error_ln_likelihood(
     ln_likelihood = log_prior - deviation_lh - np.sum(observed_lh)
     return ln_likelihood
 
-def run_mcmc_code(file: Path, iteration_num: int=50_000, run_number: int=3, analytic_sim:bool = True):
+def run_mcmc_code(file: Path, target_name, target_stellar_params, iteration_num: int=50_000, run_number: int=3, analytic_sim:bool = True):
     times = np.load(file / 'times.npy')
     flux = np.load(file / 'flux.npy')
 
