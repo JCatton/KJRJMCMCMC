@@ -156,12 +156,30 @@ def gaussian_error_ln_likelihood(
     ln_likelihood = log_prior - deviation_lh - np.sum(observed_lh)
     return ln_likelihood
 
-def run_mcmc_code(file: Path, target_name, target_stellar_params, iteration_num: int=50_000, run_number: int=3, analytic_sim:bool = True):
-    times = np.load(file / 'times.npy')
-    flux = np.load(file / 'flux.npy')
+def run_mcmc_code(file: Path, target_search_params:list, target_stellar_params, iteration_num: int=50_000, run_number: int=3, analytic_sim:bool = True):
+    """
+    Run the MCMC code on the data
 
-    stellar_params = get_stellar_params(file) # Todo
-    initial_params = estimate_parameters(times, flux) # Todo
+    Parameters:
+    - file: Path to the file
+    - target_search_params: List of parameters to search for the target [target_name, exptime, mission, sector, author, max_number_downloads, use_regression_model]
+    - target_stellar_params: Tuple of the stellar parameters[stellar_radius, limb_darkening_model, limb_darkening_model,limb_darkening_coefficients]
+    - iteration_num: Number of iterations to run
+    - run_number: Number of runs to do
+    - analytic_sim: Boolean representing whether to use the analytical
+
+    Returns:
+    - None
+
+
+    """
+    # times = np.load(file / 'times.npy')
+    # flux = np.load(file / 'flux.npy')
+    times, flux = download_data(*target_search_params)
+    # stellar_params = get_stellar_params(file, target_name) # Todo -> Currently just give the regular stellar params
+    stellar_params = target_stellar_params  # [radius, mas, limb_darkening_model, limb_darkening_coefficients] 
+    initial_params = estimate_parameters(times, flux, stellar_params) 
+
     proposal_std = estimate_proposal(times, flux) # Todo
     param_bounds = estimate_bounds(times, flux) # Todo
     noise = estimate_noise(times, flux) # Todo
