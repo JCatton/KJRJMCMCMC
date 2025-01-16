@@ -38,9 +38,7 @@ def plot_tls_stuff(results, times_input, data, save_loc = None, index = None):
     Returns:
     - Displays a plot of the data with the TLS model overlayed
     """
-    plt.figure(1)
     from transitleastsquares import transit_mask
-    plt.figure()
     in_transit = transit_mask(
         times_input,
         results.period,
@@ -67,11 +65,10 @@ def plot_tls_stuff(results, times_input, data, save_loc = None, index = None):
     plt.xlabel('Time (days)')
     plt.ylabel('Relative flux')
     if save_loc is not None:
-        plt.savefig(f"{save_loc}_data_with_tls_{index}.pdf")
+        plt.savefig(f"{save_loc}/TLS_Model_overlay_{index}.pdf")
     else:
         plt.show()
 
-    plt.figure(2)
     ax = plt.gca()
     ax.axvline(results.period, alpha=0.4, lw=3)
     plt.title(f"Power spectrum of the data with period {results.period}")
@@ -84,8 +81,8 @@ def plot_tls_stuff(results, times_input, data, save_loc = None, index = None):
     plt.plot(results.periods, results.power, color='black', lw=0.5)
     plt.xlim(0, max(results.periods))
     if save_loc is not None:
-        plt.savefig(f"{save_loc}_power_spectrum_{index}.pdf")
-    else:   
+        plt.savefig(f"{save_loc}/TLS_Power_spectrum_{index}.pdf")
+    else:
         plt.show()
 
 
