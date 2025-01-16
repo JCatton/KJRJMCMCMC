@@ -4,6 +4,22 @@ import matplotlib.pyplot as plt
 
 def run_tls(data: np.ndarray, times_input: np.ndarray, limb_darkening_model: str, limb_darkening_coefficients: list, plot_bool = False, save_loc = None, index = None, duration_multiplier = 4):
     """
+    Run TLS on the data
+
+    Parameters:
+    - data: Array of flux values
+    - times_input: Array of time values
+    - limb_darkening_model: String representing the limb darkening model
+    - limb_darkening_coefficients: List of limb darkening coefficients
+    - plot_bool: Boolean representing whether to plot the results
+    - save_loc: String representing the location to save the plots
+    - index: Integer representing the index of the plot
+    - duration_multiplier: Float representing the duration multiplier for the transit
+
+    Returns:
+    - y_second_run: Array of flux values
+    - t_second_run: Array of time values
+    - output_dict: Dictionary containing the transit information
     """
     from transitleastsquares import transitleastsquares, transit_mask, cleaned_array
     model = transitleastsquares(times_input, data)
