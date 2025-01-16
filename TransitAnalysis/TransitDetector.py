@@ -14,6 +14,7 @@ def run_tls(data: np.ndarray, times_input: np.ndarray, limb_darkening_model: str
     transit_depth = results.depth
     duration = results.duration
     SDE = results.SDE
+    t_0 = results.T0
 
     output_dict = {"Period": period, "Transit_times": transit_times, "Transit_depth": transit_depth, "Duration": duration, "SDE": SDE, "t_0": t_0}
 
