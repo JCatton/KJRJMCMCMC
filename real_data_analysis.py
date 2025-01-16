@@ -3,6 +3,7 @@ from MCMC.main import inclination_checker
 from sim.SimulateAndFlux import flux_data_from_params
 from pathlib import Path
 from typing import Callable
+from TransitAnalysis.TransitDetector import search_for_transits
 import numpy as np
 import asyncio
 import shutil
@@ -53,7 +54,11 @@ def get_stellar_params(file: Path) -> tuple[float, float]:
     """
     pass
 
-def estimate_parameters(times: np.ndarray, flux: np.ndarray) -> Params:
+def estimate_parameters(times: np.ndarray, flux: np.ndarray, ) -> Params:
+    """
+    """
+    
+    
     pass
 
 def estimate_proposal(times: np.ndarray, flux: np.ndarray) -> Proposal:
