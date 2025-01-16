@@ -221,19 +221,7 @@ class MCMC:
         """
         Performs Metropolis-Hastings MCMC sampling.
         """
-        max_iteration_number = self.iteration_num + num_of_new_iterations
-        empty_chain = np.empty_like(
-            self.chain, shape=(max_iteration_number, *self.chain.shape[1:])
-        )
-        empty_likelihood = np.empty_like(
-            self.likelihood_chain, shape=max_iteration_number
-        )
-
-        empty_chain[: len(self.chain)] = self.chain
-        empty_likelihood[: len(self.chain)] = self.likelihood_chain
-
-        self.chain = empty_chain
-        self.likelihood_chain = empty_likelihood
+        max_iteration_number = self.prepare_chains_for_new_iters(num_of_new_iterations)
 
         prev_iter = self.iteration_num - 1
 
@@ -319,6 +307,23 @@ class MCMC:
         self.likelihood_chain = self.likelihood_chain[:-1]
         print(f"{acceptance_rate=}")
         pbar.close()
+        self.chain_wrap_up()
+
+    def prepare_chains_for_new_iters(self, num_of_new_iterations):
+        max_iteration_number = self.iteration_num + num_of_new_iterations
+        empty_chain = np.empty_like(
+            self.chain, shape=(max_iteration_number, *self.chain.shape[1:])
+        )
+        empty_likelihood = np.empty_like(
+            self.likelihood_chain, shape=max_iteration_number
+        )
+        empty_chain[: len(self.chain)] = self.chain
+        empty_likelihood[: len(self.chain)] = self.likelihood_chain
+        self.chain = empty_chain
+        self.likelihood_chain = empty_likelihood
+        return max_iteration_number
+
+    def chain_wrap_up(self):
         self.determine_burn_in_index()
         self.mean = np.mean(self.chain[self.burn_in_index:], axis=0)
         self.var = np.var(self.chain[self.burn_in_index:], axis=0)
