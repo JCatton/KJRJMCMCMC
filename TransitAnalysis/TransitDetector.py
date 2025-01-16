@@ -108,13 +108,14 @@ def plot_tls_stuff(results, times_input, data, save_loc = None, index = None, du
         plt.show()
 
 
-def search_for_transits(data: np.ndarray, times_input: np.ndarray, limb_darkening_model: str, limb_darkening_coefficients: list, signal_detection_efficiency: float = 10.0, plot_bool = False, save_loc = None, duration_multiplier = 4):
+def search_for_transits(data: np.ndarray, times_input: np.ndarray, stellar_radius, limb_darkening_model: str, limb_darkening_coefficients: list, signal_detection_efficiency: float = 10.0, plot_bool = False, save_loc = None, duration_multiplier = 4):
     """
     Search for transits in the data by running TLS until the signal detection efficiency is below a certain threshold
 
     Parameters:
     - data: Array of flux values
     - times_input: Array of time values
+    - stellar_radius: Float representing the radius of the star
     - limb_darkening_model: String representing the limb darkening model
     - limb_darkening_coefficients: List of limb darkening coefficients
     - signal_detection_efficiency: Float representing the signal detection efficiency threshold
@@ -123,9 +124,7 @@ def search_for_transits(data: np.ndarray, times_input: np.ndarray, limb_darkenin
     - duration_multiplier: Float representing the duration multiplier for the transit
 
     Returns:
-    - results_list: List of dictionaries containing the transit information
-    - background_mean: Float representing the mean of the background
-    - background_std: Float representing the standard deviation of the background
+    - estimated_params: List of dictionaries containing the estimated planet parameters
 
     """
     # list of dictionaries: [dict([Period, transit_times, transit_depth, duration, SDE])]
@@ -142,7 +141,38 @@ def search_for_transits(data: np.ndarray, times_input: np.ndarray, limb_darkenin
         print(f"Found a planet with SDE of {current_signal_detection_efficiency} and period of {dictionary_entry["Period"]}")
         results_list.append(dictionary_entry)
     
-    return results_list
+    estimated_params = estimate_params_from_tls_data(results_list, stellar_radius)
+    
+    return estimated_params
+
+def estimate_params_from_tls_data(results_list: list, radius_star: float):
+    """
+    Estimate the planet parameters from the TLS results
+
+    Parameters:
+    - results_list: List of dictionaries containing the TLS results
+    - radius_star: Float representing the radius of the star
+
+    Returns:
+    - estimated_params: List of dictionaries containing the estimated planet parameters
+    """
+    estimated_params = []
+
+    for i in range(len(results_list)):
+        period = results_list[i]["Period"]
+        # transit_times = results_list[i]["Transit_times"]
+        transit_depth = results_list[i]["Transit_depth"]
+        duration = results_list[i]["Duration"]
+        t_0 = results_list[i]["t_0"]
+
+        eta = np.sqrt(1-transit_depth)
+        phase_lag = 2*np.pi*t_0/period - 3* np.pi/2
+        a_estimate = radius_star*(1+eta) * period/(np.pi * duration) # See Msci proj workbook 1 page 184-185
+
+        estimated_params_dictionary = {"eta": eta, "a": a_estimate, "P": period, "e": 0, "inc": np.pi/2, "omega": 0, "OHM": 0, "phase_lag": phase_lag}
+        estimated_params.append(estimated_params_dictionary)
+    
+    return estimated_params
 
 
 
