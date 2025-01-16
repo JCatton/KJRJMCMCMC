@@ -74,6 +74,16 @@ def get_stellar_params(file: Path) -> tuple[float, float]:
     """
     Gets the stellar parameters stored somewhere in the file
     """
+    # Stellar parameters: [radius, mass]
+    radius_wasp148a = 0.912 * 696.34e6 / 1.496e11
+    mass_wasp148a = 0.9540 * 2e30 / 6e24
+
+    limb_darkening_model = "linear"
+    limb_darkening_coefficients = [0]
+
+    stellar_params = [radius_wasp148a, mass_wasp148a, limb_darkening_model, limb_darkening_coefficients]  # Based on WASP 148
+    return stellar_params
+
 def estimate_parameters(times: np.ndarray, flux: np.ndarray, stellar_params) -> Params:
     """
     Estimates the parameters of the planets from the times and flux data
