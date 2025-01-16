@@ -88,26 +88,27 @@ def plot_tls_stuff(results, times_input, data, save_loc = None, index = None):
         plt.show()
 
 
-def search_for_transits(data: np.ndarray, times_input: np.ndarray, signal_detection_efficiency: float = 10.0, plot_bool = False, save_loc = None):
+def search_for_transits(data: np.ndarray, times_input: np.ndarray, limb_darkening_model: str, limb_darkening_coefficients: list, signal_detection_efficiency: float = 10.0, plot_bool = False, save_loc = None):
     """
     """
-    # [[Period, transit_times, transit_depth, duration, SDE]]
+    # list of dictionaries: [dict([Period, transit_times, transit_depth, duration, SDE])]
     results_list = [] 
     # Run TLS on the data
     current_signal_detection_efficiency = 1000
     while current_signal_detection_efficiency > signal_detection_efficiency:
-
-        data, times_input, iteration_list = run_tls(data, times_input, plot_bool, save_loc, len(results_list))
-
-        current_signal_detection_efficiency = iteration_list[-1]
+        data, times_input, dictionary_entry = run_tls(data, times_input, limb_darkening_model, limb_darkening_coefficients, plot_bool, save_loc, len(results_list))
+        current_signal_detection_efficiency = dictionary_entry["SDE"]
 
         if current_signal_detection_efficiency < signal_detection_efficiency:
             print(f"{len(results_list)} transits have been found with a signal detection efficiency of {signal_detection_efficiency}")
             break
-        print(f"Found a planet with SDE of {current_signal_detection_efficiency} and period of {iteration_list[0]}")
-        results_list.append(iteration_list)
+        print(f"Found a planet with SDE of {current_signal_detection_efficiency} and period of {dictionary_entry["Period"]}")
+        results_list.append(dictionary_entry)
     
-    return results_list
+    background_mean = np.mean(data)
+    background_std = np.std(data)
+    
+    return results_list, background_mean, background_std
 
 if __name__ == "__main__":
     from sim.SimulateAndFlux import flux_data_from_params
