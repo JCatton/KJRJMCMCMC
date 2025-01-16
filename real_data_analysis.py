@@ -4,6 +4,7 @@ from sim.SimulateAndFlux import flux_data_from_params
 from pathlib import Path
 from typing import Callable
 from TransitAnalysis.TransitDetector import search_for_transits
+from TransitAnalysis.TransitDataExtractor import download_data
 import numpy as np
 import asyncio
 import shutil
@@ -15,13 +16,34 @@ Params = list[list[float]]
 Bounds = list[list[tuple[float, float]]]
 Proposal = list[list[float]]
 
+def download_data(target_name, 
+                  exptime: int = 120,
+                  mission: str = "Tess",
+                  sector: int = None,
+                  author = None,
+                  max_number_downloads: int = 20,
+                  use_regression_model = True) -> tuple(np.ndarray, np.ndarray):
+    """
+    Downloads data from the target_name
 
-async def download_data() -> list[Path]:
+    Parameters:
+    - target_name: String representing the target name
+    - use_regression_model: Boolean representing whether to use the regression model
+
+    Returns:
+    - times: Array of time values
+    - flux: Array of flux values
     """
-    Downloads data from api
-    :return: list of file paths to downloaded data
-    """
-    pass
+
+    times, fluxes = download_data(target_name = target_name,
+                                  exptime = exptime,
+                                  mission = mission,
+                                  sector = sector,
+                                  author = author, 
+                                  max_number_downloads = max_number_downloads)
+
+
+    return times, fluxes
 
 
 def process_data(data: list[Path]) -> list[Path]:
