@@ -142,10 +142,9 @@ def search_for_transits(data: np.ndarray, times_input: np.ndarray, limb_darkenin
         print(f"Found a planet with SDE of {current_signal_detection_efficiency} and period of {dictionary_entry["Period"]}")
         results_list.append(dictionary_entry)
     
-    background_mean = np.mean(data)
-    background_std = np.std(data)
-    
-    return results_list, background_mean, background_std
+    return results_list
+
+
 
 if __name__ == "__main__":
     import sys
