@@ -14,7 +14,7 @@ def run_tls(data: np.ndarray, times_input: np.ndarray, plot_bool = False, save_l
     duration = results.duration
     SDE = results.SDE
 
-    output_list = [period, transit_times, transit_depth, duration, SDE]
+    output_dict = {"Period": period, "Transit_times": transit_times, "Transit_depth": transit_depth, "Duration": duration, "SDE": SDE, "t_0": t_0}
 
     intransit = transit_mask(times_input, results.period, 2*results.duration, results.T0)
     y_second_run = data[~intransit]
