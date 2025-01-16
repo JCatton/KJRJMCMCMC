@@ -108,13 +108,13 @@ def plot_tls_stuff(results, times_input, data, save_loc = None, index = None, du
         plt.show()
 
 
-def search_for_transits(data: np.ndarray, times_input: np.ndarray, stellar_radius, limb_darkening_model: str, limb_darkening_coefficients: list, signal_detection_efficiency: float = 10.0, plot_bool = False, save_loc = None, duration_multiplier = 4):
+def search_for_transits(times_input: np.ndarray, data: np.ndarray, stellar_radius, limb_darkening_model: str, limb_darkening_coefficients: list, signal_detection_efficiency: float = 10.0, plot_bool = False, save_loc = None, duration_multiplier = 4):
     """
     Search for transits in the data by running TLS until the signal detection efficiency is below a certain threshold
 
     Parameters:
-    - data: Array of flux values
     - times_input: Array of time values
+    - data: Array of flux values
     - stellar_radius: Float representing the radius of the star
     - limb_darkening_model: String representing the limb darkening model
     - limb_darkening_coefficients: List of limb darkening coefficients
