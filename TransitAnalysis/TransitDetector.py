@@ -52,9 +52,13 @@ def plot_tls_stuff(results, times_input, data, save_loc = None, index = None, du
     - results: TLS results object
     - times_input: Array of time values
     - data: Array of flux values
+    - save_loc: String representing the location to save the plots
+    - index: Integer representing the index of the plot
+    - duration_multiplier: Float representing the duration multiplier for the transit
 
     Returns:
     - Displays a plot of the data with the TLS model overlayed
+    - Displays a plot of the power spectrum of the data
     """
     from transitleastsquares import transit_mask
     in_transit = transit_mask(
