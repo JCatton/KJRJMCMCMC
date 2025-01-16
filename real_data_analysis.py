@@ -52,14 +52,46 @@ def get_stellar_params(file: Path) -> tuple[float, float]:
     """
     Gets the stellar parameters stored somewhere in the file
     """
-    pass
+def estimate_parameters(times: np.ndarray, flux: np.ndarray, stellar_params) -> Params:
+    """
+    Estimates the parameters of the planets from the times and flux data
 
-def estimate_parameters(times: np.ndarray, flux: np.ndarray, ) -> Params:
+    Parameters:
+    - times: np.ndarray of the times
+    - flux: np.ndarray of the flux values
+    - stellar_params: tuple of the stellar parameters
+
+    Returns:
+    - estimated_params: List of the estimated parameters
     """
-    """
+    stellar_radius = stellar_params[0]
+    limb_darkening_model = stellar_params[2]
+    limb_darkening_coefficients = stellar_params[3]
+
+    estimated_params = search_for_transits(times_input=times, 
+                                           data=flux, 
+                                           stellar_radius=stellar_radius, 
+                                           limb_darkening_model=limb_darkening_model, 
+                                           limb_darkening_coefficients=limb_darkening_coefficients,
+                                           signal_detection_efficiency=10.0,
+                                           plot_bool=True,
+                                           save_loc=None,
+                                           duration_multiplier=4)
     
+    output_array = np.zeros((len(estimated_params), 9))
+
+    for i in range(len(estimated_params)):
+        output_array[i,0] = estimated_params[i]["eta"]
+        output_array[i,1] = estimated_params[i]["a"]
+        output_array[i,2] = estimated_params[i]["P"]
+        output_array[i,3] = estimated_params[i]["e"]
+        output_array[i,4] = estimated_params[i]["inc"]
+        output_array[i,5] = estimated_params[i]["omega"]
+        output_array[i,6] = estimated_params[i]["OHM"]
+        output_array[i,7] = estimated_params[i]["phase_lag"]
+        output_array[i,8] = 0  # Mass currently irrelevant
     
-    pass
+    return output_array
 
 def estimate_proposal(times: np.ndarray, flux: np.ndarray) -> Proposal:
     pass
