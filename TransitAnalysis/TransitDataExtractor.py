@@ -50,6 +50,6 @@ if __name__ == "__main__":
     max_number_downloads = 10
 
 
-    time, flux = download_data(name, exptime=exptime, mission=mission, sector=sector, author=author, cadence=cadence, max_number_downloads=max_number_downloads)
+    time, flux = download_data(name, exptime, mission, author = author, max_number_downloads=10)
 
     print(time, flux)
