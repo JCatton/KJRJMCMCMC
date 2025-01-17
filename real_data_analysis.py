@@ -86,7 +86,7 @@ def get_stellar_params(file: Path) -> tuple[float, float]:
     stellar_params = [radius_wasp148a, mass_wasp148a, limb_darkening_model, limb_darkening_coefficients]  # Based on WASP 148
     return stellar_params
 
-def estimate_parameters(times: np.ndarray, flux: np.ndarray, stellar_params, period_min = None, period_max = None) -> Params:
+def estimate_parameters(times: np.ndarray, flux: np.ndarray, stellar_params, signal_detection_efficiency = 10, period_min = None, period_max = None) -> Params:
     """
     Estimates the parameters of the planets from the times and flux data
 
@@ -107,7 +107,7 @@ def estimate_parameters(times: np.ndarray, flux: np.ndarray, stellar_params, per
                                            stellar_radius=stellar_radius, 
                                            limb_darkening_model=limb_darkening_model, 
                                            limb_darkening_coefficients=limb_darkening_coefficients,
-                                           signal_detection_efficiency=10.0,
+                                           signal_detection_efficiency=signal_detection_efficiency,
                                            plot_bool=True,
                                            save_loc=None,
                                            duration_multiplier=4,
@@ -230,7 +230,7 @@ if __name__ == "__main__":
     sector = None
     author = 'Kepler'
     cadence = 'long'
-    max_number_downloads = 10
+    max_number_downloads = 4
     use_regression_model = True
     target_search_params = [taget_name, exptime, mission, sector, author, cadence, max_number_downloads, use_regression_model]
 
@@ -242,13 +242,15 @@ if __name__ == "__main__":
     plt.plot(times, flux)
     plt.show()
 
-    radius_kepler_8 = 0.912 * 696.34e6 / 1.496e11
-    mass_kepler_8 = 0.9540 * 2e30 / 6e24
-    limb_darkening_model = "linear"
-    limb_darkening_coefficients = [0]
+    radius_kepler_8 = 1.58 * 696.34e6 / 1.496e11
+    mass_kepler_8 = 1.18 * 2e30 / 6e24
+    limb_darkening_model = "quadratic"
+    limb_darkening_coefficients = [0.295, 0.312]
 
     stellar_params = [radius_kepler_8, mass_kepler_8, limb_darkening_model, limb_darkening_coefficients]  # Based on WASP 148
 
     period_min = 1
     period_max = 6
-    estimated_params = estimate_parameters(times, flux, stellar_params, period_min, period_max)
+    signal_detection_efficiency = 60
+    estimated_params = estimate_parameters(times, flux, stellar_params, signal_detection_efficiency, period_min, period_max)
+    print(estimated_params)
