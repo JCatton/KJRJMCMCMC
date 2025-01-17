@@ -222,7 +222,7 @@ def main():
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
     # main()
-    taget_name = 'Kepler 8'
+    taget_name = 'Kepler-8'
     exptime = None
     mission = None
     sector = None
