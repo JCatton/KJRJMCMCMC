@@ -1,6 +1,6 @@
 import lightkurve as lk
 import matplotlib.pyplot as plt
-
+import numpy as np
 
 def download_data(target_name: str, exptime:int = 120, mission:str = "Tess", sector:int = None, author = None, cadence = None, max_number_downloads:int = 20) -> tuple:
     """
@@ -31,16 +31,17 @@ def download_data(target_name: str, exptime:int = 120, mission:str = "Tess", sec
     light_curve_collection = search_results[:max_number_downloads].download_all()
 
     # Flattening ensures that the data is all normalised to the same level and applies savitzky-golay smoothing filter
-    lc = light_curve_collection.stitch().remove_outliers().remove_nans().flatten()
+    lc = light_curve_collection.stitch().remove_nans().flatten()
 
-    times = lc.time.value - lc.time[0].value  # zero our times as this is in line with current simulations
+    times = lc.time.value - np.min(lc.time.value)  # zero our times as this is in line with current simulations
 
-    flux = lc.flux
-
+    flux = lc.flux.value
+#
     return times, flux
 
 
 if __name__ == "__main__":
+    import matplotlib.pyplot as plt
     name = 'Kepler-8'
     mission=None
     exptime=None
@@ -53,3 +54,5 @@ if __name__ == "__main__":
     time, flux = download_data(name, exptime=exptime, mission=mission, sector=sector, author=author, cadence=cadence, max_number_downloads=max_number_downloads)
 
     print(time, flux)
+    plt.plot(time, flux)
+    plt.show()
