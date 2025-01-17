@@ -33,7 +33,7 @@ def download_data(target_name: str, exptime:int = 120, mission:str = "Tess", sec
     # Flattening ensures that the data is all normalised to the same level and applies savitzky-golay smoothing filter
     lc = light_curve_collection.stitch().remove_outliers().remove_nans().flatten()
 
-    times = lc.time - lc.time[0]  # zero our times as this is in line with current simulations
+    times = lc.time.value - lc.time[0].value  # zero our times as this is in line with current simulations
 
     flux = lc.flux
 

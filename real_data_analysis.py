@@ -235,4 +235,7 @@ if __name__ == "__main__":
 
     times, flux = download_data_api(*target_search_params)
 
+    # plt.plot(times, flux)/
+    print(f"Shapes of times and flux: {times.shape}, {flux.shape}")
     plt.plot(times, flux)
+    plt.show()
