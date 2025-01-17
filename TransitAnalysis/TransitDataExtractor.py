@@ -13,7 +13,7 @@ def download_data(target_name: str, exptime:int = 120, mission:str = "Tess", sec
     - times: Array of time values
     - flux: Array of flux values
     """
-    search_results = lk.search_lightcurve(target_name, mission=mission, sector=sector, exptime=exptime, author=author, cadence=cacence)
+    search_results = lk.search_lightcurve(target_name, mission=mission, sector=sector, exptime=exptime, author=author, cadence=cadence)
 
     light_curve_collection = search_results[:max_number_downloads].download_all()
 
