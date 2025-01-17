@@ -9,7 +9,7 @@ import numpy as np
 import asyncio
 import shutil
 
-from sim.ExampleSimulation import stellar_params
+# from sim.ExampleSimulation import stellar_paramss
 
 # Type Aliases
 Params = list[list[float]]
