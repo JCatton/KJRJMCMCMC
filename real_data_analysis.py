@@ -21,6 +21,7 @@ def download_data(target_name,
                   mission: str = "Tess",
                   sector: int = None,
                   author = None,
+                  cadence = None,
                   max_number_downloads: int = 20,
                   use_regression_model = True) -> tuple(np.ndarray, np.ndarray):
     """
@@ -40,6 +41,7 @@ def download_data(target_name,
                                   mission = mission,
                                   sector = sector,
                                   author = author, 
+                                  cadence = cadence,
                                   max_number_downloads = max_number_downloads)
 
 
@@ -219,3 +221,12 @@ def main():
 
 if __name__ == "__main__":
     main()
+    taget_name = 'Kepler 8'
+    exptime = None
+    mission = None
+    sector = None
+    author = 'Kepler'
+    cadence = 'long'
+    max_number_downloads = 20
+    use_regression_model = True
+    target_search_params = [taget_name, exptime, mission, sector, author, max_number_downloads, use_regression_model]

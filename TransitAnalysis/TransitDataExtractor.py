@@ -2,7 +2,7 @@ import lightkurve as lk
 import matplotlib.pyplot as plt
 
 
-def download_data(target_name: str, exptime:int = 120, mission:str = "Tess", sector:int = None, author = None, max_number_downloads:int = 20) -> tuple:
+def download_data(target_name: str, exptime:int = 120, mission:str = "Tess", sector:int = None, author = None, cacence = None, max_number_downloads:int = 20) -> tuple:
     """
     Downloads data from the target_name
 
@@ -23,7 +23,7 @@ def download_data(target_name: str, exptime:int = 120, mission:str = "Tess", sec
     times = lc.time - lc.time[0]  # zero our times as this is in line with current simulations
 
     flux = lc.flux
-    
+
     return times, flux
 
 
