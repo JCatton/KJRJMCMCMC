@@ -16,14 +16,14 @@ Params = list[list[float]]
 Bounds = list[list[tuple[float, float]]]
 Proposal = list[list[float]]
 
-def download_data(target_name, 
+def download_data_api(target_name: str, 
                   exptime: int = 120,
                   mission: str = "Tess",
                   sector: int = None,
                   author = None,
                   cadence = None,
                   max_number_downloads: int = 20,
-                  use_regression_model = True) -> tuple(np.ndarray, np.ndarray):
+                  use_regression_model = True):
     """
     Downloads data from the target_name
 
@@ -177,7 +177,7 @@ def run_mcmc_code(file: Path, target_search_params:list, target_stellar_params, 
     """
     # times = np.load(file / 'times.npy')
     # flux = np.load(file / 'flux.npy')
-    times, flux = download_data(*target_search_params)
+    times, flux = download_data_api(*target_search_params)
     # stellar_params = get_stellar_params(file, target_name) # Todo -> Currently just give the regular stellar params
     stellar_params = target_stellar_params  # [radius, mas, limb_darkening_model, limb_darkening_coefficients] 
     initial_params = estimate_parameters(times, flux, stellar_params) 
@@ -212,7 +212,7 @@ def run_mcmc_code(file: Path, target_search_params:list, target_stellar_params, 
         mcmc.metropolis_hastings(iteration_num)
 
 def main():
-    data = download_data()  # Todo
+    data = download_data_api()  # Todo
     files = process_data(data)  # Todo
 
     [run_mcmc_code(file) for file in files]  # Todo
