@@ -220,7 +220,8 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    import matplotlib.pyplot as plt
+    # main()
     taget_name = 'Kepler 8'
     exptime = None
     mission = None
@@ -229,4 +230,9 @@ if __name__ == "__main__":
     cadence = 'long'
     max_number_downloads = 20
     use_regression_model = True
-    target_search_params = [taget_name, exptime, mission, sector, author, max_number_downloads, use_regression_model]
+    target_search_params = [taget_name, exptime, mission, sector, author, cadence, max_number_downloads, use_regression_model]
+
+
+    times, flux = download_data_api(*target_search_params)
+
+    plt.plot(times, flux)
