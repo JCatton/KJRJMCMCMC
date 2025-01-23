@@ -231,13 +231,15 @@ def run_mcmc_code(file: Path, target_search_params:list, target_stellar_params, 
             initial_param_fuzzer(initial_params, proposal_std, param_bounds),
             param_bounds,
             proposal_std,
-            param_names=None,
+            param_names=param_names,
             likelihood_func=likelihood_fn,
             inclination_rejection_func=lambda proposals: inclination_checker(proposals, stellar_params[0]),
-            specified_folder_name = file / "run_{i}",
+            specified_folder_name = Path(file) / f"run_{i}",
             max_cpu_nodes=4,
         )
         mcmc.metropolis_hastings(iteration_num)
+        mcmc.chain_to_plot_and_estimate()
+        mcmc.corner_plot()
 
 def main():
     data = download_data_api()  # Todo
