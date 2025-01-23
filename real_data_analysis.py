@@ -225,6 +225,13 @@ def run_mcmc_code(file: Path, target_search_params:list, target_stellar_params, 
             noise,
         )
 
+    plt.figure()
+    plt.title("Estimated Parameters Initial Fit")
+    plt.plot(times, flux, label="Data")
+    plt.plot(times, flux_data_from_params(stellar_params, initial_params, times, analytical_bool=True), label="Estimated", ls=":")
+    plt.legend()
+    plt.show()
+
     for i in range(run_number):
         mcmc = MCMC(
             flux,
