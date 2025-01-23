@@ -25,6 +25,7 @@ def download_data(target_name: str, exptime:int = 120, mission:str = "Tess", sec
     # Filter out parameters with None values
     search_params = {key: value for key, value in search_params.items() if value is not None}
 
+    print(f"Searching for data with metadata \n{"\n".join([f"{k:=^9}: {v:<20}" for k,v in search_params.items()])}")
     search_results = lk.search_lightcurve(target_name, **search_params)
 
     print(search_results)
