@@ -33,7 +33,11 @@ def run_tls(data: np.ndarray,
     """
     from transitleastsquares import transitleastsquares, transit_mask, cleaned_array
     model = transitleastsquares(times_input, data)
-    results = model.power(limb_dark = limb_darkening_model, u = limb_darkening_coefficients, period_min = period_min, period_max = period_max)
+
+    if period_min is None and period_max is None:
+        results = model.power(limb_dark = limb_darkening_model, u = limb_darkening_coefficients)
+    else:
+        results = model.power(limb_dark = limb_darkening_model, u = limb_darkening_coefficients, period_min = period_min, period_max = period_max)
 
     period = results.period
     transit_times = results.transit_times
@@ -240,8 +244,8 @@ if __name__ == "__main__":
 
     sigma_n = 1e-3
     fluxes = add_gaussian_error(output_analytical, 0, sigma_n)
-
-    results = search_for_transits(fluxes, times_input,  "linear", [0], signal_detection_efficiency=10.0, plot_bool=True, save_loc=None, duration_multiplier=4)
+    results = search_for_transits(times_input, fluxes, radius_wasp148a, "linear", [0], signal_detection_efficiency=10.0, plot_bool=True, save_loc=None, duration_multiplier=4)
+    # results = search_for_transits(fluxes,  "linear", [0], signal_detection_efficiency=10.0, plot_bool=True, save_loc=None, duration_multiplier=4)
 
     print(f"{results=}")
     print(f"shape of results: {len(results)}")
