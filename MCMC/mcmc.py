@@ -123,7 +123,7 @@ class MCMC:
         Saves the object state to a dynamically named folder.
         """
         # Use numpy saving for more efficient processing
-        np.save(self.data_folder / "raw_data.npy", self.raw_data)
+        np.save(self.data_folder / "raw_data.npy", np.array(self.raw_data))
         np.save(self.data_folder / "chain.npy", self.chain)
         np.save(self.data_folder / "likelihoods.npy", self.likelihood_chain)
 
