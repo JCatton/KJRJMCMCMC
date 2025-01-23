@@ -133,7 +133,7 @@ def estimate_proposal(times: np.ndarray, flux: np.ndarray) -> Proposal:
     pass
 
 def estimate_noise(times: np.ndarray, flux: np.ndarray) -> float:
-    pass
+    return np.std(flux)
 
 def estimate_bounds(times: np.ndarray, flux: np.ndarray) -> Bounds:
     pass
@@ -254,3 +254,5 @@ if __name__ == "__main__":
     signal_detection_efficiency = 60
     estimated_params = estimate_parameters(times, flux, stellar_params, signal_detection_efficiency, period_min, period_max)
     print(estimated_params)
+
+    run_mcmc_code()
