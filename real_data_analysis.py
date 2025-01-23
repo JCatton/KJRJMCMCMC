@@ -136,7 +136,7 @@ def estimate_parameters(times: np.ndarray,
     return output_array
 
 def estimate_proposal(times: np.ndarray, flux: np.ndarray) -> Proposal:
-    return np.atleast_1d([
+    return np.atleast_2d([
                     [1e-5, 1e-5, 1e-5, 0, 1e-4, 0, 0, 0, 0],  # Planet 1
                     # [1e-5, 1e-5, 1e-5, 1e-5, 0, 0, 0, 0, 0],   # Planet 2
                     ])
@@ -146,7 +146,7 @@ def estimate_noise(times: np.ndarray, flux: np.ndarray) -> float:
     return np.std(flux)
 
 def estimate_bounds(times: np.ndarray, flux: np.ndarray) -> Bounds:
-    return np.atleast_1d([
+    return np.atleast_3d([
                     [(1e-5, 0.4), (1e-3, 0.5), (0, 1e4), (0, 0.3), (np.radians(86.8), np.pi), (-np.pi/8, np.pi/8), (-np.pi/8, np.pi/8), (-6,6), (0, 6000)],
                     # [(1e-5, 0.4), (1e-3, 0.5), (0, 1e10), (0, 0.3), (np.radians(86.8), np.pi), (-np.pi/8, np.pi/8), (-np.pi/8, np.pi/8), (-6, 6), (0, 6000)]
                     ])
@@ -200,7 +200,9 @@ def run_mcmc_code(file: Path, target_search_params:list, target_stellar_params, 
     times, flux = download_data_api(*target_search_params)
     # stellar_params = get_stellar_params(file, target_name) # Todo -> Currently just give the regular stellar params
     stellar_params = target_stellar_params  # [radius, mas, limb_darkening_model, limb_darkening_coefficients] 
-    initial_params = estimate_parameters(times, flux, stellar_params) 
+    # initial_params = estimate_parameters(times, flux, stellar_params, period_min=1, period_max=6)
+    initial_params = np.atleast_2d([ 0.095751,  0.07806046,  3.5224991,  0.          ,np.radians(84),  0.,
+   0.,         -3.6653389, 0])
 
     proposal_std = estimate_proposal(times, flux) # Todo
     param_bounds = estimate_bounds(times, flux) # Todo
@@ -287,7 +289,7 @@ if __name__ == "__main__":
     period_min = 1
     period_max = 6
     signal_detection_efficiency = 60
-    estimated_params = estimate_parameters(times, flux, stellar_params, signal_detection_efficiency, period_min, period_max)
-    print(estimated_params)
+    # estimated_params = estimate_parameters(times, flux, stellar_params, signal_detection_efficiency, period_min, period_max)
+    # print(estimated_params)
 
-    run_mcmc_code()
+    run_mcmc_code(file="test", target_search_params=target_search_params, target_stellar_params=stellar_params, iteration_num=150_000, run_number=1, analytic_sim=True)
