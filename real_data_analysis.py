@@ -242,7 +242,7 @@ def run_mcmc_code(file: Path, target_search_params:list, target_stellar_params, 
             proposal_std,
             param_names=param_names,
             likelihood_func=likelihood_fn,
-            inclination_rejection_func=lambda proposals: inclination_checker(proposals, stellar_params[0]),
+            # inclination_rejection_func=lambda proposals: inclination_checker(proposals, stellar_params[0]),
             specified_folder_name = Path(file) / f"run_{i}",
             max_cpu_nodes=4,
         )
