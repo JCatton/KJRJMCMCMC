@@ -330,42 +330,74 @@ class MCMC:
         self.var = np.var(self.chain[self.burn_in_index:], axis=0)
         self.save()
 
-    def do_gaussian_hmc_step(self, initial_pos: np.ndarray, timestep: float, hessian: np.matrix, gradient: np.ndarray):
+    # def do_gaussian_hmc_step(self, initial_pos: np.ndarray, timestep: float, hessian: np.matrix, gradient: np.ndarray):
+    #
+    #     covariance_mat = - np.linalg.inv(hessian)
+    #     expected_mean = initial_pos + covariance_mat @ gradient
+    #     a_i = velocity_sample = multivariate_normal(0, covariance_mat, size=expected_mean.shape)
+    #     b_i = initial_pos - expected_mean
+    #     new_pos = expected_mean + a_i * np.sin(timestep) + b_i * np.cos(timestep)
+    #     new_likelihood = self.likelihood_func(initial_pos)
+    #     acceptance_prob = np.exp(self.likelihood_func(new_pos) - self.likelihood_func(initial_pos))
+    #     accept = random() < acceptance_prob
+    #     if accept:
+    #         return new_pos, accept
+    #     return initial_pos, accept
 
-        covariance_mat = - np.linalg.inv(hessian)
-        expected_mean = initial_pos + covariance_mat @ gradient
-        a_i = velocity_sample = multivariate_normal(0, covariance_mat, size=expected_mean.shape)
-        b_i = initial_pos - expected_mean
-        new_pos = expected_mean + a_i * np.sin(timestep) + b_i * np.cos(timestep)
-        new_likelihood = self.likelihood_func(initial_pos)
-        acceptance_prob = np.exp(self.likelihood_func(new_pos) - self.likelihood_func(initial_pos))
-        accept = random() < acceptance_prob
-        if accept:
-            return new_pos, accept
-        return initial_pos, accept
 
-
-    def gaussian_hmc(self, num_of_new_iterations: int, timestep: float, hessian: np.matrix, gradient: np.ndarray):
+    def gaussian_hmc(self, num_of_new_iterations: int, timestep: float, hessian: np.matrix):
 
         max_iteration_number = self.prepare_chains_for_new_iters(num_of_new_iterations)
-        current_position = self.chain[-1]
 
         pbar = tqdm(
             initial=1, total=num_of_new_iterations, desc="MCMC Run "
         )
         prev_iter = self.iteration_num - 1
+        current_position = self.chain[prev_iter]
+        current_likelihood = self.likelihood_func(current_position)
+
+        gradient = self.update_gradient(current_position, hessian)
 
         for i in range(num_of_new_iterations):
             self.iteration_num += 1
             prev_iter += 1
             pbar.update(1)
-            new_pos, accept = self.do_gaussian_hmc_step(current_position, timestep, hessian, gradient)
-            self.chain[prev_iter] = new_pos
+            # new_pos, accept, new_likelihood = self.do_gaussian_hmc_step(current_position, timestep, hessian, gradient)
+
+            accept, new_likelihood, new_pos = self.do_gaussian_hmc_step(current_likelihood, current_position, gradient,
+                                                                        hessian, timestep)
             if accept:
+                current_position = new_pos
+                current_likelihood = new_likelihood
                 self.acceptance_num += 1
             else:
                 self.rejection_num += 1
 
+            hessian = self.update_hessian(hessian)
+            gradient = self.update_gradient(current_position, gradient, hessian)
+
+        self.chain_wrap_up()
+
+    def update_gradient(self, current_position, hessian):
+        """
+        Currently define gradient for multivariate Gaussian. WIP
+        """
+        gradient = - np.linalg.inv(hessian) * (current_position)
+        return gradient
+
+    def update_hessian(self, hessian):
+        return hessian
+
+    def do_gaussian_hmc_step(self, current_likelihood, current_position, gradient, hessian, timestep):
+        covariance_mat = - np.linalg.inv(hessian)
+        expected_mean = current_position + covariance_mat @ gradient
+        a_i = multivariate_normal(np.zeros(1), covariance_mat, size=expected_mean.shape)  # Velocity sample
+        b_i = current_position - expected_mean
+        new_pos = expected_mean + a_i * np.sin(timestep) + b_i * np.cos(timestep)
+        new_likelihood = self.likelihood_func(new_pos)
+        acceptance_prob = np.exp(new_likelihood - current_likelihood)
+        accept = random() < acceptance_prob
+        return accept, new_likelihood, new_pos
 
     def chain_to_plot_and_estimate(self, true_vals: Optional[np.ndarray[float]] = None, manual_burn_in_idx: int = 0):
         if not isinstance(manual_burn_in_idx, np.int64 | int):

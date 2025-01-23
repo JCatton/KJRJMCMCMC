@@ -50,7 +50,9 @@ def gaussian_hmc(num_of_new_iterations: int, timestep: float, hessian: np.matrix
         gradient = update_gradient(current_position, hessian)
 
     acceptance_rate = acceptance_number / num_of_new_iterations
+    autoc = autocorrelation(chain[1000:])
     print(f"{acceptance_rate=}")
+    print(f"ESF={np.sum(autoc)}")
     domain = np.arange(iteration_number)
     fig, axs = plt.subplots(
             nrows=chain.shape[1], ncols=1, figsize=(10, 8)
@@ -58,9 +60,15 @@ def gaussian_hmc(num_of_new_iterations: int, timestep: float, hessian: np.matrix
     for i in range(hessian.shape[0]):
         axs[i].plot(domain, chain[:, i])
     plt.show()
+    fig, axs = plt.subplots(
+        nrows=chain.shape[1], ncols=1, figsize=(10, 8)
+    )
+    for i in range(hessian.shape[0]):
+        axs[i].plot(domain[:1000], chain[:1000, i])
+    plt.show()
     plt.plot(domain, likelihoods)
     plt.show()
-    corner(chain[100:])
+    corner(chain[1000:])
     plt.show()
 
 def update_gradient(current_position, hessian):
@@ -85,6 +93,16 @@ def do_gaussian_hmc_step(current_likelihood, current_position, gradient, hessian
     accept = random() < acceptance_prob
     return accept, new_likelihood, new_pos
 
+def autocorrelation (x) :
+    """
+    Compute the autocorrelation of the signal, based on the properties of the
+    power spectral density of the signal.
+    """
+    xp = x-np.mean(x)
+    f = np.fft.fft(xp)
+    p = np.array([np.real(v)**2+np.imag(v)**2 for v in f])
+    pi = np.fft.ifft(p)
+    return np.real(pi)[:x.size//2]/np.sum(xp**2)
 
 def main():
     global likelihood_func
@@ -96,7 +114,8 @@ def main():
     covariance[0,2] = -0.25
     def likelihood_func(x):
         return gaussian_log_likelihood(x, covariance, mean)
-    gaussian_hmc(50000, np.pi / 2, -np.linalg.inv(covariance))
+    gaussian_hmc(50000, np.pi / 2, -np.linalg.inv(covariance))#
+
 
 
 if __name__ == '__main__':
