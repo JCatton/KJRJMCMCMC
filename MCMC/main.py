@@ -51,13 +51,18 @@ def extract_timeseries_data(file_location: str) -> (np.ndarray, np.ndarray):
     timeseries = np.load(file_location, allow_pickle=True)
     return timeseries[0], timeseries[1]
 
-def prepare_arrays_for_mcmc(param_names, true_vals, initial_params, proposal_std, param_bounds, analytical_bool):
+def prepare_arrays_for_mcmc(param_names=None,
+                            true_vals=None,
+                            initial_params=None,
+                            proposal_std=None,
+                            param_bounds=None,
+                            analytical_bool= None):
     if analytical_bool is None:
         raise ValueError("analytical_bool must be set to True or False")
     
     if analytical_bool:
-        param_names = param_names[:, :-1]
-        true_vals = true_vals[:, :-1]
+        param_names = param_names[:, :-1] if param_names is not None else None
+        true_vals = true_vals[:, :-1] if true_vals is not None else None
         initial_params = initial_params[:, :-1]
         proposal_std = proposal_std[:, :-1]
         param_bounds = param_bounds[:, :-1]
@@ -65,8 +70,8 @@ def prepare_arrays_for_mcmc(param_names, true_vals, initial_params, proposal_std
     
     elif analytical_bool == False:
         n_body_mask = np.array([True, False, True, True, True, True, True, True, True])
-        param_names = param_names[:, n_body_mask]
-        true_vals = true_vals[:, n_body_mask]
+        param_names = param_names[:, n_body_mask] if param_names is not None else None
+        true_vals = true_vals[:, n_body_mask] if true_vals is not None else None
         initial_params = initial_params[:, n_body_mask]
         proposal_std = proposal_std[:, n_body_mask]
         param_bounds = param_bounds[:, n_body_mask]

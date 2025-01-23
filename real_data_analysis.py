@@ -1,5 +1,5 @@
 from MCMC.mcmc import MCMC
-from MCMC.main import inclination_checker
+from MCMC.main import inclination_checker, prepare_arrays_for_mcmc
 from sim.SimulateAndFlux import flux_data_from_params
 from pathlib import Path
 from typing import Callable
@@ -13,8 +13,8 @@ import shutil
 
 # Type Aliases
 Params = list[list[float]]
-Bounds = list[list[tuple[float, float]]]
-Proposal = list[list[float]]
+Bounds = np.ndarray
+Proposal = np.ndarray
 
 def download_data_api(target_name: str, 
                   exptime: int = 120,
