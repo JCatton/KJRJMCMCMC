@@ -136,13 +136,20 @@ def estimate_parameters(times: np.ndarray,
     return output_array
 
 def estimate_proposal(times: np.ndarray, flux: np.ndarray) -> Proposal:
-    pass
+    return np.atleast_1d([
+                    [1e-5, 1e-5, 1e-5, 0, 1e-4, 0, 0, 0, 0],  # Planet 1
+                    # [1e-5, 1e-5, 1e-5, 1e-5, 0, 0, 0, 0, 0],   # Planet 2
+                    ])
+
 
 def estimate_noise(times: np.ndarray, flux: np.ndarray) -> float:
     return np.std(flux)
 
 def estimate_bounds(times: np.ndarray, flux: np.ndarray) -> Bounds:
-    pass
+    return np.atleast_1d([
+                    [(1e-5, 0.4), (1e-3, 0.5), (0, 1e4), (0, 0.3), (np.radians(86.8), np.pi), (-np.pi/8, np.pi/8), (-np.pi/8, np.pi/8), (-6,6), (0, 6000)],
+                    # [(1e-5, 0.4), (1e-3, 0.5), (0, 1e10), (0, 0.3), (np.radians(86.8), np.pi), (-np.pi/8, np.pi/8), (-np.pi/8, np.pi/8), (-6, 6), (0, 6000)]
+                    ])
 
 def initial_param_fuzzer(initial_params: Params, proposal_std: Proposal, param_bounds: Bounds) -> Params:
     return initial_params
