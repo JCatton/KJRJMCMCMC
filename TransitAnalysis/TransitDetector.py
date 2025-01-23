@@ -2,7 +2,17 @@ from transitleastsquares import transitleastsquares, transit_mask, cleaned_array
 import numpy as np
 import matplotlib.pyplot as plt
 
-def run_tls(data: np.ndarray, times_input: np.ndarray, limb_darkening_model: str, limb_darkening_coefficients: list, plot_bool = False, save_loc = None, index = None, duration_multiplier = 4, period_min = None, period_max = None):
+def run_tls(data: np.ndarray,
+            times_input: np.ndarray,
+            limb_darkening_model: str,
+            limb_darkening_coefficients: list,
+            plot_bool = False,
+            save_loc = None,
+            index = None,
+            duration_multiplier = 4,
+            period_min = None,
+            period_max = None
+            ):
     """
     Run TLS on the data
 
@@ -108,7 +118,18 @@ def plot_tls_stuff(results, times_input, data, save_loc = None, index = None, du
         plt.show()
 
 
-def search_for_transits(times_input: np.ndarray, data: np.ndarray, stellar_radius, limb_darkening_model: str, limb_darkening_coefficients: list, signal_detection_efficiency: float = 10.0, plot_bool = False, save_loc = None, duration_multiplier = 4, period_min = None, period_max = None):
+def search_for_transits(times_input: np.ndarray,
+                        data: np.ndarray,
+                        stellar_radius,
+                        limb_darkening_model: str,
+                        limb_darkening_coefficients: list,
+                        signal_detection_efficiency: float = 10.0,
+                        plot_bool = False,
+                        save_loc = None,
+                        duration_multiplier = 4,
+                        period_min = None,
+                        period_max = None
+                        ):
     """
     Search for transits in the data by running TLS until the signal detection efficiency is below a certain threshold
 
@@ -132,7 +153,16 @@ def search_for_transits(times_input: np.ndarray, data: np.ndarray, stellar_radiu
     # Run TLS on the data
     current_signal_detection_efficiency = 1000
     while current_signal_detection_efficiency > signal_detection_efficiency:
-        data, times_input, dictionary_entry = run_tls(data, times_input, limb_darkening_model, limb_darkening_coefficients, plot_bool, save_loc, len(results_list), duration_multiplier, period_min, period_max)
+        data, times_input, dictionary_entry = run_tls(data,
+                                                      times_input,
+                                                      limb_darkening_model,
+                                                      limb_darkening_coefficients,
+                                                      plot_bool,
+                                                      save_loc,
+                                                      len(results_list),
+                                                      duration_multiplier,
+                                                      period_min,
+                                                      period_max)
         current_signal_detection_efficiency = dictionary_entry["SDE"]
 
         if current_signal_detection_efficiency < signal_detection_efficiency:
