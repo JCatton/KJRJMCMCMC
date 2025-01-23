@@ -147,6 +147,11 @@ def estimate_bounds(times: np.ndarray, flux: np.ndarray) -> Bounds:
 def initial_param_fuzzer(initial_params: Params, proposal_std: Proposal, param_bounds: Bounds) -> Params:
     return initial_params
 
+def generate_param_names(initial_parameters: Params) -> np.ndarray:
+    depth, _ = initial_parameters.shape
+    base_names = [r"\eta", "a", "P", "e", "inc", "omega", "big_ohm", "phase_lag", "mass"]
+    return np.array([[name + f"_{obj_num}" for name in base_names] for obj_num in range(1, depth + 1)])
+
 
 def gaussian_error_ln_likelihood(
     observed: np.array,
@@ -193,6 +198,14 @@ def run_mcmc_code(file: Path, target_search_params:list, target_stellar_params, 
     proposal_std = estimate_proposal(times, flux) # Todo
     param_bounds = estimate_bounds(times, flux) # Todo
     noise = estimate_noise(times, flux) # Todo
+    param_names = generate_param_names(initial_params)
+
+    param_names, true_vals, initial_params, proposal_std, param_bounds = prepare_arrays_for_mcmc(param_names,
+                                                                                                 None,
+                                                                                                 initial_params,
+                                                                                                 proposal_std,
+                                                                                                 param_bounds,
+                                                                                                 analytic_sim)
 
     def likelihood_fn(params):
         return gaussian_error_ln_likelihood(
