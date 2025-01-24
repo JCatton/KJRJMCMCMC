@@ -205,13 +205,17 @@ def run_mcmc_code(file: Path, target_search_params:list, target_stellar_params, 
     initial_params = np.atleast_2d([ 0.095751,  0.07806046,  3.5224991,  0.          ,np.radians(84),  0.,
    0.,         -3.6653389, 0])
 
+    true_vals = np.array([
+        [0.092, 0.0474, 3.5224991, 0, np.radians(84), 0, 0, -3.6653389, 0],
+    ])
+    print(f"{initial_params=}, {initial_params.shape=}")
     proposal_std = estimate_proposal(times, flux) # Todo
     param_bounds = estimate_bounds(times, flux) # Todo
     noise = estimate_noise(times, flux) # Todo
     param_names = generate_param_names(initial_params)
 
     param_names, true_vals, initial_params, proposal_std, param_bounds = prepare_arrays_for_mcmc(param_names,
-                                                                                                 None,
+                                                                                                 true_vals,
                                                                                                  initial_params,
                                                                                                  proposal_std,
                                                                                                  param_bounds,
@@ -232,6 +236,7 @@ def run_mcmc_code(file: Path, target_search_params:list, target_stellar_params, 
     plt.title("Estimated Parameters Initial Fit")
     plt.plot(times, flux, label="Data")
     plt.plot(times, flux_data_from_params(stellar_params, initial_params, times, analytical_bool=True), label="Estimated", ls=":")
+    plt.plot(times, flux_data_from_params(stellar_params, true_vals, times, analytical_bool=True), label="True", ls="--")
     plt.legend()
     plt.show()
 
