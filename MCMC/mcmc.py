@@ -232,6 +232,7 @@ class MCMC:
                 self.iteration_num += 1
                 prev_iter += 1
                 pbar.update(1)
+                remaining_iter -= 1
                 continue  # Skip to the next iteration
 
             # Keep clipping as easiest solution that works with multiprocessing and
@@ -361,61 +362,42 @@ class MCMC:
                 axs[i, body].set_ylabel(f"{name}")
         plt.xlabel("Iteration #")
         plt.tight_layout()
-        plt.show()
+        plt.savefig(self.data_folder / "chain_plot_plot.pdf")
+        plt.close()
 
-        # fig, axs = plt.subplots(
-        #     nrows=chain.shape[2], ncols=chain.shape[1], figsize=(10, 8)
-        # )
-        # fig.suptitle("Parameter Iterations After Burn In")
-        # plt.xlabel("Iteration #")
-        # chain = chain[self.burn_in_index:]
-        # x = np.arange(len(chain))
-        #
-        # for body in range(chain.shape[1]):
-        #     for i, name in enumerate(param_names[body]):
-        #         param_samples = chain[:, body, i]
-        #         print(
-        #             f"Estimated {name}: {np.mean(param_samples):.3e}",
-        #             f", true {name}: {true_vals[body, i]}" if true_vals is not None else None,
-        #         )
-        #         axs[i, body].plot(x, param_samples, label=name)
-        #         if true_vals is not None:
-        #             axs[i, body].hlines(true_vals[body, i], xmin=0, xmax=len(chain), linestyles="--", color="red")
-        #         min_val, max_val = minmax(param_samples)
-        #         axs[i, body].vlines(self.burn_in_index, ymin=max_val,
-        #                             ymax=min_val, linestyles="dotted",
-        #                             color="red")
-        #         axs[i, body].set_ylabel(f"{name}")
-        #
-        # plt.tight_layout()
-        # plt.show()
+        fig, axs = plt.subplots(
+                nrows=chain.shape[2], ncols=chain.shape[1], figsize=(10, 8)
+            )
 
-        # fig, axs = plt.subplots(
-        #     nrows=chain.shape[2], ncols=chain.shape[1], figsize=(10, 8)
-        # )
-        # fig.suptitle("Parameter Iterations After Burn In")
-        # plt.xlabel("Iteration #")
-        # chain = chain[self.burn_in_index:]
-        # x = np.arange(len(chain))
-        #
-        # for body in range(chain.shape[1]):
-        #     for i, name in enumerate(param_names[body]):
-        #         param_samples = chain[:, body, i]
-        #         print(
-        #             f"Estimated {name}: {np.mean(param_samples):.3e}",
-        #             f", true {name}: {true_vals[body, i]}" if true_vals is not None else None,
-        #         )
-        #         axs[i, body].plot(x, param_samples, label=name)
-        #         if true_vals is not None:
-        #             axs[i, body].hlines(true_vals[body, i], xmin=0, xmax=len(chain), linestyles="--", color="red")
-        #         min_val, max_val = minmax(param_samples)
-        #         axs[i, body].vlines(self.burn_in_index, ymin=max_val,
-        #                             ymax=min_val, linestyles="dotted",
-        #                             color="red")
-        #         axs[i, body].set_ylabel(f"{name}")
-        #
-        # plt.tight_layout()
-        # plt.show()
+            # Ensure axs is always 2D
+        if chain.shape[2] == 1 and chain.shape[1] == 1:
+            axs = np.array([[axs]])  # Wrap single axes into a 2D array
+        elif chain.shape[1] == 1:
+            axs = np.expand_dims(axs, axis=1)  # Add column dimension
+        elif chain.shape[2] == 1:
+            axs = np.expand_dims(axs, axis=0)  # Add row dimension
+
+        fig.suptitle("Parameter Iterations After Burn In")
+        plt.xlabel("Iteration #")
+        chain = chain[self.burn_in_index:]
+        x = np.arange(len(chain))
+
+        for body in range(chain.shape[1]):
+            for i, name in enumerate(param_names[body]):
+                param_samples = chain[:, body, i]
+                print(
+                    f"Estimated {name}: {np.mean(param_samples):.3e}",
+                    f", true {name}: {true_vals[body, i]}" if true_vals is not None else None,
+                )
+                axs[i, body].plot(x, param_samples, label=name)
+                if true_vals is not None:
+                    axs[i, body].hlines(true_vals[body, i], xmin=0, xmax=len(chain), linestyles="--", color="red")
+                min_val, max_val = minmax(param_samples)
+                axs[i, body].set_ylabel(f"{name}")
+
+        plt.tight_layout()
+        plt.savefig(self.data_folder / "chain_post_burn_in_plot_plot.pdf")
+        plt.close()
 
     def corner_plot(
         self, true_vals: Optional[np.ndarray] = None, burn_in_index: int = None
