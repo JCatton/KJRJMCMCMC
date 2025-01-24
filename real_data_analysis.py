@@ -102,15 +102,16 @@ def estimate_parameters(times: np.ndarray,
     - stellar_params: tuple of the stellar parameters
 
     Returns:
-    - estimated_params: List of the estimated parameters
+    - estimated_params: List of the estimated parameters [eta, a, P, e, inc, omega, big_ohm, phase_lag, mass]
     """
     stellar_radius = stellar_params[0]
+    stellar_mass = stellar_params[1]
     limb_darkening_model = stellar_params[2]
     limb_darkening_coefficients = stellar_params[3]
 
     estimated_params = search_for_transits(times_input=times, 
                                            data=flux, 
-                                           stellar_radius=stellar_radius, 
+                                           stellar_params=[stellar_radius, stellar_mass], 
                                            limb_darkening_model=limb_darkening_model, 
                                            limb_darkening_coefficients=limb_darkening_coefficients,
                                            signal_detection_efficiency=signal_detection_efficiency,

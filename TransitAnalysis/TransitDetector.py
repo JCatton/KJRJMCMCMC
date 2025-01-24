@@ -124,7 +124,7 @@ def plot_tls_stuff(results, times_input, data, save_loc = None, index = None, du
 
 def search_for_transits(times_input: np.ndarray,
                         data: np.ndarray,
-                        stellar_radius,
+                        stellar_params: tuple,
                         limb_darkening_model: str,
                         limb_darkening_coefficients: list,
                         signal_detection_efficiency: float = 10.0,
@@ -140,7 +140,7 @@ def search_for_transits(times_input: np.ndarray,
     Parameters:
     - times_input: Array of time values
     - data: Array of flux values
-    - stellar_radius: Float representing the radius of the star
+    - stellar_params: Tuple of stellar parameters [radius, mass]
     - limb_darkening_model: String representing the limb darkening model
     - limb_darkening_coefficients: List of limb darkening coefficients
     - signal_detection_efficiency: Float representing the signal detection efficiency threshold
@@ -174,23 +174,24 @@ def search_for_transits(times_input: np.ndarray,
             break
         print(f"Found a planet with SDE of {current_signal_detection_efficiency} and period of {dictionary_entry["Period"]}")
         results_list.append(dictionary_entry)
-    
-    estimated_params = estimate_params_from_tls_data(results_list, stellar_radius)
+    estimated_params = estimate_params_from_tls_data(results_list, stellar_params)
     
     return estimated_params
 
-def estimate_params_from_tls_data(results_list: list, radius_star: float):
+def estimate_params_from_tls_data(results_list: list, stellar_params: tuple):
     """
     Estimate the planet parameters from the TLS results
 
     Parameters:
     - results_list: List of dictionaries containing the TLS results
-    - radius_star: Float representing the radius of the star
+    - stellar_params: Tuple of stellar parameters [radius, mass]
 
     Returns:
     - estimated_params: List of dictionaries containing the estimated planet parameters
     """
     estimated_params = []
+    radius_star = stellar_params[0]
+    mass_star = stellar_params[1]
 
     for i in range(len(results_list)):
         period = results_list[i]["Period"]
@@ -201,8 +202,14 @@ def estimate_params_from_tls_data(results_list: list, radius_star: float):
 
         eta = np.sqrt(1-transit_depth)
         phase_lag = 2*np.pi*t_0/period - 3* np.pi/2
-        a_estimate = radius_star*(1+eta) * period/(np.pi * duration) # See Msci proj workbook 1 page 184-185
+        # a_estimate = radius_star*(1+eta) * period/(np.pi * duration) # See Msci proj workbook 1 page 184-185
 
+        G = 6.67430e-11 # m^3 kg^-1 s^-2
+
+        # convert G to AU^3 M_Earth^-1 day^-2
+        G = G * (1.496e11)**(-3) * (6e24) * (24*60*60)**2
+
+        a_estimate = np.cbrt(G * mass_star * period**2 / (4*np.pi**2))
         estimated_params_dictionary = {"eta": eta, "a": a_estimate, "P": period, "e": 0, "inc": np.pi/2, "omega": 0, "OHM": 0, "phase_lag": phase_lag}
         estimated_params.append(estimated_params_dictionary)
     
@@ -223,7 +230,7 @@ if __name__ == "__main__":
     # Stellar parameters: [radius, mass]
     radius_wasp148a = 0.912 * 696.34e6 / 1.496e11
     mass_wasp148a = 0.9540 * 2e30 / 6e24
-
+    stellar_params = [radius_wasp148a, mass_wasp148a]  # Based on WASP 148
     eta1 = 0.3
     eta2 = 0.4
     # planet_params =[ [ eta,   a,     P,   e,               inc, omega, OHM, phase_lag ] ]
@@ -244,7 +251,7 @@ if __name__ == "__main__":
 
     sigma_n = 1e-3
     fluxes = add_gaussian_error(output_analytical, 0, sigma_n)
-    results = search_for_transits(times_input, fluxes, radius_wasp148a, "linear", [0], signal_detection_efficiency=10.0, plot_bool=True, save_loc=None, duration_multiplier=4)
+    results = search_for_transits(times_input, fluxes, stellar_params, "linear", [0], signal_detection_efficiency=10.0, plot_bool=True, save_loc=None, duration_multiplier=4)
     # results = search_for_transits(fluxes,  "linear", [0], signal_detection_efficiency=10.0, plot_bool=True, save_loc=None, duration_multiplier=4)
 
     print(f"{results=}")
