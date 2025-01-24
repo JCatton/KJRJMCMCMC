@@ -201,7 +201,7 @@ def run_mcmc_code(file: Path, target_search_params:list, target_stellar_params, 
     times, flux = download_data_api(*target_search_params)
     # stellar_params = get_stellar_params(file, target_name) # Todo -> Currently just give the regular stellar params
     stellar_params = target_stellar_params  # [radius, mas, limb_darkening_model, limb_darkening_coefficients] 
-    # initial_params = estimate_parameters(times, flux, stellar_params, period_min=1, period_max=6)
+    #initial_params = estimate_parameters(times, flux, stellar_params, signal_detection_efficiency = 60, period_min=1, period_max=6)
     initial_params = np.atleast_2d([ 0.095751,  0.07806046,  3.5224991,  0.          ,np.radians(84),  0.,
    0.,         -3.6653389, 0])
 
