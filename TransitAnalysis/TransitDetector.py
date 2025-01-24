@@ -236,7 +236,7 @@ if __name__ == "__main__":
     # planet_params =[ [ eta,   a,     P,   e,               inc, omega, OHM, phase_lag ] ]
     planet_params = np.array(
         [
-            [eta1, 0.08215, 4.803809, 0.208, np.radians(90), 0, 0, 0, 0.287],
+            [eta1, 0.08215, 4.803809, 0, np.radians(90), 0, 0, 0, 0.287],
             # [eta2, 0.2044, 34.525, 0.1809, np.radians(90), 0, 0, np.pi / 4, 0.392]
         ]
     )
