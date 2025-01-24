@@ -1,6 +1,8 @@
 import lightkurve as lk
 import matplotlib.pyplot as plt
 import numpy as np
+from lightkurve.correctors import DesignMatrix, RegressionCorrector
+from lightkurve import LightCurveCollection
 
 def download_data(target_name: str, exptime:int = 120, mission:str = "Tess", sector:int = None, author = None, cadence = None, max_number_downloads:int = 20) -> tuple:
     """
