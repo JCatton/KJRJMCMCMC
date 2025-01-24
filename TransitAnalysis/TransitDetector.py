@@ -204,7 +204,7 @@ def estimate_params_from_tls_data(results_list: list, stellar_params: tuple):
         t_0 = results_list[i]["t_0"]
 
         eta = np.sqrt(1-transit_depth)
-        phase_lag = 2*np.pi*t_0/period - 3* np.pi/2
+        phase_lag = 2*np.pi*t_0/period + np.pi/2
         # a_estimate = radius_star*(1+eta) * period/(np.pi * duration) # See Msci proj workbook 1 page 184-185
 
         G = 6.67430e-11 # m^3 kg^-1 s^-2
