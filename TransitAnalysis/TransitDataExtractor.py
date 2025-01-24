@@ -92,7 +92,7 @@ def tpfs_to_lightcurves(tpfs):
 
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
-    name = 'Kepler-8'
+    name = 'TIC 147977348'
     mission=None
     exptime=None
     author = 'Kepler'
