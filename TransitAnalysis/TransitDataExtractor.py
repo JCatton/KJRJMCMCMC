@@ -35,7 +35,8 @@ def download_data(target_name: str, exptime:int = 120, mission:str = "Tess", sec
 
     un_corr, corr = tpfs_to_lightcurves(tpf_collection)
 
-    times = corr.time - un_corr.time[0]
+    times = (corr.time - un_corr.time[0]).value
+
     flux = corr.flux
 
     ax = corr.plot(c='k', lw=2, label='Corrected')
