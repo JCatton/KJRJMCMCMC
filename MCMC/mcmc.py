@@ -231,6 +231,7 @@ class MCMC:
                 self.likelihood_chain[prev_iter + 1] = current_likelihood
                 self.iteration_num += 1
                 prev_iter += 1
+                pbar.update(1)
                 continue  # Skip to the next iteration
 
             # Keep clipping as easiest solution that works with multiprocessing and
