@@ -206,7 +206,7 @@ def run_mcmc_code(file: Path, target_search_params:list, target_stellar_params, 
    0.,         -3.6653389, 0])
 
     true_vals = np.array([
-        [0.092, 0.0474, 3.5224991, 0, np.radians(84), 0, 0, -3.6653389, 0],
+        [0.0875, 0.06608, 5.0037775, 0.05, np.radians(82.54), 0, 0, 0, 0],
     ])
     print(f"{initial_params=}, {initial_params.shape=}")
     proposal_std = estimate_proposal(times, flux) # Todo
@@ -267,7 +267,7 @@ def main():
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
     # main()
-    taget_name = 'Kepler-8'
+    taget_name = 'TIC 147977348'
     exptime = None
     mission = None
     sector = None
@@ -285,12 +285,12 @@ if __name__ == "__main__":
     plt.plot(times, flux)
     plt.show()
 
-    radius_kepler_8 = 1.58 * 696.34e6 / 1.496e11
-    mass_kepler_8 = 1.18 * 2e30 / 6e24
+    radius_tic_147977348 = 2.082 * 696.34e6 / 1.496e11
+    mass_tic_147977348 = 1.536 * 2e30 / 6e24
     limb_darkening_model = "quadratic"
     limb_darkening_coefficients = [0.295, 0.312]
 
-    stellar_params = [radius_kepler_8, mass_kepler_8, limb_darkening_model, limb_darkening_coefficients]  # Based on WASP 148
+    stellar_params = [radius_tic_147977348, mass_tic_147977348, limb_darkening_model, limb_darkening_coefficients]  # Based on WASP 148
 
     period_min = 1
     period_max = 6

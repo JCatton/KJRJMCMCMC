@@ -102,7 +102,19 @@ def inclination_checker(proposals: np.ndarray, r_star: float, indices: tuple[int
     r = a * (1 - e**2) / (1 + e * np.cos(3* np.pi / 2 - omega))
     critical_inc = np.arccos((r_star*(1+eta)) / r)
 
-    return np.all(inc >= critical_inc) # Return True if all inclinations are above the critical value
+
+    # Calculate delta: the maximum deviation allowed from critical_inc
+    delta = np.radians(90) - critical_inc
+
+    # Check if inclinations are within bounds
+    valid_inclination = np.logical_and(
+        np.abs(inc - np.radians(90)) <= delta,  # Within delta range of 90 degrees
+        inc >= critical_inc,                   # Above critical inclination
+    )
+
+    return np.any(valid_inclination) # Return True provided at least one point inclination is good
+
+
 
 
 
