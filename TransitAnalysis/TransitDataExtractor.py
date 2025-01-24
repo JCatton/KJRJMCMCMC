@@ -42,6 +42,25 @@ def download_data(target_name: str, exptime:int = 120, mission:str = "Tess", sec
 #
     return times, flux
 
+def tpfs_to_lightcurves(tpfs):
+    """
+    takes lightkurve collection of tpfs and returns a lightkurve collection of light curves, use apply_regressor to apply the regressor to the data
+    """
+    un_corr = []
+    corr = []
+    for tpf in tpfs:
+        uncorrected_lc, corrected_lc = apply_regressor(tpf)
+        un_corr.append(uncorrected_lc)
+        corr.append(corrected_lc)
+
+    corr_lc_collection = LightCurveCollection(corr)
+    un_corr_lc_old_collection = LightCurveCollection(un_corr)
+
+    stiched_corr_lc = corr_lc_collection.stitch()
+    stiched_un_corr_lc = un_corr_lc_old_collection.stitch()
+
+    return stiched_un_corr_lc, stiched_corr_lc
+
 
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
