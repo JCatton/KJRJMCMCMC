@@ -24,19 +24,21 @@ def download_data(target_name: str, exptime:int = 120, mission:str = "Tess", sec
 
     # Filter out parameters with None values
     search_params = {key: value for key, value in search_params.items() if value is not None}
-
-    print(f"Searching for data with metadata \n{"\n".join([f"{k:=^9}: {v:<20}" for k,v in search_params.items()])}")
-    search_results = lk.search_lightcurve(target_name, **search_params)
+    search_results = lk.search_tesscut(target_name)
+    # print(f"Searching for data with metadata \n{"\n".join([f"{k:=^9}: {v:<20}" for k,v in search_params.items()])}")
+    # search_results = lk.search_lightcurve(target_name, **search_params)
 
     print(search_results)
-    light_curve_collection = search_results[:max_number_downloads].download_all()
+    tpf_collection = search_results.download_all(cutout_size=(50, 50))
 
-    # Flattening ensures that the data is all normalised to the same level and applies savitzky-golay smoothing filter
-    lc = light_curve_collection.stitch().remove_nans().flatten()
+    un_corr, corr = tpfs_to_lightcurves(tpf_collection)
 
-    times = lc.time.value - np.min(lc.time.value)  # zero our times as this is in line with current simulations
+    times = corr.time - un_corr.time[0]
+    flux = corr.flux
 
-    flux = lc.flux.value
+    ax = corr.plot(c='k', lw=2, label='Corrected')
+    un_corr.plot(ax = ax,c='r', lw=2, label='Uncorrected')
+    plt.show()
 #
     return times, flux
 
