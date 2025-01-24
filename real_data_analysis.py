@@ -290,7 +290,7 @@ if __name__ == "__main__":
     limb_darkening_model = "quadratic"
     limb_darkening_coefficients = [0.295, 0.312]
 
-    stellar_params = [radius_kepler_8, mass_kepler_8, limb_darkening_model, limb_darkening_coefficients]  # Based on WASP 148
+    stellar_params = [radius_tic_147977348, mass_tic_147977348, limb_darkening_model, limb_darkening_coefficients]  # Based on WASP 148
 
     period_min = 1
     period_max = 6
