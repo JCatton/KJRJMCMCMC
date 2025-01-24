@@ -174,6 +174,9 @@ def search_for_transits(times_input: np.ndarray,
             break
         print(f"Found a planet with SDE of {current_signal_detection_efficiency} and period of {dictionary_entry["Period"]}")
         results_list.append(dictionary_entry)
+
+        break
+    
     estimated_params = estimate_params_from_tls_data(results_list, stellar_params)
     
     return estimated_params
@@ -251,8 +254,36 @@ if __name__ == "__main__":
 
     sigma_n = 1e-3
     fluxes = add_gaussian_error(output_analytical, 0, sigma_n)
-    results = search_for_transits(times_input, fluxes, stellar_params, "linear", [0], signal_detection_efficiency=10.0, plot_bool=True, save_loc=None, duration_multiplier=4)
+    results = search_for_transits(times_input, fluxes, stellar_params, "linear", [0], signal_detection_efficiency=10.0, plot_bool=False, save_loc=None, duration_multiplier=4)
     # results = search_for_transits(fluxes,  "linear", [0], signal_detection_efficiency=10.0, plot_bool=True, save_loc=None, duration_multiplier=4)
+
+
+    output_array = np.zeros((len(results), 9))
+
+    for i in range(len(results)):
+        output_array[i,0] = results[i]["eta"]
+        output_array[i,1] = results[i]["a"]
+        output_array[i,2] = results[i]["P"]
+        output_array[i,3] = results[i]["e"]
+        output_array[i,4] = results[i]["inc"]
+        output_array[i,5] = results[i]["omega"]
+        output_array[i,6] = results[i]["OHM"]
+        output_array[i,7] = results[i]["phase_lag"]
+        output_array[i,8] = 0  # Mass currently irrelevant
+    
+
+    # import simulate and flux
+    from sim.SimulateAndFlux import flux_data_from_params
+
+    # use reults to get flux
+    # fluxes = flux_data_from_params(stellar_params, results[:,:-1], times_input, analytical_bool=True)
+    fluxes_true = output_analytical
+    output_array= output_array[:, :-1]
+
+    plt.plot(times_input, flux_data_from_params(stellar_params, output_array, times_input, analytical_bool=True), label="Estimated", ls=":")
+    plt.plot(times_input, fluxes_true, label="True")
+    plt.legend()
+    plt.show()
 
     print(f"{results=}")
     print(f"shape of results: {len(results)}")
