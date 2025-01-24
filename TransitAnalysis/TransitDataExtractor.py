@@ -42,6 +42,34 @@ def download_data(target_name: str, exptime:int = 120, mission:str = "Tess", sec
 #
     return times, flux
 
+def apply_regressor(tpf):
+    """
+    Apply the regressor to the data
+
+    Parameters:
+    - tpf: Target Pixel File
+
+    Returns:
+    - uncorrected_lc: Uncorrected light curve
+    - corrected_ffi_lc: Corrected light
+    """
+    aper = tpf.create_threshold_mask()
+    uncorrected_lc = tpf.to_lightcurve(aperture_mask=aper)
+
+    uncorrected_lc = uncorrected_lc.remove_nans()
+
+    clean_flux = tpf.flux[~np.isnan(tpf.to_lightcurve(aperture_mask=aper).flux), :, :]
+
+    dm = DesignMatrix(clean_flux[:, ~aper], name='regressors').pca(5).append_constant()
+
+    rc = RegressionCorrector(uncorrected_lc)
+
+    corrected_ffi_lc = rc.correct(dm)
+
+    corrected_ffi_lc = uncorrected_lc - rc.model_lc + np.percentile(rc.model_lc.flux, 5)
+
+    return uncorrected_lc.normalize(), corrected_ffi_lc.normalize()
+
 def tpfs_to_lightcurves(tpfs):
     """
     takes lightkurve collection of tpfs and returns a lightkurve collection of light curves, use apply_regressor to apply the regressor to the data
