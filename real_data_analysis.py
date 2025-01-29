@@ -43,7 +43,7 @@ def download_data_api(target_name: str,
                                   sector = sector,
                                   author = author, 
                                   cadence = cadence,
-                                  indicies_requested,
+                                  indicies_requested = indicies_requested,
                                   max_number_downloads = max_number_downloads)
 
 
