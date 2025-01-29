@@ -37,8 +37,8 @@ def download_data(target_name: str, exptime:int = 120, mission:str = "Tess", sec
     else:
         lower = indicies_requested[0]
         upper = indicies_requested[1]
-        tpf_collection = search_results[lower, upper].download_all(cutout_size=(50, 50))
-
+        tpf_collection = search_results[lower:upper].download_all(cutout_size=(50, 50))
+        
     un_corr, corr = tpfs_to_lightcurves(tpf_collection)
 
 
