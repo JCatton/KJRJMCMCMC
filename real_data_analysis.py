@@ -273,8 +273,8 @@ if __name__ == "__main__":
     exptime = None
     mission = None
     sector = None
-    author = 'Kepler'
-    cadence = 'long'
+    author = None
+    cadence = None
     indicies_requested = (1,5)
     max_number_downloads = 4
     use_regression_model = True
