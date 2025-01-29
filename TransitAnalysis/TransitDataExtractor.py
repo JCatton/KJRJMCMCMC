@@ -35,15 +35,23 @@ def download_data(target_name: str, exptime:int = 120, mission:str = "Tess", sec
 
     un_corr, corr = tpfs_to_lightcurves(tpf_collection)
 
-    times = (corr.time - un_corr.time[0]).value
 
-    flux = corr.flux
+    # Sort indices based on the time array
+    sorted_indices = np.argsort(corr.time.value)
+
+    # Sort time and flux arrays accordingly
+    sorted_time = corr.time.value[sorted_indices]
+    sorted_flux = corr.flux[sorted_indices]
+
+
+    sorted_time = sorted_time - sorted_time[0]
+
 
     ax = corr.plot(c='k', lw=2, label='Corrected')
     un_corr.plot(ax = ax,c='r', lw=2, label='Uncorrected')
     plt.show()
 #
-    return times, flux
+    return sorted_time, sorted_flux
 
 def apply_regressor(tpf):
     """
