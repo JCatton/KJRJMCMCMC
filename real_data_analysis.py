@@ -138,7 +138,7 @@ def estimate_parameters(times: np.ndarray,
 
 def estimate_proposal(times: np.ndarray, flux: np.ndarray) -> Proposal:
     return np.atleast_2d([
-                    [1e-5, 1e-5, 1e-5, 0, 1e-4, 0, 0, 0, 0],  # Planet 1
+                    [5*1e-4, 2*1e-4, 2*1e-4, 0, 5*1e-4, 0, 0, 0, 0],  # Planet 1
                     # [1e-5, 1e-5, 1e-5, 1e-5, 0, 0, 0, 0, 0],   # Planet 2
                     ])
 
@@ -148,7 +148,7 @@ def estimate_noise(times: np.ndarray, flux: np.ndarray) -> float:
 
 def estimate_bounds(times: np.ndarray, flux: np.ndarray) -> Bounds:
     return np.atleast_3d([
-                    [(1e-5, 0.4), (1e-3, 0.5), (0, 1e4), (0, 0.3), (np.radians(86.8), np.pi), (-np.pi/8, np.pi/8), (-np.pi/8, np.pi/8), (-6,6), (0, 6000)],
+                    [(1e-5, 0.4), (1e-3, 0.5), (0, 1e4), (0, 0.3), (np.radians(80), np.pi), (-np.pi/8, np.pi/8), (-np.pi/8, np.pi/8), (-6,6), (0, 6000)],
                     # [(1e-5, 0.4), (1e-3, 0.5), (0, 1e10), (0, 0.3), (np.radians(86.8), np.pi), (-np.pi/8, np.pi/8), (-np.pi/8, np.pi/8), (-6, 6), (0, 6000)]
                     ])
 
