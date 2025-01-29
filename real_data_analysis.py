@@ -233,7 +233,7 @@ def run_mcmc_code(file: Path, target_search_params:list, target_stellar_params, 
         )
 
     plt.figure()
-    plt.title("Estimated Parameters Initial Fit")
+    plt.title(f"Estimated Parameters Initial Fit\n{file}")
     plt.plot(times, flux, label="Data")
     plt.plot(times, flux_data_from_params(stellar_params, initial_params, times, analytical_bool=True), label="Estimated", ls=":")
     plt.plot(times, flux_data_from_params(stellar_params, true_vals, times, analytical_bool=True), label="True", ls="--")
