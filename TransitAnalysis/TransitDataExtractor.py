@@ -38,26 +38,27 @@ def download_data(target_name: str, exptime:int = 120, mission:str = "Tess", sec
         lower = indicies_requested[0]
         upper = indicies_requested[1]
         tpf_collection = search_results[lower:upper].download_all(cutout_size=(50, 50))
-        
+
     un_corr, corr = tpfs_to_lightcurves(tpf_collection)
 
+    # Filter the arrays
+    combined_array_corr = np.array([corr.time.value, corr.flux])
+    sorted_indices_corr = np.argsort(combined_array_corr[0])
+    sorted_combined_array_corr = combined_array_corr[:, sorted_indices_corr]
+    #Zero
+    sorted_combined_array_corr[0] -= sorted_combined_array_corr[0, 0]
 
-    # Sort indices based on the time array
-    sorted_indices = np.argsort(corr.time.value)
+        # Filter the arrays
+    combined_array_un_corr = np.array([corr.time.value, corr.flux])
+    sorted_indices_un_corr = np.argsort(combined_array_un_corr[0])
+    sorted_combined_array_un_corr = combined_array_un_corr[:, sorted_indices_un_corr]
+    #Zero
+    sorted_combined_array_un_corr[0] -= sorted_combined_array_un_corr[0, 0]
 
-    # Sort time and flux arrays accordingly
-    sorted_time = corr.time.value[sorted_indices]
-    sorted_flux = corr.flux[sorted_indices]
-
-
-    sorted_time = sorted_time - sorted_time[0]
-
-
-    ax = corr.plot(c='k', lw=2, label='Corrected')
-    un_corr.plot(ax = ax,c='r', lw=2, label='Uncorrected')
-    plt.show()
+    plt.plot(sorted_combined_array_un_corr[0], sorted_combined_array_un_corr[1], label= "uncorrected")
+    plt.show(sorted_combined_array_corr[0], sorted_combined_array_corr[1], label = "Corrected")
 #
-    return sorted_time, sorted_flux
+    return sorted_combined_array_corr[0], sorted_combined_array_corr[1]
 
 def apply_regressor(tpf):
     """
