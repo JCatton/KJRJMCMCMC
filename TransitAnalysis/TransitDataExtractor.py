@@ -56,8 +56,8 @@ def download_data(target_name: str, exptime:int = 120, mission:str = "Tess", sec
     sorted_combined_array_un_corr[0] -= sorted_combined_array_un_corr[0, 0]
 
     plt.plot(sorted_combined_array_un_corr[0], sorted_combined_array_un_corr[1], label= "uncorrected")
-    plt.show(sorted_combined_array_corr[0], sorted_combined_array_corr[1], label = "Corrected")
-#
+    plt.plot(sorted_combined_array_corr[0], sorted_combined_array_corr[1], label = "Corrected")
+    plt.plot()
     return sorted_combined_array_corr[0], sorted_combined_array_corr[1]
 
 def apply_regressor(tpf):
