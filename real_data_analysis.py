@@ -22,6 +22,7 @@ def download_data_api(target_name: str,
                   sector: int = None,
                   author = None,
                   cadence = None,
+                  indicies_requested = None,
                   max_number_downloads: int = 20,
                   use_regression_model = True):
     """
@@ -42,6 +43,7 @@ def download_data_api(target_name: str,
                                   sector = sector,
                                   author = author, 
                                   cadence = cadence,
+                                  indicies_requested,
                                   max_number_downloads = max_number_downloads)
 
 
@@ -273,9 +275,10 @@ if __name__ == "__main__":
     sector = None
     author = 'Kepler'
     cadence = 'long'
+    indicies_requested = (1,5)
     max_number_downloads = 4
     use_regression_model = True
-    target_search_params = [taget_name, exptime, mission, sector, author, cadence, max_number_downloads, use_regression_model]
+    target_search_params = [taget_name, exptime, mission, sector, author, cadence, indicies_requested, max_number_downloads, use_regression_model]
 
 
     times, flux = download_data_api(*target_search_params)

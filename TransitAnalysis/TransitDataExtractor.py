@@ -4,7 +4,7 @@ import numpy as np
 from lightkurve.correctors import DesignMatrix, RegressionCorrector
 from lightkurve import LightCurveCollection
 
-def download_data(target_name: str, exptime:int = 120, mission:str = "Tess", sector:int = None, author = None, cadence = None, max_number_downloads:int = 20) -> tuple:
+def download_data(target_name: str, exptime:int = 120, mission:str = "Tess", sector:int = None, author = None, cadence = None, indicies_requested = None, max_number_downloads:int = 20) -> tuple:
     """
     Downloads data from the target_name
 
@@ -31,7 +31,13 @@ def download_data(target_name: str, exptime:int = 120, mission:str = "Tess", sec
     # search_results = lk.search_lightcurve(target_name, **search_params)
 
     print(search_results)
-    tpf_collection = search_results.download_all(cutout_size=(50, 50))
+
+    if indicies_requested == None:
+        tpf_collection = search_results.download_all(cutout_size=(50, 50))
+    else:
+        lower = indicies_requested[0]
+        upper = indicies_requested[1]
+        tpf_collection = search_results[lower, upper].download_all(cutout_size=(50, 50))
 
     un_corr, corr = tpfs_to_lightcurves(tpf_collection)
 
