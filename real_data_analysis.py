@@ -302,4 +302,4 @@ if __name__ == "__main__":
     # estimated_params = estimate_parameters(times, flux, stellar_params, signal_detection_efficiency, period_min, period_max)
     # print(estimated_params)
 
-    run_mcmc_code(file="test", target_search_params=target_search_params, target_stellar_params=stellar_params, iteration_num=150_000, run_number=1, analytic_sim=True)
+    run_mcmc_code(file="toi_1181", target_search_params=target_search_params, target_stellar_params=stellar_params, iteration_num=600_000, run_number=3, analytic_sim=True)
