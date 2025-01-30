@@ -203,19 +203,19 @@ def run_mcmc_code(file: Path, target_search_params:list, target_stellar_params, 
     times, flux = download_data_api(*target_search_params)
     # stellar_params = get_stellar_params(file, target_name) # Todo -> Currently just give the regular stellar params
     stellar_params = target_stellar_params  # [radius, mas, limb_darkening_model, limb_darkening_coefficients] 
-    initial_params = estimate_parameters(times, flux, stellar_params, signal_detection_efficiency = 60, period_min=1, period_max=6)
+    initial_params = np.atleast_2d(estimate_parameters(times, flux, stellar_params, signal_detection_efficiency = 30, period_min=1, period_max=6))
 #     initial_params = np.atleast_2d([ 0.095751,  0.07806046,  3.5224991,  0.          ,np.radians(84),  0.,
 #    0.,         -3.6653389, 0])
 
 
-    true_vals = np.array([
-        [0.0764, 0.03824559011, 2.103195, 	0.011, np.radians(87.0), 0, 0, 0, 0],
-    ])
+    true_vals = np.atleast_2d(np.array([
+        [0.0764, 0.03824559011, 2.103195, 	0.011, np.radians(87.0), 0, 0,  1.51935416, 0],
+    ]))
     print(f"{initial_params=}, {initial_params.shape=}")
-    proposal_std = estimate_proposal(times, flux) # Todo
-    param_bounds = estimate_bounds(times, flux) # Todo
+    proposal_std = np.atleast_2d(estimate_proposal(times, flux)) # Todo
+    param_bounds = np.atleast_2d(estimate_bounds(times, flux)) # Todo
     noise = estimate_noise(times, flux) # Todo
-    param_names = generate_param_names(initial_params)
+    param_names = np.atleast_2d(generate_param_names(initial_params))
 
     param_names, true_vals, initial_params, proposal_std, param_bounds = prepare_arrays_for_mcmc(param_names,
                                                                                                  true_vals,
@@ -298,7 +298,7 @@ if __name__ == "__main__":
 
     period_min = 1
     period_max = 6
-    signal_detection_efficiency = 60
+    signal_detection_efficiency = 30
     # estimated_params = estimate_parameters(times, flux, stellar_params, signal_detection_efficiency, period_min, period_max)
     # print(estimated_params)
 
