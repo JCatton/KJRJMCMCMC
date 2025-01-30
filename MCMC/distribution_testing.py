@@ -7,7 +7,20 @@ from corner import corner
 
 def gaussian_log_likelihood(pos: np.ndarray, covariance_mat: np.mat, mean: np.ndarray):
     delta = pos - mean
-    return -0.5 * np.log(np.linalg.det(covariance_mat) + delta.transpose() @ np.linalg.inv(covariance_mat) @ delta)
+    n = len(pos)
+    return -0.5 * n * np.log(np.linalg.det(covariance_mat)) - 0.5 * delta.transpose() @ np.linalg.inv(covariance_mat) @ delta
+
+def potential_energy(position_ln_likelihood: float) -> float:
+    """
+    Betancourt Introduction to HMC
+    """
+    return -position_ln_likelihood
+
+def kinetic_energy(mom_generating_func: multivariate_normal, momentum: np.ndarray) -> float:
+    """
+    Betancourt Introduction to HMC
+    """
+    return - np.log(mom_generating_func.pdf(momentum))
 
 def gaussian_hmc(num_of_new_iterations: int, timestep: float, hessian: np.matrix):
 
