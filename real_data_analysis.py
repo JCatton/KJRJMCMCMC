@@ -140,7 +140,7 @@ def estimate_parameters(times: np.ndarray,
 
 def estimate_proposal(times: np.ndarray, flux: np.ndarray) -> Proposal:
     return np.atleast_2d([
-                    [5*1e-4, 2*1e-4, 2*1e-4, 0, 5*1e-4, 0, 0, 0, 0],  # Planet 1
+                    [5*1e-4, 2*1e-4, 2*1e-4, 0, 1*1e-4, 0, 0, 0, 0],  # Planet 1
                     # [1e-5, 1e-5, 1e-5, 1e-5, 0, 0, 0, 0, 0],   # Planet 2
                     ])
 
