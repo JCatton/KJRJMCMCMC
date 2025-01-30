@@ -1,5 +1,3 @@
-from mcmc import MCMC, Statistics
-from main import gaussian_error_ln_likelihood
 from scipy.stats import multivariate_normal
 from random import random#
 from tqdm import tqdm
