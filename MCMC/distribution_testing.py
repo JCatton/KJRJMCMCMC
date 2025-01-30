@@ -36,7 +36,7 @@ def gaussian_hmc(num_of_new_iterations: int, timestep: float, hessian: np.matrix
     prev_iter = iteration_number - 1
     chain[prev_iter] = np.array([100,20,-40,560,10])
     current_position = chain[prev_iter]
-    current_likelihood = likelihood_func(current_position)
+    current_ln_likelihood = ln_likelihood_func(current_position)
 
     gradient = update_gradient(current_position, hessian)
 
@@ -46,17 +46,17 @@ def gaussian_hmc(num_of_new_iterations: int, timestep: float, hessian: np.matrix
         pbar.update(1)
         # new_pos, accept, new_likelihood = self.do_gaussian_hmc_step(current_position, timestep, hessian, gradient)
 
-        accept, new_likelihood, new_pos = do_gaussian_hmc_step(current_likelihood, current_position, gradient,
+        accept, new_likelihood, new_pos = do_gaussian_hmc_step(current_ln_likelihood, current_position, gradient,
                                                                hessian, timestep)
         if accept:
             current_position = new_pos
-            current_likelihood = new_likelihood
+            current_ln_likelihood = new_likelihood
             acceptance_number += 1
         else:
             rejection_number += 1
 
         chain[prev_iter] = current_position
-        likelihoods[prev_iter] = current_likelihood
+        likelihoods[prev_iter] = current_ln_likelihood
         hessian = update_hessian(hessian)
         gradient = update_gradient(current_position, hessian)
 
@@ -92,17 +92,37 @@ def update_gradient(current_position, hessian):
 def update_hessian(hessian):
     return hessian
 
-def do_gaussian_hmc_step(current_likelihood, current_position, gradient, hessian, timestep):
+def hamiltonian(cov, pos, mom):
+    return 0.5 * pos.transpose() @ cov @ pos + 0.5 * mom.transpose() @ np.linalg.inv(cov) @ mom
+    # return 0.5 * pos.transpose() @ pos + 0.5 * mom.transpose() @ mom
+
+def do_gaussian_hmc_step(current_ln_likelihood, current_pos, gradient, hessian, timestep):
+
     covariance_mat = - np.linalg.inv(hessian)
-    expected_mean = current_position + covariance_mat @ gradient
-    current_normal = multivariate_normal(np.zeros(len(current_position)), covariance_mat)
-    a_i =  current_normal.rvs() # Velocity sample
-    b_i = current_position - expected_mean
+    expected_mean = current_pos - hessian @ gradient
+    current_normal = multivariate_normal(np.zeros(len(current_pos)), covariance_mat)
+
+    current_mom = current_normal.rvs() # Velocity sample
+    a_i = np.linalg.inv(covariance_mat) @ current_mom
+    b_i = current_pos - expected_mean
+
     new_pos = expected_mean + a_i * np.sin(timestep) + b_i * np.cos(timestep)
-    new_likelihood = likelihood_func(new_pos)
-    acceptance_prob = np.exp(new_likelihood - current_likelihood)
+    new_mom = covariance_mat @ (a_i * np.cos(timestep) - b_i * np.sin(timestep))
+
+    # current_potential = potential_energy(current_ln_likelihood)
+    # current_energy = current_potential + kinetic_energy(current_normal, current_mom)
+
+    new_ln_likelihood = ln_likelihood_func(new_pos)
+    # new_potential = potential_energy(new_ln_likelihood)
+    # new_energy = new_potential + kinetic_energy(current_normal, new_mom)
+
+    old_h = hamiltonian(covariance_mat, current_pos, current_mom)
+    new_h = hamiltonian(covariance_mat, new_pos, new_mom)
+
+    acceptance_prob = np.exp(-new_h + old_h)
+
     accept = random() < acceptance_prob
-    return accept, new_likelihood, new_pos
+    return accept, new_ln_likelihood, new_pos
 
 def autocorrelation (x) :
     """
@@ -116,16 +136,16 @@ def autocorrelation (x) :
     return np.real(pi)[:x.size//2]/np.sum(xp**2)
 
 def main():
-    global likelihood_func
+    global ln_likelihood_func
     mean = np.zeros(5, dtype=np.float64)
     covariance = np.diag(np.ones(5, dtype=np.float64))
     covariance[0,1] = 0.3
     covariance[1,0] = 0.3
     covariance[2,0] = -0.25
     covariance[0,2] = -0.25
-    def likelihood_func(x):
+    def ln_likelihood_func(x):
         return gaussian_log_likelihood(x, covariance, mean)
-    gaussian_hmc(50000, np.pi / 2, -np.linalg.inv(covariance))#
+    gaussian_hmc(50000, np.pi / 2, -np.linalg.inv(covariance))
 
 
 
