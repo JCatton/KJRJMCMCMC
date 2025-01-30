@@ -203,12 +203,13 @@ def run_mcmc_code(file: Path, target_search_params:list, target_stellar_params, 
     times, flux = download_data_api(*target_search_params)
     # stellar_params = get_stellar_params(file, target_name) # Todo -> Currently just give the regular stellar params
     stellar_params = target_stellar_params  # [radius, mas, limb_darkening_model, limb_darkening_coefficients] 
-    #initial_params = estimate_parameters(times, flux, stellar_params, signal_detection_efficiency = 60, period_min=1, period_max=6)
-    initial_params = np.atleast_2d([ 0.095751,  0.07806046,  3.5224991,  0.          ,np.radians(84),  0.,
-   0.,         -3.6653389, 0])
+    initial_params = estimate_parameters(times, flux, stellar_params, signal_detection_efficiency = 60, period_min=1, period_max=6)
+#     initial_params = np.atleast_2d([ 0.095751,  0.07806046,  3.5224991,  0.          ,np.radians(84),  0.,
+#    0.,         -3.6653389, 0])
+
 
     true_vals = np.array([
-        [0.0875, 0.06608, 5.0037775, 0.05, np.radians(82.54), 0, 0, 0, 0],
+        [0.0764, 0.03824559011, 2.103195, 	0.011, np.radians(87.0), 0, 0, 0, 0],
     ])
     print(f"{initial_params=}, {initial_params.shape=}")
     proposal_std = estimate_proposal(times, flux) # Todo
@@ -269,7 +270,7 @@ def main():
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
     # main()
-    taget_name = 'TOI-1181'
+    taget_name = 'TIC 229510866'
     exptime = None
     mission = None
     sector = None
@@ -288,12 +289,12 @@ if __name__ == "__main__":
     plt.plot(times, flux)
     plt.show()
 
-    radius_tic_147977348 = 2.082 * 696.34e6 / 1.496e11
-    mass_tic_147977348 = 1.536 * 2e30 / 6e24
+    radius_toi_1181 = 1.961 * 696.34e6 / 1.496e11
+    mass_toi_1181 = 1.467 * 2e30 / 6e24
     limb_darkening_model = "quadratic"
     limb_darkening_coefficients = [0.295, 0.312]
 
-    stellar_params = [radius_tic_147977348, mass_tic_147977348, limb_darkening_model, limb_darkening_coefficients]  # Based on WASP 148
+    stellar_params = [radius_toi_1181, mass_toi_1181, limb_darkening_model, limb_darkening_coefficients]  # Based on WASP 148
 
     period_min = 1
     period_max = 6
