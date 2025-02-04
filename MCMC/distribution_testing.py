@@ -23,31 +23,26 @@ def kinetic_energy(mom_generating_func: multivariate_normal, momentum: np.ndarra
     """
     return - np.log(mom_generating_func.pdf(momentum))
 
-def gaussian_hmc(num_of_new_iterations: int, timestep: float, hessian: np.matrix):
+def gaussian_hmc(num_of_new_iterations: int, timestep: float, cov_mat_est: np.matrix, cov_mat_est_interval: int=1):
 
     acceptance_number = 0
     rejection_number = 0
-    iteration_number = 1
-    chain = np.empty(shape=(num_of_new_iterations, hessian.shape[0]),  dtype=np.float64)
+    iter_num = 1
+    chain = np.empty(shape=(num_of_new_iterations, cov_mat_est.shape[0]),  dtype=np.float64)
     likelihoods = np.empty(num_of_new_iterations, dtype=np.float64)
 
     pbar = tqdm(
         initial=1, total=num_of_new_iterations, desc="MCMC Run "
     )
-    prev_iter = iteration_number - 1
+    prev_iter = iter_num - 1
     chain[prev_iter] = np.array([100,20,-40,560,10])
     # chain[prev_iter] = np.array([1, 1, 1, 1, 1])
     current_position = chain[prev_iter]
     current_ln_likelihood = ln_likelihood_func(current_position)
 
     for i in range(num_of_new_iterations - 1):
-        iteration_number += 1
-        prev_iter += 1
-        pbar.update(1)
-        # new_pos, accept, new_likelihood = self.do_gaussian_hmc_step(current_position, timestep, hessian, gradient)
-
         accept, new_likelihood, new_pos = do_gaussian_hmc_step(current_ln_likelihood, current_position,
-                                                               hessian, timestep)
+                                                               cov_mat_est, timestep)
         if accept:
             current_position = new_pos
             current_ln_likelihood = new_likelihood
@@ -55,27 +50,33 @@ def gaussian_hmc(num_of_new_iterations: int, timestep: float, hessian: np.matrix
         else:
             rejection_number += 1
 
-        chain[prev_iter] = current_position
-        likelihoods[prev_iter] = current_ln_likelihood
-        hessian = update_hessian(hessian)
+        chain[iter_num] = current_position
+        likelihoods[iter_num] = current_ln_likelihood
+        iter_num += 1
+        prev_iter += 1
+        if iter_num % cov_mat_est_interval == 0:
+            cov_mat_est = update_covariance(chain, prev_iter, cov_mat_est_interval)
+        pbar.update(1)
+    print(cov_mat_est)
+
 
     acceptance_rate = acceptance_number / (rejection_number + acceptance_number)
     autoc = autocorrelation(chain[1000:])
     print(f"{acceptance_rate=}")
-    print(f"ESF={np.sum(autoc)}")
-    domain = np.arange(iteration_number)
+    print(f"ESF={1/(1+2*np.sum(autoc))}")
+    domain = np.arange(iter_num)
     fig, axs = plt.subplots(
             nrows=chain.shape[1], ncols=1, figsize=(10, 8)
         )
     fig.suptitle("Chains")
-    for i in range(hessian.shape[0]):
+    for i in range(cov_mat_est.shape[0]):
         axs[i].plot(domain, chain[:, i])
     plt.show()
     fig, axs = plt.subplots(
         nrows=chain.shape[1], ncols=1, figsize=(10, 8)
     )
     fig.suptitle("Burn-in chains")
-    for i in range(hessian.shape[0]):
+    for i in range(cov_mat_est.shape[0]):
         axs[i].plot(domain[:50], chain[:50, i])
     plt.show()
 
@@ -83,7 +84,7 @@ def gaussian_hmc(num_of_new_iterations: int, timestep: float, hessian: np.matrix
         nrows=chain.shape[1], ncols=1, figsize=(10, 8)
     )
     fig.suptitle("Burn-in chains")
-    for i in range(hessian.shape[0]):
+    for i in range(cov_mat_est.shape[0]):
         axs[i].plot(domain[50:], chain[50:, i])
     plt.show()
 
@@ -100,11 +101,8 @@ def gaussian_hmc(num_of_new_iterations: int, timestep: float, hessian: np.matrix
 #     gradient = np.linalg.inv(hessian) @ (current_position)
 #     return gradient
 
-def update_covariance(chain):
-    return chain
-
-def update_hessian(hessian):
-    return hessian
+def update_covariance(chain: np.ndarray, max_iter, interval: int):
+    return np.corrcoef(chain[:max_iter, :], rowvar=0)
 
 def hamiltonian(cov, pos, mean, mom):
     delta = pos - mean
@@ -113,9 +111,8 @@ def hamiltonian(cov, pos, mean, mom):
     return -ln_likelihood_func(pos) + 0.5 * mom.transpose() @ np.linalg.inv(cov) @ mom
     # return 0.5 * pos.transpose() @ pos + 0.5 * mom.transpose() @ mom
 
-def do_gaussian_hmc_step(current_ln_likelihood, current_pos, hessian, timestep):
+def do_gaussian_hmc_step(current_ln_likelihood, current_pos, covariance_mat, timestep):
 
-    covariance_mat = - np.linalg.inv(hessian)
     expected_mean = mean
     current_normal = multivariate_normal(np.zeros(len(current_pos)), covariance_mat)
 
@@ -165,7 +162,7 @@ def main():
     covariance[0,2] = -0.25
     def ln_likelihood_func(x):
         return gaussian_log_likelihood(x, covariance, mean)
-    gaussian_hmc(50000, np.pi / 2, -np.linalg.inv(covariance))
+    gaussian_hmc(50_000, np.pi / 2, covariance, cov_mat_est_interval=1000)
 
 
 
