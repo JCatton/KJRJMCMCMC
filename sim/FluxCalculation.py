@@ -4,11 +4,11 @@ from tqdm import tqdm
 import os
 import matplotlib.pyplot as plt
 from numba import jit
+from LimbDarkening import limb_darkening_flux
 
-
-@jit
+# @jit
 def delta_flux_from_mandel_and_agol(
-    x: float, y: float, z: float, radius_star: float, eta: float
+    x: float, y: float, z: float, radius_star: float, eta: float, use_limb_darkening: bool = False, limb_darkening_coefficients: np.ndarray = None
 ) -> np.ndarray:
     """
     Calculate the delta flux for a planet using the Mandel and Agol model.
@@ -25,13 +25,26 @@ def delta_flux_from_mandel_and_agol(
     """
     d = np.sqrt(x**2 + y**2)
     r = d / radius_star
-    delta_flux = np.ones_like(d)
+    overlapping_area_fraction = np.zeros_like(d)
 
     complete_overlap = np.nonzero((z > 0) & (r <= 1 - eta))
     partial_overlap = np.nonzero((z > 0) & (r > abs(1 - eta)) & (r < 1 + eta))
 
-    delta_flux[complete_overlap] = 1 - eta * eta
-    delta_flux[partial_overlap] -= overlap_calc(r, eta, radius_star, partial_overlap)
+    overlapping_area_fraction[complete_overlap] = eta * eta
+    overlapping_area_fraction[partial_overlap] = overlap_calc(r, eta, radius_star, partial_overlap)
+
+    if use_limb_darkening:
+        if limb_darkening_coefficients is None:
+            raise ValueError("Limb darkening coefficients must be provided if limb darkening is used")
+        
+        limb_coeff_1 = limb_darkening_coefficients[0]
+        limb_coeff_2 = limb_darkening_coefficients[1]
+
+        delta_flux = 1 - limb_darkening_flux(p = eta, z= r, third_axis=z, lambda_e = overlapping_area_fraction, limb_coeff_1 = limb_coeff_1, limb_coeff_2 = limb_coeff_2)
+
+    
+    else:
+        delta_flux = 1 - overlapping_area_fraction
     return delta_flux
 
 
@@ -65,7 +78,7 @@ def overlap_calc(
     return blocked_flux
 
 
-@jit
+# @jit
 def combined_delta_flux(
     x: np.ndarray,
     y: np.ndarray,
@@ -73,6 +86,8 @@ def combined_delta_flux(
     radius_star: float,
     eta_values: np.ndarray,
     times: np.ndarray,
+    use_limb_darkening: bool = False,
+    limb_darkening_coefficients: np.ndarray = None
 ) -> np.ndarray:
     """
     Treating each transits individually, calculate the combined delta flux for all planets.
@@ -97,7 +112,7 @@ def combined_delta_flux(
     # Calculate the delta flux for each planet and subtract it from the combined flux
     for i in range(N):
         eta = eta_values[i]
-        delta_flux = delta_flux_from_mandel_and_agol(x[i], y[i], z[i], radius_star, eta)
+        delta_flux = delta_flux_from_mandel_and_agol(x[i], y[i], z[i], radius_star, eta, use_limb_darkening, limb_darkening_coefficients)
         combined_flux += delta_flux - 1
     return combined_flux
 

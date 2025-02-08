@@ -21,6 +21,9 @@ def flux_data_from_params(
     times: np.ndarray,
     no_loading_bar: bool = True,
     analytical_bool: bool = False,
+    use_limb_darkening: bool = False, 
+    limb_darkening_coefficients: np.ndarray = None
+
 ) -> np.ndarray:
     """
     Calculate flux values from analytical positions.
@@ -47,6 +50,8 @@ def flux_data_from_params(
             radius_star=stellar_params[0],
             eta_values=planet_params[:, 0],
             times=times,
+            use_limb_darkening=use_limb_darkening,
+            limb_darkening_coefficients=limb_darkening_coefficients
         )
 
     else:
@@ -94,34 +99,40 @@ if __name__ == "__main__":
     # planet_params =[ [ eta,   a,     P,   e,               inc, omega, OHM, phase_lag ] ]
     planet_params = np.array(
         [
-            [eta1, 0.08215, 8.803809, 0.208, np.radians(90), 0, 0, 0, 0.287],
-            [eta2, 0.2044, 34.525, 0.1809, np.radians(90), 0, 0, np.pi / 4, 0.392]
+            [eta1, 0.08215, 8.803809, 0.208, np.radians(90), 0, 0, -np.pi, 0.287],
+            # [eta2, 0.2044, 34.525, 0.1809, np.radians(90), 0, 0, np.pi / 4, 0.392]
         ]
     )
     # True inclinations are 89.3 and 104.9 +- some
 
     num_samples = 60000
     number_max_period = 4
-    times_input = np.linspace(0, 4 * 34, 60000)  # Three orbital periods for planet 1
+    times_input = np.linspace(0, 1/6 * 34, 600000)  # Three orbital periods for planet 1
 
     planet_params_analytical = planet_params[:, :-1]
     output_analytical = flux_data_from_params(
         stellar_params=stellar_params, planet_params=planet_params_analytical, times=times_input, analytical_bool=True
     )
 
-    n_body_mask = np.array([True, False, True, True, True, True, True, True, True])
-    planet_params_n_body = planet_params[:, n_body_mask]
-
-    output_n_body = flux_data_from_params(
-        stellar_params=stellar_params, planet_params=planet_params_n_body, times=times_input, analytical_bool=False
+    output_analytical_with_limb_darkening = flux_data_from_params(
+        stellar_params=stellar_params, planet_params=planet_params_analytical, times=times_input, analytical_bool=True, use_limb_darkening=True, limb_darkening_coefficients=np.array([0.4, 0.3])
     )
 
+    # n_body_mask = np.array([True, False, True, True, True, True, True, True, True])
+    # planet_params_n_body = planet_params[:, n_body_mask]
 
-    np.save("../TestFluxesMultiple.npy", output_analytical)
-    np.save("../TestTimesMultiple.npy", times_input)
+    # output_n_body = flux_data_from_params(
+    #     stellar_params=stellar_params, planet_params=planet_params_n_body, times=times_input, analytical_bool=False
+    # )
+
+
+    # np.save("../TestFluxesMultiple.npy", output_analytical)
+    # np.save("../TestTimesMultiple.npy", times_input)
 
     plt.plot(times_input, output_analytical, label="Analytical")
-    plt.plot(times_input, output_n_body, label="N Body")
+    plt.plot(times_input, output_analytical_with_limb_darkening, label="Analytical Limb Darkening")
+    # plt.plot(times_input, output_n_body, label="N Body")
+    # plt.xlim(2.6,2.95)
     plt.legend()
     plt.show()
 
