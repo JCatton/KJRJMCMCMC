@@ -11,7 +11,7 @@ import time
 import sim.FileCheck as fc
 
 from sim.PositionGenerator import n_body_sim_api, analytical_positions_api
-from sim.FluxCalculation import combined_delta_flux
+from sim.FluxCalculation import combined_delta_flux, use_batman
 from sim.Decorators import TimeMeasure
 
 # @TimeMeasure
@@ -21,12 +21,13 @@ def flux_data_from_params(
     times: np.ndarray,
     no_loading_bar: bool = True,
     analytical_bool: bool = False,
+    batman_bool: bool = False
 ) -> np.ndarray:
     """
     Calculate flux values from analytical positions.
 
     Parameters:
-    - stellar_params: List of stellar parameters [radius, mass]
+    - stellar_params: List of stellar parameters [radius, mass, limb_darkening_model, limb_darkening_coefficients]
     - planet_params: List of planet parameters planet_params: 2D numpy array where each row represents
                      a planet's parameters as
                      [eta, a, p, e, inc, omega, big_ohm, phase_lag, mass (only for N body)]
@@ -39,15 +40,22 @@ def flux_data_from_params(
     """
 
     if analytical_bool:
-        positions = analytical_positions_api(planet_params=planet_params[:,1:], times=times)
-        flux_values = combined_delta_flux(
-            x=positions[:, :, 0].transpose(),
-            y=positions[:, :, 1].transpose(),
-            z=positions[:, :, 2].transpose(),
-            radius_star=stellar_params[0],
-            eta_values=planet_params[:, 0],
-            times=times,
-        )
+        if batman_bool:
+            flux_values = use_batman(
+                stellar_params=stellar_params,
+                planet_params=planet_params,
+                times=times,
+            )
+        else:
+            positions = analytical_positions_api(planet_params=planet_params[:,1:], times=times)
+            flux_values = combined_delta_flux(
+                x=positions[:, :, 0].transpose(),
+                y=positions[:, :, 1].transpose(),
+                z=positions[:, :, 2].transpose(),
+                radius_star=stellar_params[0],
+                eta_values=planet_params[:, 0],
+                times=times,
+            )
 
     else:
         positions = n_body_sim_api(
