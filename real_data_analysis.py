@@ -120,7 +120,14 @@ def estimate_parameters(
     stellar_radius = stellar_params[0]
     stellar_mass = stellar_params[1]
     limb_darkening_model = stellar_params[2]
-    limb_darkening_coefficients = stellar_params[3]
+    if limb_darkening_model == 2:
+        limb_darkening_model = "quadratic"
+    elif limb_darkening_model == 1:
+        limb_darkening_model = "linear"
+    else:
+        print("Jonte tf have you done")
+
+    limb_darkening_coefficients = [stellar_params[3], stellar_params[4]]
 
     estimated_params = search_for_transits(
         times_input=times,
@@ -152,7 +159,7 @@ def estimate_parameters(
     return output_array
 
 
-def merge_params(planet_params: Params, stellar_params: list[float]) -> Params:
+def extend_params_for_stellar(planet_params: Params, stellar_params: list[float]) -> Params:
     """
     Merge the planet and stellar parameters into one array for the MCMC code
 
@@ -171,14 +178,14 @@ def merge_params(planet_params: Params, stellar_params: list[float]) -> Params:
     output_array[0, 4] = stellar_params[4]
 
     for i in range(1, planet_params.shape[0] + 1):
-        output_array[i, 0] = planet_params[i, 0]
-        output_array[i, 1] = planet_params[i, 1]
-        output_array[i, 2] = planet_params[i, 2]
-        output_array[i, 3] = planet_params[i, 3]
-        output_array[i, 4] = planet_params[i, 4]
-        output_array[i, 5] = planet_params[i, 5]
-        output_array[i, 6] = planet_params[i, 6]
-        output_array[i, 7] = planet_params[i, 7]
+        output_array[i, 0] = planet_params[i-1, 0]
+        output_array[i, 1] = planet_params[i-1, 1]
+        output_array[i, 2] = planet_params[i-1, 2]
+        output_array[i, 3] = planet_params[i-1, 3]
+        output_array[i, 4] = planet_params[i-1, 4]
+        output_array[i, 5] = planet_params[i-1, 5]
+        output_array[i, 6] = planet_params[i-1, 6]
+        output_array[i, 7] = planet_params[i-1, 7]
         output_array[i, 8] = 0  # Mass currently irrelevant
 
     return output_array
@@ -187,7 +194,6 @@ def merge_params(planet_params: Params, stellar_params: list[float]) -> Params:
 def estimate_proposal(times: np.ndarray, flux: np.ndarray) -> Proposal:
     return np.atleast_2d(
         [
-            [0, 0, 0, 1e-3, 1e-3, 0, 0, 0, 0],  # Stellar
             [5 * 1e-4, 2 * 1e-4, 2 * 1e-4, 0, 1 * 1e-4, 0, 0, 0, 0],  # Planet 1
             # [1e-5, 1e-5, 1e-5, 1e-5, 0, 0, 0, 0, 0],   # Planet 2
         ]
@@ -201,17 +207,6 @@ def estimate_noise(times: np.ndarray, flux: np.ndarray) -> float:
 def estimate_bounds(times: np.ndarray, flux: np.ndarray) -> Bounds:
     return np.atleast_3d(
         [
-            [
-                (0, 5),
-                (0, 1e40),
-                (0, 1e10),
-                (0, 1),
-                (0, 1),
-                (0, 5),
-                (0, 5),
-                (0, 5),
-                (0, 5),
-            ],  # Only ones that matter here are 0->1 -> I.e. the limb darkening coefficient indexes
             [
                 (1e-5, 0.4),
                 (1e-3, 0.5),
@@ -254,14 +249,50 @@ def generate_param_names(initial_parameters: Params) -> np.ndarray:
         ]
     )
 
-    names[0, 0] = "stellar_radius"
-    names[0, 1] = "stellar_mass"
-    names[0, 2] = "limb_darkening_model"
-    names[0, 3] = "limb_darkening_coefficient_1"
-    names[0, 4] = "limb_darkening_coefficient_2"
-    names[0, 5:] = "empty"
-
     return names
+
+def extend_names_for_stellar(names: np.ndarray) -> np.ndarray:
+    new_names = np.zeros((names.shape[0] + 1, names.shape[1]), dtype=object)
+    new_names[0,0] = "stellar_radius"
+    new_names[0,1] = "stellar_mass"
+    new_names[0,2] = "limb_darkening_model"
+    new_names[0,3] = "limb_darkening_coefficient_1"
+    new_names[0,4] = "limb_darkening_coefficient_2"
+    new_names[0,5:] = "Empty"
+    new_names[1:] = names
+
+    return new_names
+
+def extend_proposal_for_stellar(proposal: Proposal) -> Proposal:
+
+    new_proposal = np.zeros((proposal.shape[0] + 1, proposal.shape[1]))
+    new_proposal[0,0] = 0
+    new_proposal[0,1] = 0
+    new_proposal[0,2] = 0
+    new_proposal[0,3] = 1e-3
+    new_proposal[0,4] = 1e-3
+    new_proposal[0,5:] = 0
+    new_proposal[1:] = proposal
+
+    return new_proposal
+
+def extend_param_bounds_for_stellar(param_bounds: Bounds) -> Bounds:
+
+    new_param_bounds = np.zeros((param_bounds.shape[0] + 1, param_bounds.shape[1], param_bounds.shape[2]))
+
+    new_param_bounds[0,0] = (0, 5)
+    new_param_bounds[0,1] = (0, 1e40)
+    new_param_bounds[0,2] = (0, 1e10)
+    new_param_bounds[0,3] = (0, 1)
+    new_param_bounds[0,4] = (0, 1)
+    new_param_bounds[0,5:] = (0, 5)
+
+    new_param_bounds[1:] = param_bounds
+
+    return new_param_bounds
+
+
+
 
 
 def gaussian_error_ln_likelihood(
