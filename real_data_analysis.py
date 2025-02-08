@@ -138,6 +138,37 @@ def estimate_parameters(times: np.ndarray,
     
     return output_array
 
+def merge_params(planet_params: Params, stellar_params: list[float]) -> Params:
+    """
+    Merge the planet and stellar parameters into one array for the MCMC code
+
+    Parameters:
+    - planet_params: List of the planet parameters [eta, a, P, e, inc, omega, big_ohm, phase_lag, mass]
+    - stellar_params: List of the stellar parameters [radius, mass, limb_darkening_model, limb_darkening_coefficients]
+
+    Returns:
+    - output_array: List of the merged parameters 
+    """
+    output_array = np.zeros((planet_params.shape[0] + 1, 9))
+    output_array[0,0] = stellar_params[0]
+    output_array[0,1] = stellar_params[1]
+    output_array[0,2] = stellar_params[2]
+    output_array[0,3] = stellar_params[3]
+    output_array[0,4] = stellar_params[4]
+
+    for i in range(1, planet_params.shape[0]+1):
+        output_array[i,0] = planet_params[i,0]
+        output_array[i,1] = planet_params[i,1]
+        output_array[i,2] = planet_params[i,2]
+        output_array[i,3] = planet_params[i,3]
+        output_array[i,4] = planet_params[i,4]
+        output_array[i,5] = planet_params[i,5]
+        output_array[i,6] = planet_params[i,6]
+        output_array[i,7] = planet_params[i,7]
+        output_array[i,8] = 0  # Mass currently irrelevant
+
+    return output_array
+
 def estimate_proposal(times: np.ndarray, flux: np.ndarray) -> Proposal:
     return np.atleast_2d([
                     [5*1e-4, 2*1e-4, 2*1e-4, 0, 1*1e-4, 0, 0, 0, 0],  # Planet 1
