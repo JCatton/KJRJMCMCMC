@@ -356,7 +356,6 @@ def run_mcmc_code(
     )
     #     initial_params = np.atleast_2d([ 0.095751,  0.07806046,  3.5224991,  0.          ,np.radians(84),  0.,
     #    0.,         -3.6653389, 0])
-    input_params = merge_params(initial_params, stellar_params)
 
     true_vals = np.atleast_2d(
         np.array(
@@ -391,6 +390,13 @@ def run_mcmc_code(
             analytic_sim,
         )
     )
+
+    input_params = extend_params_for_stellar(initial_params, stellar_params)
+    param_names = extend_names_for_stellar(param_names)
+    proposal_std = extend_proposal_for_stellar(proposal_std)
+    param_bounds = extend_param_bounds_for_stellar(param_bounds)
+    true_vals = extend_params_for_stellar(true_vals, stellar_params)
+    
 
     def likelihood_fn(params):
         return gaussian_error_ln_likelihood(
