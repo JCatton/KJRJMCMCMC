@@ -88,7 +88,7 @@ def flux_data_from_params(
 if __name__ == "__main__":
 
     # Stellar parameters: [radius, mass]
-    radius_wasp148a = 0.912 * 696.34e6 / 1.496e11
+    radius_wasp148a = 0.912 * 696.34e6 
     mass_wasp148a = 0.9540 * 2e30 / 6e24
 
     stellar_params = [radius_wasp148a, mass_wasp148a]  # Based on WASP 148
