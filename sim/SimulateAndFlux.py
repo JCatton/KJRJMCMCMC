@@ -14,6 +14,7 @@ from sim.PositionGenerator import n_body_sim_api, analytical_positions_api
 from sim.FluxCalculation import combined_delta_flux, use_batman
 from sim.Decorators import TimeMeasure
 
+
 # @TimeMeasure
 def flux_data_from_params(
     stellar_params: np.ndarray,
@@ -21,7 +22,7 @@ def flux_data_from_params(
     times: np.ndarray,
     no_loading_bar: bool = True,
     analytical_bool: bool = False,
-    batman_bool: bool = False
+    batman_bool: bool = False,
 ) -> np.ndarray:
     """
     Calculate flux values from analytical positions.
@@ -47,7 +48,9 @@ def flux_data_from_params(
                 times=times,
             )
         else:
-            positions = analytical_positions_api(planet_params=planet_params[:,1:], times=times)
+            positions = analytical_positions_api(
+                planet_params=planet_params[:, 1:], times=times
+            )
             flux_values = combined_delta_flux(
                 x=positions[:, :, 0].transpose(),
                 y=positions[:, :, 1].transpose(),
@@ -92,16 +95,20 @@ if __name__ == "__main__":
     limb_darkening_model = "quadratic"
     limb_darkening_coefficients = [0.295, 0.312]
 
-    stellar_params = [radius_toi_1181, mass_toi_1181, limb_darkening_model, limb_darkening_coefficients]  # Based on WASP 148
-
+    stellar_params = [
+        radius_toi_1181,
+        mass_toi_1181,
+        limb_darkening_model,
+        limb_darkening_coefficients,
+    ]  # Based on WASP 148
 
     eta1 = 0.3
     eta2 = 0.4
     # planet_params =[ [ eta,   a,     P,   e,               inc, omega, OHM, phase_lag ] ]
     planet_params = np.array(
         [
-            [eta1, 0.08215, 8.803809, 0, np.radians(90), 0, 0, -np.pi/2, 0.287],
-            [eta2, 0.2044, 34.525, 0, np.radians(90), 0, 0, np.pi / 4, 0.392]
+            [eta1, 0.08215, 8.803809, 0, np.radians(90), 0, 0, -np.pi / 2, 0.287],
+            [eta2, 0.2044, 34.525, 0, np.radians(90), 0, 0, np.pi / 4, 0.392],
         ]
     )
     # True inclinations are 89.3 and 104.9 +- some
@@ -109,10 +116,13 @@ if __name__ == "__main__":
     number_max_period = 4
     times_input = np.linspace(0, 4 * 34, 60000)  # Three orbital periods for planet 1
 
-
     planet_params_analytical = planet_params[:, :-1]
     output_analytical = flux_data_from_params(
-        stellar_params=stellar_params, planet_params=planet_params_analytical, times=times_input, analytical_bool=True, batman_bool=True
+        stellar_params=stellar_params,
+        planet_params=planet_params_analytical,
+        times=times_input,
+        analytical_bool=True,
+        batman_bool=True,
     )
 
     # n_body_mask = np.array([True, False, True, True, True, True, True, True, True])
@@ -122,7 +132,6 @@ if __name__ == "__main__":
     #     stellar_params=stellar_params, planet_params=planet_params_n_body, times=times_input, analytical_bool=False
     # )
 
-
     np.save("../TestFluxesMultiple.npy", output_analytical)
     np.save("../TestTimesMultiple.npy", times_input)
 
@@ -130,5 +139,3 @@ if __name__ == "__main__":
     # plt.plot(times_input, output_n_body, label="N Body")
     plt.legend()
     plt.show()
-
-

@@ -4,7 +4,17 @@ import numpy as np
 from lightkurve.correctors import DesignMatrix, RegressionCorrector
 from lightkurve import LightCurveCollection
 
-def download_data(target_name: str, exptime:int = 120, mission:str = "Tess", sector:int = None, author = None, cadence = None, indicies_requested = None, max_number_downloads:int = 20) -> tuple:
+
+def download_data(
+    target_name: str,
+    exptime: int = 120,
+    mission: str = "Tess",
+    sector: int = None,
+    author=None,
+    cadence=None,
+    indicies_requested=None,
+    max_number_downloads: int = 20,
+) -> tuple:
     """
     Downloads data from the target_name
 
@@ -25,7 +35,9 @@ def download_data(target_name: str, exptime:int = 120, mission:str = "Tess", sec
     }
 
     # Filter out parameters with None values
-    search_params = {key: value for key, value in search_params.items() if value is not None}
+    search_params = {
+        key: value for key, value in search_params.items() if value is not None
+    }
     search_results = lk.search_tesscut(target_name)
     # print(f"Searching for data with metadata \n{"\n".join([f"{k:=^9}: {v:<20}" for k,v in search_params.items()])}")
     # search_results = lk.search_lightcurve(target_name, **search_params)
@@ -45,20 +57,27 @@ def download_data(target_name: str, exptime:int = 120, mission:str = "Tess", sec
     combined_array_corr = np.array([corr.time.value, corr.flux])
     sorted_indices_corr = np.argsort(combined_array_corr[0])
     sorted_combined_array_corr = combined_array_corr[:, sorted_indices_corr]
-    #Zero
+    # Zero
     sorted_combined_array_corr[0] -= sorted_combined_array_corr[0, 0]
 
-        # Filter the arrays
+    # Filter the arrays
     combined_array_un_corr = np.array([corr.time.value, corr.flux])
     sorted_indices_un_corr = np.argsort(combined_array_un_corr[0])
     sorted_combined_array_un_corr = combined_array_un_corr[:, sorted_indices_un_corr]
-    #Zero
+    # Zero
     sorted_combined_array_un_corr[0] -= sorted_combined_array_un_corr[0, 0]
 
-    plt.plot(sorted_combined_array_un_corr[0], sorted_combined_array_un_corr[1], label= "uncorrected")
-    plt.plot(sorted_combined_array_corr[0], sorted_combined_array_corr[1], label = "Corrected")
+    plt.plot(
+        sorted_combined_array_un_corr[0],
+        sorted_combined_array_un_corr[1],
+        label="uncorrected",
+    )
+    plt.plot(
+        sorted_combined_array_corr[0], sorted_combined_array_corr[1], label="Corrected"
+    )
     plt.plot()
     return sorted_combined_array_corr[0], sorted_combined_array_corr[1]
+
 
 def apply_regressor(tpf):
     """
@@ -78,7 +97,7 @@ def apply_regressor(tpf):
 
     clean_flux = tpf.flux[~np.isnan(tpf.to_lightcurve(aperture_mask=aper).flux), :, :]
 
-    dm = DesignMatrix(clean_flux[:, ~aper], name='regressors').pca(5).append_constant()
+    dm = DesignMatrix(clean_flux[:, ~aper], name="regressors").pca(5).append_constant()
 
     rc = RegressionCorrector(uncorrected_lc)
 
@@ -87,6 +106,7 @@ def apply_regressor(tpf):
     corrected_ffi_lc = uncorrected_lc - rc.model_lc + np.percentile(rc.model_lc.flux, 5)
 
     return uncorrected_lc.normalize(), corrected_ffi_lc.normalize()
+
 
 def tpfs_to_lightcurves(tpfs):
     """
@@ -110,16 +130,24 @@ def tpfs_to_lightcurves(tpfs):
 
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
-    name = 'TIC 147977348'
-    mission=None
-    exptime=None
-    author = 'Kepler'
-    cadence = 'long'
+
+    name = "TIC 147977348"
+    mission = None
+    exptime = None
+    author = "Kepler"
+    cadence = "long"
     sector = None
     max_number_downloads = 10
 
-
-    time, flux = download_data(name, exptime=exptime, mission=mission, sector=sector, author=author, cadence=cadence, max_number_downloads=max_number_downloads)
+    time, flux = download_data(
+        name,
+        exptime=exptime,
+        mission=mission,
+        sector=sector,
+        author=author,
+        cadence=cadence,
+        max_number_downloads=max_number_downloads,
+    )
 
     print(time, flux)
     plt.plot(time, flux)

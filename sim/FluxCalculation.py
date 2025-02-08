@@ -20,31 +20,33 @@ def use_batman(planet_params, stellar_params, times):
 
     """
     import batman
+
     flux = np.zeros(len(times))
-    stellar_radius, stellar_mass, limb_darkening_model, limb_darkening_coefficients = stellar_params
+    stellar_radius, stellar_mass, limb_darkening_model, limb_darkening_coefficients = (
+        stellar_params
+    )
 
     for planet_param in planet_params:
         a = planet_param[1] * 1.496e11 / stellar_radius
-        t_0 = planet_param[2]*(planet_param[7] + np.pi/2)/(2*np.pi)
+        t_0 = planet_param[2] * (planet_param[7] + np.pi / 2) / (2 * np.pi)
 
         params = batman.TransitParams()
-        params.t0 = t_0                       #time of inferior conjunction
-        params.per = planet_param[2]                      #orbital period
-        params.rp = planet_param[0]                     #planet radius (in units of stellar radii)
-        params.a = a                   #semi-major axis (in units of stellar radii)
-        params.inc = np.degrees(planet_param[4])                     #orbital inclination (in degrees)
-        params.ecc = planet_param[3]                      #eccentricity
-        params.w = planet_param[5]                       #longitude of periastron (in degrees)
-        params.u = limb_darkening_coefficients                #limb darkening coefficients [u1, u2]
-        params.limb_dark = limb_darkening_model       #limb darkening model
+        params.t0 = t_0  # time of inferior conjunction
+        params.per = planet_param[2]  # orbital period
+        params.rp = planet_param[0]  # planet radius (in units of stellar radii)
+        params.a = a  # semi-major axis (in units of stellar radii)
+        params.inc = np.degrees(planet_param[4])  # orbital inclination (in degrees)
+        params.ecc = planet_param[3]  # eccentricity
+        params.w = planet_param[5]  # longitude of periastron (in degrees)
+        params.u = limb_darkening_coefficients  # limb darkening coefficients [u1, u2]
+        params.limb_dark = limb_darkening_model  # limb darkening model
 
-        m = batman.TransitModel(params, times)    #initializes model
-        flux += m.light_curve(params) - 1         #calculates light curve
+        m = batman.TransitModel(params, times)  # initializes model
+        flux += m.light_curve(params) - 1  # calculates light curve
 
     flux += 1
 
     return flux
-
 
 
 @jit
