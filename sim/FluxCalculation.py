@@ -22,8 +22,8 @@ def use_batman(planet_params, stellar_params, times):
     import batman
 
     flux = np.zeros(len(times))
-    stellar_radius, stellar_mass, limb_darkening_model, limb_darkening_coefficients = (
-        stellar_params
+    stellar_radius, stellar_mass, limb_darkening_model, l_d_c_1, l_d_c_2,   = (
+        stellar_params[:5]
     )
 
     if limb_darkening_model == 2:
@@ -45,7 +45,7 @@ def use_batman(planet_params, stellar_params, times):
         params.inc = np.degrees(planet_param[4])  # orbital inclination (in degrees)
         params.ecc = planet_param[3]  # eccentricity
         params.w = planet_param[5]  # longitude of periastron (in degrees)
-        params.u = limb_darkening_coefficients  # limb darkening coefficients [u1, u2]
+        params.u = [l_d_c_1, l_d_c_2]  # limb darkening coefficients [u1, u2]
         params.limb_dark = limb_darkening_model  # limb darkening model
 
         m = batman.TransitModel(params, times)  # initializes model
