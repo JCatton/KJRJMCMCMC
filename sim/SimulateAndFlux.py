@@ -87,49 +87,47 @@ def flux_data_from_params(
 # Example Usage
 if __name__ == "__main__":
 
-    # Stellar parameters: [radius, mass]
-    radius_wasp148a = 0.912 * 696.34e6 
-    mass_wasp148a = 0.9540 * 2e30 / 6e24
+    radius_toi_1181 = 1.961 * 696.34e6
+    mass_toi_1181 = 1.467 * 2e30 / 6e24
+    limb_darkening_model = "quadratic"
+    limb_darkening_coefficients = [0.295, 0.312]
 
-    stellar_params = [radius_wasp148a, mass_wasp148a]  # Based on WASP 148
-    radius_wasp148_b = 8.47 * 6.4e6 / 1.496e11
-    radius_wasp148_c = (
-        9.4 * 6.4e6 / 1.496e11
-    )  # assumed similar densities as no values for radius
+    stellar_params = [radius_toi_1181, mass_toi_1181, limb_darkening_model, limb_darkening_coefficients]  # Based on WASP 148
+
 
     eta1 = 0.3
     eta2 = 0.4
     # planet_params =[ [ eta,   a,     P,   e,               inc, omega, OHM, phase_lag ] ]
     planet_params = np.array(
         [
-            [eta1, 0.08215, 8.803809, 0.208, np.radians(90), 0, 0, 0, 0.287],
-            [eta2, 0.2044, 34.525, 0.1809, np.radians(90), 0, 0, np.pi / 4, 0.392]
+            [eta1, 0.08215, 8.803809, 0, np.radians(90), 0, 0, -np.pi/2, 0.287],
+            [eta2, 0.2044, 34.525, 0, np.radians(90), 0, 0, np.pi / 4, 0.392]
         ]
     )
     # True inclinations are 89.3 and 104.9 +- some
-
     num_samples = 60000
     number_max_period = 4
     times_input = np.linspace(0, 4 * 34, 60000)  # Three orbital periods for planet 1
 
+
     planet_params_analytical = planet_params[:, :-1]
     output_analytical = flux_data_from_params(
-        stellar_params=stellar_params, planet_params=planet_params_analytical, times=times_input, analytical_bool=True
+        stellar_params=stellar_params, planet_params=planet_params_analytical, times=times_input, analytical_bool=True, batman_bool=True
     )
 
-    n_body_mask = np.array([True, False, True, True, True, True, True, True, True])
-    planet_params_n_body = planet_params[:, n_body_mask]
+    # n_body_mask = np.array([True, False, True, True, True, True, True, True, True])
+    # planet_params_n_body = planet_params[:, n_body_mask]
 
-    output_n_body = flux_data_from_params(
-        stellar_params=stellar_params, planet_params=planet_params_n_body, times=times_input, analytical_bool=False
-    )
+    # output_n_body = flux_data_from_params(
+    #     stellar_params=stellar_params, planet_params=planet_params_n_body, times=times_input, analytical_bool=False
+    # )
 
 
     np.save("../TestFluxesMultiple.npy", output_analytical)
     np.save("../TestTimesMultiple.npy", times_input)
 
     plt.plot(times_input, output_analytical, label="Analytical")
-    plt.plot(times_input, output_n_body, label="N Body")
+    # plt.plot(times_input, output_n_body, label="N Body")
     plt.legend()
     plt.show()
 
