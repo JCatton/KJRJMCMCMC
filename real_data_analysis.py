@@ -171,7 +171,8 @@ def merge_params(planet_params: Params, stellar_params: list[float]) -> Params:
 
 def estimate_proposal(times: np.ndarray, flux: np.ndarray) -> Proposal:
     return np.atleast_2d([
-                    [5*1e-4, 2*1e-4, 2*1e-4, 0, 1*1e-4, 0, 0, 0, 0],  # Planet 1
+                    [0     ,      0,      0, 1e-3,   1e-3, 0, 0, 0, 0],  # Stellar
+                    [5*1e-4, 2*1e-4, 2*1e-4,    0, 1*1e-4, 0, 0, 0, 0],  # Planet 1
                     # [1e-5, 1e-5, 1e-5, 1e-5, 0, 0, 0, 0, 0],   # Planet 2
                     ])
 
@@ -181,6 +182,7 @@ def estimate_noise(times: np.ndarray, flux: np.ndarray) -> float:
 
 def estimate_bounds(times: np.ndarray, flux: np.ndarray) -> Bounds:
     return np.atleast_3d([
+                    [(0,5), (0,1e40), (0,1e10), (0,1), (0,1), (0,5), (0,5), (0,5), (0, 5)],  # Only ones that matter here are 0->1 -> I.e. the limb darkening coefficient indexes
                     [(1e-5, 0.4), (1e-3, 0.5), (0, 1e4), (0, 0.3), (np.radians(80), np.pi), (-np.pi/8, np.pi/8), (-np.pi/8, np.pi/8), (-6,6), (0, 6000)],
                     # [(1e-5, 0.4), (1e-3, 0.5), (0, 1e10), (0, 0.3), (np.radians(86.8), np.pi), (-np.pi/8, np.pi/8), (-np.pi/8, np.pi/8), (-6, 6), (0, 6000)]
                     ])
@@ -191,7 +193,16 @@ def initial_param_fuzzer(initial_params: Params, proposal_std: Proposal, param_b
 def generate_param_names(initial_parameters: Params) -> np.ndarray:
     depth, _ = initial_parameters.shape
     base_names = [r"\eta", "a", "P", "e", "inc", "omega", "big_ohm", "phase_lag", "mass"]
-    return np.array([[name + f"_{obj_num}" for name in base_names] for obj_num in range(1, depth + 1)])
+    names = np.array([[name + f"_{obj_num}" for name in base_names] for obj_num in range(1, depth + 1)])
+
+    names[0,0] = "stellar_radius"
+    names[0,1] = "stellar_mass"
+    names[0,2] = "limb_darkening_model"
+    names[0,3] = "limb_darkening_coefficient_1"
+    names[0,4] = "limb_darkening_coefficient_2"
+    names[0,5:] = "empty"
+
+    return names
 
 
 def gaussian_error_ln_likelihood(
@@ -237,6 +248,7 @@ def run_mcmc_code(file: Path, target_search_params:list, target_stellar_params, 
     initial_params = np.atleast_2d(estimate_parameters(times, flux, stellar_params, signal_detection_efficiency = 30, period_min=1, period_max=6))
 #     initial_params = np.atleast_2d([ 0.095751,  0.07806046,  3.5224991,  0.          ,np.radians(84),  0.,
 #    0.,         -3.6653389, 0])
+    input_params = merge_params(initial_params, stellar_params)
 
 
     true_vals = np.atleast_2d(np.array([
@@ -325,7 +337,7 @@ if __name__ == "__main__":
     limb_darkening_model = "quadratic"
     limb_darkening_coefficients = [0.295, 0.312]
 
-    stellar_params = [radius_toi_1181, mass_toi_1181, limb_darkening_model, limb_darkening_coefficients]  # Based on WASP 148
+    stellar_params = [radius_toi_1181, mass_toi_1181, limb_darkening_model, limb_darkening_coefficients[0], limb_darkening_coefficients[1]]  # Based on WASP 148
 
     period_min = 1
     period_max = 6
