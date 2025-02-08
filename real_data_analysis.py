@@ -321,6 +321,7 @@ def run_mcmc_code(
     iteration_num: int = 50_000,
     run_number: int = 3,
     analytic_sim: bool = True,
+    batman_bool: bool = False,
 ):
     """
     Run the MCMC code on the data
@@ -503,7 +504,8 @@ if __name__ == "__main__":
         file="toi_1181",
         target_search_params=target_search_params,
         target_stellar_params=stellar_params,
-        iteration_num=600_000,
+        iteration_num=60_000,
         run_number=3,
         analytic_sim=True,
+        batman_bool=True
     )
