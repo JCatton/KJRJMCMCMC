@@ -26,6 +26,13 @@ def use_batman(planet_params, stellar_params, times):
         stellar_params
     )
 
+    if limb_darkening_model == 2:
+        limb_darkening_model = "quadratic"
+    elif limb_darkening_model == 1:
+        limb_darkening_model = "linear"
+    else:
+        print("Jonte tf have you done")
+
     for planet_param in planet_params:
         a = planet_param[1] * 1.496e11 / stellar_radius
         t_0 = planet_param[2] * (planet_param[7] + np.pi / 2) / (2 * np.pi)

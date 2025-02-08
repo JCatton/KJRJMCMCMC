@@ -483,7 +483,7 @@ if __name__ == "__main__":
 
     radius_toi_1181 = 1.961 * 696.34e6 / 1.496e11
     mass_toi_1181 = 1.467 * 2e30 / 6e24
-    limb_darkening_model = "quadratic"
+    limb_darkening_model = 2
     limb_darkening_coefficients = [0.295, 0.312]
 
     stellar_params = [
