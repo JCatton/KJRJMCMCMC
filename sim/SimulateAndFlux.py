@@ -17,8 +17,7 @@ from sim.Decorators import TimeMeasure
 
 # @TimeMeasure
 def flux_data_from_params(
-    stellar_params: np.ndarray,
-    planet_params: np.ndarray,
+    input_params: np.ndarray,
     times: np.ndarray,
     no_loading_bar: bool = True,
     analytical_bool: bool = False,
@@ -29,9 +28,10 @@ def flux_data_from_params(
 
     Parameters:
     - stellar_params: List of stellar parameters [radius, mass, limb_darkening_model, limb_darkening_coefficients]
-    - planet_params: List of planet parameters planet_params: 2D numpy array where each row represents
-                     a planet's parameters as
-                     [eta, a, p, e, inc, omega, big_ohm, phase_lag, mass (only for N body)]
+    - input_params: List of Stellar and planet params where each row represents
+                        [
+                        [radius, mass, limb_darkening_model, limb_darkening_coefficient_1, limb_darkening_coefficient_2, 0:],
+                        [eta, a (only for analytical), p, e, inc, omega, big_ohm, phase_lag, mass (only for N body)]
     - times: Array of time values
     - no_loading_bar: Boolean to disable loading bar
     - analytical_bool: Boolean to use analytical positions, default is False
@@ -39,6 +39,10 @@ def flux_data_from_params(
     Returns:
     - flux_values: Array of flux values
     """
+    stellar_params = input_params[0]
+    stellar_params[0] *= 1.496e11  # Convert radius to meters
+    planet_params = input_params[1:]
+    print(f"{batman_bool=}")
 
     if analytical_bool:
         if batman_bool:

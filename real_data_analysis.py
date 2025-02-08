@@ -402,8 +402,8 @@ def run_mcmc_code(
         return gaussian_error_ln_likelihood(
             flux,
             None,
-            lambda params: flux_data_from_params(
-                stellar_params, params, times, analytical_bool=analytic_sim
+            lambda input_params: flux_data_from_params(
+                input_params, times, analytical_bool=analytic_sim, batman_bool=batman_bool #############
             ),
             params,
             noise,
@@ -415,14 +415,14 @@ def run_mcmc_code(
     plt.plot(
         times,
         flux_data_from_params(
-            stellar_params, initial_params, times, analytical_bool=True
+            input_params, times, analytical_bool=True, batman_bool=batman_bool
         ),
         label="Estimated",
         ls=":",
     )
     plt.plot(
         times,
-        flux_data_from_params(stellar_params, true_vals, times, analytical_bool=True),
+        flux_data_from_params(true_vals, times, analytical_bool=True, batman_bool=batman_bool),
         label="True",
         ls="--",
     )
@@ -432,13 +432,13 @@ def run_mcmc_code(
     for i in range(run_number):
         mcmc = MCMC(
             flux,
-            initial_param_fuzzer(initial_params, proposal_std, param_bounds),
+            initial_param_fuzzer(input_params, proposal_std, param_bounds),
             param_bounds,
             proposal_std,
             param_names=param_names,
             likelihood_func=likelihood_fn,
-            inclination_rejection_func=lambda proposals: inclination_checker(
-                proposals, stellar_params[0]
+            inclination_rejection_func=lambda input_params: inclination_checker(
+                proposals = input_params[1:], r_star = input_params[0,0] 
             ),
             specified_folder_name=Path(file) / f"run_{i}",
             max_cpu_nodes=4,
