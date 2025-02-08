@@ -17,7 +17,7 @@ def use_batman(planet_params, stellar_params, times):
 
     Returns:
     - flux: Array of flux values
-    
+
     """
     import batman
     flux = np.zeros(len(times))
@@ -40,8 +40,6 @@ def use_batman(planet_params, stellar_params, times):
 
         m = batman.TransitModel(params, times)    #initializes model
         flux += m.light_curve(params) - 1         #calculates light curve
-        plt.plot(times, m.light_curve(params))
-        plt.show()
 
     flux += 1
 
