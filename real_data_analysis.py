@@ -170,7 +170,7 @@ def extend_params_for_stellar(planet_params: Params, stellar_params: list[float]
     Returns:
     - output_array: List of the merged parameters
     """
-    output_array = np.zeros((planet_params.shape[0] + 1, 9))
+    output_array = np.zeros((planet_params.shape[0] + 1, 8))
     output_array[0, 0] = stellar_params[0]
     output_array[0, 1] = stellar_params[1]
     output_array[0, 2] = stellar_params[2]
@@ -186,7 +186,7 @@ def extend_params_for_stellar(planet_params: Params, stellar_params: list[float]
         output_array[i, 5] = planet_params[i-1, 5]
         output_array[i, 6] = planet_params[i-1, 6]
         output_array[i, 7] = planet_params[i-1, 7]
-        output_array[i, 8] = 0  # Mass currently irrelevant
+        # output_array[i, 8] = 0  # Mass currently irrelevant
 
     return output_array
 
