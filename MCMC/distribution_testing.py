@@ -1,3 +1,4 @@
+import os
 from typing import Optional, Callable
 
 from scipy.stats import multivariate_normal
@@ -38,10 +39,11 @@ def find_first_greater(arr, x):
 
 
 class Gaussian_HMC:
-    def __init__(self, likelihood_func, initial_parameters, diagnostic_mean = None):
+    def __init__(self, likelihood_func, initial_parameters, diagnostic_mean = None, plot_save_folder = None):
 
         # Logistics
         self.initial_parameters = np.array(initial_parameters, dtype=np.float64)
+        self.plot_save_folder = os.path.join(plot_save_folder)
 
         # Diagnostics
         self.acceptance_num = 0
@@ -112,15 +114,17 @@ class Gaussian_HMC:
             )
         fig.suptitle("Chains")
         for i in range(self.estimated_covariance_matrix.shape[0]):
-            axs[i].plot(domain, self.chain[:, i])
-        plt.show()
+            axs[i].plot(domain, self.chain[:, i])#
+        plt.savefig(self.plot_save_folder + "/chains.png")
+        plt.close()
         fig, axs = plt.subplots(
             nrows=self.chain.shape[1], ncols=1, figsize=(10, 8)
         )
         fig.suptitle("Burn-in chains")
         for i in range(self.estimated_covariance_matrix.shape[0]):
             axs[i].plot(domain[:burn_in], self.chain[:burn_in, i])
-        plt.show()
+        plt.savefig(self.plot_save_folder + "/burn-in_chains.png")
+        plt.close()
 
         fig, axs = plt.subplots(
             nrows=self.chain.shape[1], ncols=1, figsize=(10, 8)
@@ -128,13 +132,16 @@ class Gaussian_HMC:
         fig.suptitle("Post-Burn-in chains")
         for i in range(self.estimated_covariance_matrix.shape[0]):
             axs[i].plot(domain[burn_in:], self.chain[burn_in:, i])
-        plt.show()
+        plt.savefig(self.plot_save_folder + "/post-burn-in_chains.png")
+        plt.close()
 
         plt.title("Post-Burn-in Likelihoods")
         plt.plot(domain, self.likelihood_chain)
-        plt.show()
+        plt.savefig(self.plot_save_folder + "/post-burn-in_likelihood.png")
+        plt.close()
         corner(self.chain[burn_in:])
-        plt.show()
+        plt.savefig(self.plot_save_folder + "/corner.png")
+        plt.close()
 
     def prepare_chains_for_new_iters(self, num_of_new_iterations):
         max_iteration_number = self.iteration_num + num_of_new_iterations
