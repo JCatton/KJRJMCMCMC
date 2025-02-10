@@ -66,9 +66,13 @@ class Gaussian_HMC:
         self.likelihood_chain = np.atleast_1d(self.likelihood_func(self.initial_parameters))
 
 
-    def gaussian_hmc(self, num_of_new_iterations: int, timestep: float, cov_mat_est_interval: int=1):
+    def gaussian_hmc(self, num_of_new_iterations: int,
+                     timestep: float,
+                     est_burn_in_end: int=5000,
+                     cov_mat_est_interval: int=1):
 
         self.prepare_chains_for_new_iters(num_of_new_iterations)
+
 
         pbar = tqdm(
             initial=1, total=num_of_new_iterations, desc="MCMC Run "
@@ -77,7 +81,7 @@ class Gaussian_HMC:
         current_position = self.chain[prev_iter]
         current_ln_likelihood = self.likelihood_func(current_position)
 
-        for i in range(num_of_new_iterations - 1):
+        for i in range(num_of_new_iterations):
             accept, new_likelihood, new_pos = self.do_gaussian_hmc_step(current_ln_likelihood, current_position,
                                                                    self.estimated_covariance_matrix, timestep)
             if accept:
@@ -91,8 +95,8 @@ class Gaussian_HMC:
             self.likelihood_chain[self.iteration_num] = current_ln_likelihood
             self.iteration_num += 1
             prev_iter += 1
-            if i != 0 and self.iteration_num % cov_mat_est_interval == 0:
-                self.estimated_covariance_matrix = self.update_covariance(prev_iter)
+            if self.iteration_num >= est_burn_in_end and self.iteration_num % cov_mat_est_interval == 0:
+                self.estimated_covariance_matrix = self.update_covariance(cov_mat_est_interval, prev_iter)
             pbar.update(1)
 
         print("\n", self.estimated_covariance_matrix)
@@ -135,10 +139,10 @@ class Gaussian_HMC:
     def prepare_chains_for_new_iters(self, num_of_new_iterations):
         max_iteration_number = self.iteration_num + num_of_new_iterations
         empty_chain = np.empty_like(
-            self.chain, shape=(max_iteration_number - 1, *self.chain.shape[1:])
+            self.chain, shape=(max_iteration_number, *self.chain.shape[1:])
         )
         empty_likelihood = np.empty_like(
-            self.likelihood_chain, shape=max_iteration_number - 1
+            self.likelihood_chain, shape=max_iteration_number
         )
         empty_chain[: len(self.chain)] = self.chain
         empty_likelihood[: len(self.chain)] = self.likelihood_chain
@@ -146,8 +150,9 @@ class Gaussian_HMC:
         self.likelihood_chain = empty_likelihood
         return max_iteration_number
 
-    def update_covariance(self, max_iter):
-        return np.corrcoef(self.chain[:max_iter, :], rowvar=0)
+    def update_covariance(self, interval, max_iter):
+        self.determine_burn_in_index()
+        return np.corrcoef(self.chain[self.burn_in_index:max_iter:interval, :], rowvar=0)
 
     def hamiltonian(self, cov, pos, mean, mom):
         delta = pos - mean
@@ -181,7 +186,7 @@ class Gaussian_HMC:
         Returns:
             int: The burn-in cutoff index.
         """
-        max_idx = self.likelihood_chain.argmax()
+        max_idx = self.likelihood_chain[:self.iteration_num].argmax()
         max_likelihood = self.likelihood_chain[max_idx]
         two_perc_iter = self.iteration_num // 50
         upper_var_iter = min(self.iteration_num, max_idx + two_perc_iter)
