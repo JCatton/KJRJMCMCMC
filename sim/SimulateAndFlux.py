@@ -42,7 +42,7 @@ def flux_data_from_params(
     stellar_params = input_params[0]
     stellar_params[0] *= 1.496e11  # Convert radius to meters
     planet_params = input_params[1:]
-    print(f"{batman_bool=}")
+    # print(f"{batman_bool=}")
 
     if analytical_bool:
         if batman_bool:

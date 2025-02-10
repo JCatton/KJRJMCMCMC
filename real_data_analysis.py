@@ -273,6 +273,7 @@ def extend_proposal_for_stellar(proposal: Proposal) -> Proposal:
     new_proposal[0,4] = 1e-3
     new_proposal[0,5:] = 0
     new_proposal[1:] = proposal
+    
 
     return new_proposal
 
@@ -391,11 +392,17 @@ def run_mcmc_code(
         )
     )
 
+    print(f"After {initial_params.shape=}")
+    print(f"After {proposal_std.shape=}")
+
     input_params = extend_params_for_stellar(initial_params, stellar_params)
+    print(f"After {input_params.shape=}")
     param_names = extend_names_for_stellar(param_names)
     proposal_std = extend_proposal_for_stellar(proposal_std)
     param_bounds = extend_param_bounds_for_stellar(param_bounds)
     true_vals = extend_params_for_stellar(true_vals, stellar_params)
+
+    print(f"After {proposal_std.shape=}")
     
 
     def likelihood_fn(params):
@@ -427,9 +434,18 @@ def run_mcmc_code(
         ls="--",
     )
     plt.legend()
-    plt.show()
+    plt.show()  
+
+    # print(f"{input_params.shape=}")
+    # print(f"{input_params[0]=}")
+    # print(f"{input_params[0,0]=}")
+
+    r_star = input_params[0,0]  
+
+    # print(f"{r_star=}")
 
     for i in range(run_number):
+        # print(f"{input_params.shape=}")
         mcmc = MCMC(
             flux,
             initial_param_fuzzer(input_params, proposal_std, param_bounds),
@@ -482,10 +498,10 @@ if __name__ == "__main__":
 
     times, flux = download_data_api(*target_search_params)
 
-    # plt.plot(times, flux)/
-    print(f"Shapes of times and flux: {times.shape}, {flux.shape}")
-    plt.plot(times, flux)
-    plt.show()
+    # # plt.plot(times, flux)/
+    # print(f"Shapes of times and flux: {times.shape}, {flux.shape}")
+    # plt.plot(times, flux)
+    # plt.show()
 
     radius_toi_1181 = 1.961 * 696.34e6 / 1.496e11
     mass_toi_1181 = 1.467 * 2e30 / 6e24
