@@ -342,10 +342,20 @@ def run_mcmc_code(
     """
     # times = np.load(file / 'times.npy')
     # flux = np.load(file / 'flux.npy')
-    times, flux = download_data_api(*target_search_params)
+    # times, flux = download_data_api(*target_search_params)
+
+    #Save the params for easier testing
+    # np.save("Test-Params/times", times)
+    # np.save("Test-Params/flux", flux)
+
+    times = np.load("Test-Params/times.npy")
+    flux = np.load("Test-Params/flux.npy")
+
+
+
     # stellar_params = get_stellar_params(file, target_name) # Todo -> Currently just give the regular stellar params
     stellar_params = target_stellar_params  # [radius, mas, limb_darkening_model, limb_darkening_coefficients]
-    initial_params = np.atleast_2d(
+    """initial_params = np.atleast_2d(
         estimate_parameters(
             times,
             flux,
@@ -354,9 +364,13 @@ def run_mcmc_code(
             period_min=1,
             period_max=6,
         )
-    )
+    )"""
+    # np.save("Test-Params/initial_params", initial_params)
+    initial_params = np.load("Test-Params/initial_params.npy")
     #     initial_params = np.atleast_2d([ 0.095751,  0.07806046,  3.5224991,  0.          ,np.radians(84),  0.,
     #    0.,         -3.6653389, 0])
+
+
 
     true_vals = np.atleast_2d(
         np.array(
@@ -526,7 +540,7 @@ if __name__ == "__main__":
         file="toi_1181",
         target_search_params=target_search_params,
         target_stellar_params=stellar_params,
-        iteration_num=60_000,
+        iteration_num=60_00,
         run_number=3,
         analytic_sim=True,
         batman_bool=True
