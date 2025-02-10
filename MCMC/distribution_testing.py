@@ -13,6 +13,10 @@ def gaussian_log_likelihood(pos: np.ndarray, covariance_mat: np.mat, mean: np.nd
     # return -0.5 * n * np.log(np.linalg.det(covariance_mat)) - 0.5 * delta.transpose() @ np.linalg.inv(covariance_mat) @ delta
     return -0.5 * n * np.log(np.linalg.det(covariance_mat)) - 0.5 * delta.transpose() @ covariance_mat @ delta
 
+def logistic_log_likelihood(pos: np.ndarray, spread, mean):
+    standardized = - (pos - mean) / spread
+    return standardized - np.log(spread) - 2 * np.log(1+np.exp(standardized))
+
 def potential_energy(position_ln_likelihood: float) -> float:
     """
     Betancourt Introduction to HMC
