@@ -68,6 +68,8 @@ class GaussianHMCTests(unittest.TestCase):
         For an underlying distribution using the identity matrix as its covariance"""
         mean = np.array([0.0, 50, 180, -50, -8], dtype=np.float64)
         covariance = self.covariance_ident
+        save_folder = sys._getframe().f_code.co_name
+        ensure_folder(save_folder)
 
         def ln_like(x):
             return (gaussian_log_likelihood(x, covariance, mean))
@@ -76,20 +78,22 @@ class GaussianHMCTests(unittest.TestCase):
         num_iterations = self.num_iterations
         means = np.empty(shape=(len(num_iterations), len(inital_params)))
         covs = np.empty(shape=(len(num_iterations), *covariance.shape))
-        hmc = Gaussian_HMC(ln_like, initial_parameters=inital_params, diagnostic_mean=mean)
+        hmc = Gaussian_HMC(ln_like, initial_parameters=inital_params, diagnostic_mean=mean, plot_save_folder=os.path.join(base_test_folder, save_folder))
         for i, new_iter in enumerate(num_iterations):
             timestep = np.pi / 2
             hmc.gaussian_hmc(new_iter, timestep, cov_mat_est_interval=10)
             covs[i] = hmc.estimated_covariance_matrix
             means[i] = np.mean(hmc.chain, axis=0)
 
-        self.plot_results(covariance, covs, mean, means, num_iterations, sys._getframe().f_code.co_name)
+        self.plot_results(covariance, covs, mean, means, num_iterations, save_folder)
 
     def test_gaussian_5d_correlation(self):
         """Test sampling a 5D Gaussian using the analytic HMC (gaussian_hmc).
         For an underlying distribution using the correlation and anti-correlation in its covariance"""
         mean = np.array([0.0, 50, 180, -50, -8], dtype=np.float64)
         covariance = self.covariance_correlation
+        save_folder = sys._getframe().f_code.co_name
+        ensure_folder(save_folder)
 
         def ln_like(x):
             return (gaussian_log_likelihood(x, covariance, mean))
@@ -98,20 +102,23 @@ class GaussianHMCTests(unittest.TestCase):
         num_iterations = self.num_iterations
         means = np.empty(shape=(len(num_iterations), len(inital_params)))
         covs = np.empty(shape=(len(num_iterations), *covariance.shape))
-        hmc = Gaussian_HMC(ln_like, initial_parameters=inital_params, diagnostic_mean=mean)
+        hmc = Gaussian_HMC(ln_like, initial_parameters=inital_params, diagnostic_mean=mean,
+                           plot_save_folder=os.path.join(base_test_folder, save_folder))
         for i, new_iter in enumerate(num_iterations):
             timestep = np.pi / 2
             hmc.gaussian_hmc(new_iter, timestep, cov_mat_est_interval=10)
             covs[i] = hmc.estimated_covariance_matrix
             means[i] = np.mean(hmc.chain, axis=0)
 
-        self.plot_results(covariance, covs, mean, means, num_iterations, sys._getframe().f_code.co_name)
+        self.plot_results(covariance, covs, mean, means, num_iterations, save_folder)
 
     def test_gaussian_5d_size_diff(self):
         """Test sampling a 5D Gaussian using the analytic HMC (gaussian_hmc).
         For an underlying distribution using the various scales in its diagonal covariance"""
         mean = np.array([0.0, 50, 180, -50, -8], dtype=np.float64)
         covariance = self.covariance_size_diff
+        save_folder = sys._getframe().f_code.co_name
+        ensure_folder(save_folder)
 
         def ln_like(x):
             return gaussian_log_likelihood(x, covariance, mean)
@@ -120,20 +127,23 @@ class GaussianHMCTests(unittest.TestCase):
         num_iterations = self.num_iterations
         means = np.empty(shape=(len(num_iterations), len(inital_params)))
         covs = np.empty(shape=(len(num_iterations), *covariance.shape))
-        hmc = Gaussian_HMC(ln_like, initial_parameters=inital_params, diagnostic_mean=mean)
+        hmc = Gaussian_HMC(ln_like, initial_parameters=inital_params, diagnostic_mean=mean,
+                           plot_save_folder=os.path.join(base_test_folder, save_folder))
         for i, new_iter in enumerate(num_iterations):
             timestep = np.pi / 2
             hmc.gaussian_hmc(new_iter, timestep, cov_mat_est_interval=10)
             covs[i] = hmc.estimated_covariance_matrix
             means[i] = np.mean(hmc.chain, axis=0)
 
-        self.plot_results(covariance, covs, mean, means, num_iterations, sys._getframe().f_code.co_name)
+        self.plot_results(covariance, covs, mean, means, num_iterations, save_folder)
 
     def test_gaussian_5d_size_diff_correlation(self):
         """Test sampling a 5D Gaussian using the analytic HMC (gaussian_hmc).
         For an underlying distribution using the various scales in its covariance with correlation"""
         mean = np.array([0.0, 50, 180, -50, -8], dtype=np.float64)
         covariance = self.covariance_size_diff_corr
+        save_folder = sys._getframe().f_code.co_name
+        ensure_folder(save_folder)
 
         def ln_like(x):
             return gaussian_log_likelihood(x, covariance, mean)
@@ -142,14 +152,15 @@ class GaussianHMCTests(unittest.TestCase):
         num_iterations = self.num_iterations
         means = np.empty(shape=(len(num_iterations), len(inital_params)))
         covs = np.empty(shape=(len(num_iterations), *covariance.shape))
-        hmc = Gaussian_HMC(ln_like, initial_parameters=inital_params, diagnostic_mean=mean)
+        hmc = Gaussian_HMC(ln_like, initial_parameters=inital_params, diagnostic_mean=mean,
+                           plot_save_folder=os.path.join(base_test_folder, save_folder))
         for i, new_iter in enumerate(num_iterations):
             timestep = np.pi / 2
             hmc.gaussian_hmc(new_iter, timestep, cov_mat_est_interval=10)
             covs[i] = hmc.estimated_covariance_matrix
             means[i] = np.mean(hmc.chain, axis=0)
 
-        self.plot_results(covariance, covs, mean, means, num_iterations, sys._getframe().f_code.co_name)
+        self.plot_results(covariance, covs, mean, means, num_iterations, save_folder)
 
     def test_gaussian_4d_logistic_1d(self):
         """Test sampling a 1D Gaussian using the analytic HMC (gaussian_hmc)."""
@@ -159,6 +170,8 @@ class GaussianHMCTests(unittest.TestCase):
         covariance[1, 0] = 0.3
         covariance[2, 1] = -0.25
         covariance[1, 2] = -0.25
+        save_folder = sys._getframe().f_code.co_name
+        ensure_folder(save_folder)
 
         def ln_like(x):
             return (gaussian_log_likelihood(x[:4], covariance[:4, :4], mean[:4]) +
@@ -168,14 +181,15 @@ class GaussianHMCTests(unittest.TestCase):
         num_iterations = self.num_iterations
         means = np.empty(shape=(len(num_iterations), len(inital_params)))
         covs = np.empty(shape=(len(num_iterations), *covariance.shape))
-        hmc = Gaussian_HMC(ln_like, initial_parameters=inital_params, diagnostic_mean=mean)
+        hmc = Gaussian_HMC(ln_like, initial_parameters=inital_params, diagnostic_mean=mean,
+                           plot_save_folder=os.path.join(base_test_folder, save_folder))
         for i, new_iter in enumerate(num_iterations):
             timestep = np.pi / 2
             hmc.gaussian_hmc(new_iter, timestep, cov_mat_est_interval=10)
             covs[i] = hmc.estimated_covariance_matrix
             means[i] = np.mean(hmc.chain, axis=0)
 
-        self.plot_results(covariance, covs, mean, means, num_iterations, sys._getframe().f_code.co_name)
+        self.plot_results(covariance, covs, mean, means, num_iterations, save_folder)
 
     def plot_results(self, covariance, covs, mean, means, num_iterations, func_name: str = None):
         ensure_folder(func_name)
