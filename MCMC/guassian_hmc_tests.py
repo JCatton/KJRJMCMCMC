@@ -1,3 +1,4 @@
+import sys
 import unittest
 import numpy as np
 import matplotlib.pyplot as plt
@@ -7,16 +8,22 @@ import imageio.v2 as imageio
 import os
 
 images = []
-folder='./testing_results/'
+base_test_folder= './testing_results/'
 
-if not os.path.exists(folder):
-    os.mkdir(folder)
+
+def ensure_folder(folder_name):
+    fp = os.path.join(base_test_folder, folder_name)
+    if not os.path.exists(fp):
+        os.mkdir(fp)
+
+
+ensure_folder("")
 
 
 def covariance_heatmap_gif(covariance, covs, num_iterations, func_name: str = None):
 
     iter_num = 0
-    func_folder = os.path.join(folder, func_name)
+    func_folder = os.path.join(base_test_folder, func_name)
     filename = f"heatmap_iter_{iter_num}.png"
     plt.figure()
     plt.title(f"Covariance Difference Iteration Number {iter_num}")
@@ -73,7 +80,7 @@ class GaussianHMCTests(unittest.TestCase):
             covs[i] = hmc.estimated_covariance_matrix
             means[i] = np.mean(hmc.chain, axis=0)
 
-        self.plot_results(covariance, covs, mean, means, num_iterations, __name__)
+        self.plot_results(covariance, covs, mean, means, num_iterations, sys._getframe().f_code.co_name)
 
     def test_gaussian_5d_correlation(self):
         """Test sampling a 5D Gaussian using the analytic HMC (gaussian_hmc).
@@ -95,7 +102,7 @@ class GaussianHMCTests(unittest.TestCase):
             covs[i] = hmc.estimated_covariance_matrix
             means[i] = np.mean(hmc.chain, axis=0)
 
-        self.plot_results(covariance, covs, mean, means, num_iterations, __name__)
+        self.plot_results(covariance, covs, mean, means, num_iterations, sys._getframe().f_code.co_name)
 
     def test_gaussian_5d_size_diff(self):
         """Test sampling a 5D Gaussian using the analytic HMC (gaussian_hmc).
@@ -117,7 +124,7 @@ class GaussianHMCTests(unittest.TestCase):
             covs[i] = hmc.estimated_covariance_matrix
             means[i] = np.mean(hmc.chain, axis=0)
 
-        self.plot_results(covariance, covs, mean, means, num_iterations, __name__)
+        self.plot_results(covariance, covs, mean, means, num_iterations, sys._getframe().f_code.co_name)
 
     def test_gaussian_5d_size_diff_correlation(self):
         """Test sampling a 5D Gaussian using the analytic HMC (gaussian_hmc).
@@ -139,7 +146,7 @@ class GaussianHMCTests(unittest.TestCase):
             covs[i] = hmc.estimated_covariance_matrix
             means[i] = np.mean(hmc.chain, axis=0)
 
-        self.plot_results(covariance, covs, mean, means, num_iterations, __name__)
+        self.plot_results(covariance, covs, mean, means, num_iterations, sys._getframe().f_code.co_name)
 
     def test_gaussian_4d_logistic_1d(self):
         """Test sampling a 1D Gaussian using the analytic HMC (gaussian_hmc)."""
@@ -166,38 +173,10 @@ class GaussianHMCTests(unittest.TestCase):
             covs[i] = hmc.estimated_covariance_matrix
             means[i] = np.mean(hmc.chain, axis=0)
 
-        if self.save_plots:
-            self.plot_results(covariance, covs, mean, means, num_iterations)
-
-    def test_gaussian_4d_logistic_1d(self):
-        """Test sampling a 1D Gaussian using the analytic HMC (gaussian_hmc)."""
-        mean = np.array([0.0, 50, 180, -50, -8], dtype=np.float64)
-        covariance = np.diag(np.ones(5, dtype=np.float64))
-        covariance[0, 1] = 0.3
-        covariance[1, 0] = 0.3
-        covariance[2, 1] = -0.25
-        covariance[1, 2] = -0.25
-
-        def ln_like(x):
-            return (gaussian_log_likelihood(x[:4], covariance[:4, :4], mean[:4]) +
-                    # logistic_log_likelihood(x[3], 1, mean[3]) +
-                    logistic_log_likelihood(x[4], 1, mean[4]))
-
-        inital_params = np.array([-1000.0, 0, 180, 50, 10], dtype=np.float64)
-        num_iterations = np.full(30, 2500, dtype=np.int32)
-        means = np.empty(shape=(len(num_iterations), len(inital_params)))
-        covs = np.empty(shape=(len(num_iterations), *covariance.shape))
-        hmc = Gaussian_HMC(ln_like, initial_parameters=inital_params, diagnostic_mean=mean)
-        for i, new_iter in enumerate(num_iterations):
-            timestep = np.pi / 2
-            hmc.gaussian_hmc(new_iter, timestep, cov_mat_est_interval=100)
-            covs[i] = hmc.estimated_covariance_matrix
-            means[i] = np.mean(hmc.chain, axis=0)
-
-        if self.save_plots:
-            self.plot_results(covariance, covs, mean, means, num_iterations)
+        self.plot_results(covariance, covs, mean, means, num_iterations, sys._getframe().f_code.co_name)
 
     def plot_results(self, covariance, covs, mean, means, num_iterations, func_name: str = None):
+        ensure_folder(func_name)
         fig, axs = plt.subplots(nrows=2, ncols=1, sharex=True)
         fig.suptitle('Gaussian HMC test Across Iteration Number')
         axs[0].set_title("Norm of Estimated Mean from True Values")
@@ -208,7 +187,7 @@ class GaussianHMCTests(unittest.TestCase):
                     [np.linalg.norm(covariance - cov) for cov in covs])
         axs[1].set_ylabel("Norm")
         axs[1].set_xlabel("Iteration #")
-        plt.savefig(folder + f"{func_name}/norm_fig")
+        plt.savefig(base_test_folder + f"{func_name}/norm_fig")
         plt.close()
         covariance_heatmap_gif(covariance, covs, num_iterations, func_name)
 
