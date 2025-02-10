@@ -26,7 +26,7 @@ def kinetic_energy(mom_generating_func: multivariate_normal, momentum: np.ndarra
     return - np.log(mom_generating_func.pdf(momentum))
 
 class Gaussian_HMC:
-    def __init__(self, likelihood_func, initial_parameters):
+    def __init__(self, likelihood_func, initial_parameters, diagnostic_mean = None):
 
         # Logistics
         self.initial_parameters = np.array(initial_parameters, dtype=np.float64)
@@ -37,7 +37,7 @@ class Gaussian_HMC:
         self.iteration_num = 1  # Can't start on the zeroth iteration
 
         # Statistics
-        self.mean: Optional[np.ndarray] = None
+        self.mean: Optional[np.ndarray] = diagnostic_mean
         self.var: Optional[np.ndarray] = None
         self.burn_in_index: Optional[int] = None
 
@@ -54,7 +54,7 @@ class Gaussian_HMC:
         self.likelihood_chain = np.atleast_1d(self.likelihood_func(self.initial_parameters))
 
 
-    def gaussian_hmc(self, num_of_new_iterations: int, timestep: float, cov_mat_est: np.matrix, cov_mat_est_interval: int=1):
+    def gaussian_hmc(self, num_of_new_iterations: int, timestep: float, cov_mat_est_interval: int=1):
 
         self.prepare_chains_for_new_iters(num_of_new_iterations)
 
@@ -63,11 +63,11 @@ class Gaussian_HMC:
         )
         prev_iter = self.iteration_num - 1
         current_position = self.chain[prev_iter]
-        current_ln_likelihood = ln_likelihood_func(current_position)
+        current_ln_likelihood = self.likelihood_func(current_position)
 
         for i in range(num_of_new_iterations - 1):
             accept, new_likelihood, new_pos = self.do_gaussian_hmc_step(current_ln_likelihood, current_position,
-                                                                   cov_mat_est, timestep)
+                                                                   self.estimated_covariance_matrix, timestep)
             if accept:
                 current_position = new_pos
                 current_ln_likelihood = new_likelihood
@@ -79,13 +79,13 @@ class Gaussian_HMC:
             self.likelihood_chain[self.iteration_num] = current_ln_likelihood
             self.iteration_num += 1
             prev_iter += 1
-            if self.iteration_num % cov_mat_est_interval == 0:
-                cov_mat_est = self.update_covariance(prev_iter)
+            if i != 0 and self.iteration_num % cov_mat_est_interval == 0:
+                self.estimated_covariance_matrix = self.update_covariance(prev_iter)
             pbar.update(1)
 
-        print("\n", cov_mat_est)
+        print("\n", self.estimated_covariance_matrix)
         acceptance_rate = self.acceptance_num / (self.rejection_num + self.acceptance_num)
-        autoc = autocorrelation(self.chain[1000:])
+        autoc = autocorrelation(self.chain[50:])
         print(f"{acceptance_rate=}")
         print(f"ESF={1/(1+2*np.sum(autoc))}")
         domain = np.arange(self.iteration_num)
@@ -93,14 +93,14 @@ class Gaussian_HMC:
                 nrows=self.chain.shape[1], ncols=1, figsize=(10, 8)
             )
         fig.suptitle("Chains")
-        for i in range(cov_mat_est.shape[0]):
+        for i in range(self.estimated_covariance_matrix.shape[0]):
             axs[i].plot(domain, self.chain[:, i])
         plt.show()
         fig, axs = plt.subplots(
             nrows=self.chain.shape[1], ncols=1, figsize=(10, 8)
         )
         fig.suptitle("Burn-in chains")
-        for i in range(cov_mat_est.shape[0]):
+        for i in range(self.estimated_covariance_matrix.shape[0]):
             axs[i].plot(domain[:50], self.chain[:50, i])
         plt.show()
 
@@ -108,14 +108,14 @@ class Gaussian_HMC:
             nrows=self.chain.shape[1], ncols=1, figsize=(10, 8)
         )
         fig.suptitle("Burn-in chains")
-        for i in range(cov_mat_est.shape[0]):
+        for i in range(self.estimated_covariance_matrix.shape[0]):
             axs[i].plot(domain[50:], self.chain[50:, i])
         plt.show()
 
         plt.title("Likelihoods")
         plt.plot(domain, self.likelihood_chain)
         plt.show()
-        corner(self.chain[1000:])
+        corner(self.chain[50:])
         plt.show()
 
     def prepare_chains_for_new_iters(self, num_of_new_iterations):
@@ -137,11 +137,11 @@ class Gaussian_HMC:
 
     def hamiltonian(self, cov, pos, mean, mom):
         delta = pos - mean
-        return -ln_likelihood_func(pos) + 0.5 * mom.transpose() @ np.linalg.inv(cov) @ mom
+        return -self.likelihood_func(pos) + 0.5 * mom.transpose() @ np.linalg.inv(cov) @ mom
 
     def do_gaussian_hmc_step(self, current_ln_likelihood, current_pos, covariance_mat, timestep):
 
-        expected_mean = mean
+        expected_mean = self.mean
         current_normal = multivariate_normal(np.zeros(len(current_pos)), covariance_mat)
 
         current_mom = current_normal.rvs() # Velocity sample
@@ -151,7 +151,7 @@ class Gaussian_HMC:
         new_pos = expected_mean + a_i * np.sin(timestep) + b_i * np.cos(timestep)
         new_mom = covariance_mat @ (a_i * np.cos(timestep) - b_i * np.sin(timestep))
 
-        new_ln_likelihood = ln_likelihood_func(new_pos)
+        new_ln_likelihood = self.likelihood_func(new_pos)
 
         old_h = self.hamiltonian(covariance_mat, current_pos, expected_mean, current_mom)
         new_h = self.hamiltonian(covariance_mat, new_pos, expected_mean, new_mom)
