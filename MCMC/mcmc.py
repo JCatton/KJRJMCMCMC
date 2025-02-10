@@ -228,17 +228,17 @@ class MCMC:
 
             proposal_within_bounds = self.proposal_within_bounds(proposals)
 
-            if self.inclination_rejection_func and not self.inclination_rejection_func(
-                proposals[1:]
-            ):
-                self.rejection_num += 1
-                self.chain[prev_iter + 1] = current_params
-                self.likelihood_chain[prev_iter + 1] = current_likelihood
-                self.iteration_num += 1
-                prev_iter += 1
-                pbar.update(1)
-                remaining_iter -= 1
-                continue  # Skip to the next iteration
+            # if self.inclination_rejection_func and not self.inclination_rejection_func(
+            #     proposals[:,1:,:]
+            # ):
+            #     self.rejection_num += 1
+            #     self.chain[prev_iter + 1] = current_params
+            #     self.likelihood_chain[prev_iter + 1] = current_likelihood
+            #     self.iteration_num += 1
+            #     prev_iter += 1
+            #     pbar.update(1)
+            #     remaining_iter -= 1
+            #     continue  # Skip to the next iteration
 
             # Keep clipping as easiest solution that works with multiprocessing and
             # negligible run cost
