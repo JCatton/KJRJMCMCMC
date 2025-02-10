@@ -40,14 +40,15 @@ def flux_data_from_params(
     - flux_values: Array of flux values
     """
     stellar_params = input_params[0]
-    stellar_params[0] *= 1.496e11  # Convert radius to meters
     planet_params = input_params[1:]
     # print(f"{batman_bool=}")
 
     if analytical_bool:
         if batman_bool:
+            stellar_params_to_input = stellar_params.copy()
+            stellar_params_to_input[0] = stellar_params[0] * 1.496e11  # Convert radius to meters
             flux_values = use_batman(
-                stellar_params=stellar_params,
+                stellar_params=stellar_params_to_input,
                 planet_params=planet_params,
                 times=times,
             )
