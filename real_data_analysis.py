@@ -496,7 +496,7 @@ if __name__ == "__main__":
         use_regression_model,
     ]
 
-    times, flux = download_data_api(*target_search_params)
+    # times, flux = download_data_api(*target_search_params)
 
     # # plt.plot(times, flux)/
     # print(f"Shapes of times and flux: {times.shape}, {flux.shape}")
