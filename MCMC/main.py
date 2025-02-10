@@ -98,6 +98,8 @@ def inclination_checker(
     - Boolean indicating if all inclinations are above the critical value
     """
 
+    # print(f"{proposals=}")
+    # print(f"{proposals.shape=}")
     eta_idx, a_idx, e_idx, omega_idx, inc_idx = indices
     eta = proposals[0, :, eta_idx]
     a = proposals[0, :, a_idx]

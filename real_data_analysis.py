@@ -438,7 +438,7 @@ def run_mcmc_code(
             param_names=param_names,
             likelihood_func=likelihood_fn,
             inclination_rejection_func=lambda input_params: inclination_checker(
-                proposals = input_params[1:], r_star = input_params[0,0] 
+                proposals = input_params, r_star = r_star
             ),
             specified_folder_name=Path(file) / f"run_{i}",
             max_cpu_nodes=4,
