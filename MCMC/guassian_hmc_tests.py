@@ -30,6 +30,7 @@ def covariance_heatmap_gif(covariance, covs, num_iterations, func_name: str = No
     sns.heatmap(covariance - np.identity(covariance.shape[1]), vmin=0, vmax=1, square=True, cmap="crest")
     plt.savefig(os.path.join(func_folder, filename))
     images.append(imageio.imread(os.path.join(func_folder, filename)))
+    os.remove(os.path.join(func_folder, filename))
     plt.close()
 
     for i, new_iter in enumerate(num_iterations):
@@ -60,6 +61,8 @@ class GaussianHMCTests(unittest.TestCase):
         self.covariance_size_diff_corr[2, 1] = -0.5
         self.covariance_size_diff_corr[1, 2] = -0.5
 
+        self.num_iterations = np.full(5, 2500, dtype=np.int32)
+
     def test_gaussian_5d_identity(self):
         """Test sampling a 15D Gaussian using the analytic HMC (gaussian_hmc).
         For an underlying distribution using the identity matrix as its covariance"""
@@ -70,13 +73,13 @@ class GaussianHMCTests(unittest.TestCase):
             return (gaussian_log_likelihood(x, covariance, mean))
 
         inital_params = np.array([-1000.0, 0, 180, 50, 10], dtype=np.float64)
-        num_iterations = np.full(30, 2500, dtype=np.int32)
+        num_iterations = self.num_iterations
         means = np.empty(shape=(len(num_iterations), len(inital_params)))
         covs = np.empty(shape=(len(num_iterations), *covariance.shape))
         hmc = Gaussian_HMC(ln_like, initial_parameters=inital_params, diagnostic_mean=mean)
         for i, new_iter in enumerate(num_iterations):
             timestep = np.pi / 2
-            hmc.gaussian_hmc(new_iter, timestep, cov_mat_est_interval=100)
+            hmc.gaussian_hmc(new_iter, timestep, cov_mat_est_interval=10)
             covs[i] = hmc.estimated_covariance_matrix
             means[i] = np.mean(hmc.chain, axis=0)
 
@@ -92,13 +95,13 @@ class GaussianHMCTests(unittest.TestCase):
             return (gaussian_log_likelihood(x, covariance, mean))
 
         inital_params = np.array([-1000.0, 0, 180, 50, 10], dtype=np.float64)
-        num_iterations = np.full(30, 2500, dtype=np.int32)
+        num_iterations = self.num_iterations
         means = np.empty(shape=(len(num_iterations), len(inital_params)))
         covs = np.empty(shape=(len(num_iterations), *covariance.shape))
         hmc = Gaussian_HMC(ln_like, initial_parameters=inital_params, diagnostic_mean=mean)
         for i, new_iter in enumerate(num_iterations):
             timestep = np.pi / 2
-            hmc.gaussian_hmc(new_iter, timestep, cov_mat_est_interval=100)
+            hmc.gaussian_hmc(new_iter, timestep, cov_mat_est_interval=10)
             covs[i] = hmc.estimated_covariance_matrix
             means[i] = np.mean(hmc.chain, axis=0)
 
@@ -111,16 +114,16 @@ class GaussianHMCTests(unittest.TestCase):
         covariance = self.covariance_size_diff
 
         def ln_like(x):
-            return (gaussian_log_likelihood(x, covariance, mean))
+            return gaussian_log_likelihood(x, covariance, mean)
 
         inital_params = np.array([-1000.0, 0, 180, 50, 10], dtype=np.float64)
-        num_iterations = np.full(30, 2500, dtype=np.int32)
+        num_iterations = self.num_iterations
         means = np.empty(shape=(len(num_iterations), len(inital_params)))
         covs = np.empty(shape=(len(num_iterations), *covariance.shape))
         hmc = Gaussian_HMC(ln_like, initial_parameters=inital_params, diagnostic_mean=mean)
         for i, new_iter in enumerate(num_iterations):
             timestep = np.pi / 2
-            hmc.gaussian_hmc(new_iter, timestep, cov_mat_est_interval=100)
+            hmc.gaussian_hmc(new_iter, timestep, cov_mat_est_interval=10)
             covs[i] = hmc.estimated_covariance_matrix
             means[i] = np.mean(hmc.chain, axis=0)
 
@@ -133,16 +136,16 @@ class GaussianHMCTests(unittest.TestCase):
         covariance = self.covariance_size_diff_corr
 
         def ln_like(x):
-            return (gaussian_log_likelihood(x, covariance, mean))
+            return gaussian_log_likelihood(x, covariance, mean)
 
         inital_params = np.array([-1000.0, 0, 180, 50, 10], dtype=np.float64)
-        num_iterations = np.full(30, 2500, dtype=np.int32)
+        num_iterations = self.num_iterations
         means = np.empty(shape=(len(num_iterations), len(inital_params)))
         covs = np.empty(shape=(len(num_iterations), *covariance.shape))
         hmc = Gaussian_HMC(ln_like, initial_parameters=inital_params, diagnostic_mean=mean)
         for i, new_iter in enumerate(num_iterations):
             timestep = np.pi / 2
-            hmc.gaussian_hmc(new_iter, timestep, cov_mat_est_interval=100)
+            hmc.gaussian_hmc(new_iter, timestep, cov_mat_est_interval=10)
             covs[i] = hmc.estimated_covariance_matrix
             means[i] = np.mean(hmc.chain, axis=0)
 
@@ -159,17 +162,16 @@ class GaussianHMCTests(unittest.TestCase):
 
         def ln_like(x):
             return (gaussian_log_likelihood(x[:4], covariance[:4, :4], mean[:4]) +
-                    # logistic_log_likelihood(x[3], 1, mean[3]) +
                     logistic_log_likelihood(x[4], 1, mean[4]))
 
         inital_params = np.array([-1000.0, 0, 180, 50, 10], dtype=np.float64)
-        num_iterations = np.full(30, 2500, dtype=np.int32)
+        num_iterations = self.num_iterations
         means = np.empty(shape=(len(num_iterations), len(inital_params)))
         covs = np.empty(shape=(len(num_iterations), *covariance.shape))
         hmc = Gaussian_HMC(ln_like, initial_parameters=inital_params, diagnostic_mean=mean)
         for i, new_iter in enumerate(num_iterations):
             timestep = np.pi / 2
-            hmc.gaussian_hmc(new_iter, timestep, cov_mat_est_interval=100)
+            hmc.gaussian_hmc(new_iter, timestep, cov_mat_est_interval=10)
             covs[i] = hmc.estimated_covariance_matrix
             means[i] = np.mean(hmc.chain, axis=0)
 
