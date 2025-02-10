@@ -61,7 +61,7 @@ class GaussianHMCTests(unittest.TestCase):
         self.covariance_size_diff_corr[2, 1] = -0.5
         self.covariance_size_diff_corr[1, 2] = -0.5
 
-        self.num_iterations = np.full(5, 2500, dtype=np.int32)
+        self.num_iterations = np.full(60, 2500, dtype=np.int32)
 
     def test_gaussian_5d_identity(self):
         """Test sampling a 15D Gaussian using the analytic HMC (gaussian_hmc).
