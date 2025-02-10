@@ -29,6 +29,14 @@ def kinetic_energy(mom_generating_func: multivariate_normal, momentum: np.ndarra
     """
     return - np.log(mom_generating_func.pdf(momentum))
 
+def find_first_greater(arr, x):
+    idx = np.argmax(arr > x)
+    if arr[idx] > x:
+        return idx
+    else:
+        return -1
+
+
 class Gaussian_HMC:
     def __init__(self, likelihood_func, initial_parameters, diagnostic_mean = None):
 
@@ -89,7 +97,9 @@ class Gaussian_HMC:
 
         print("\n", self.estimated_covariance_matrix)
         acceptance_rate = self.acceptance_num / (self.rejection_num + self.acceptance_num)
-        autoc = autocorrelation(self.chain[50:])
+
+        burn_in = self.determine_burn_in_index()
+        autoc = autocorrelation(self.chain[burn_in:])
         print(f"{acceptance_rate=}")
         print(f"ESF={1/(1+2*np.sum(autoc))}")
         domain = np.arange(self.iteration_num)
@@ -105,21 +115,21 @@ class Gaussian_HMC:
         )
         fig.suptitle("Burn-in chains")
         for i in range(self.estimated_covariance_matrix.shape[0]):
-            axs[i].plot(domain[:50], self.chain[:50, i])
+            axs[i].plot(domain[:burn_in], self.chain[:burn_in, i])
         plt.show()
 
         fig, axs = plt.subplots(
             nrows=self.chain.shape[1], ncols=1, figsize=(10, 8)
         )
-        fig.suptitle("Burn-in chains")
+        fig.suptitle("Post-Burn-in chains")
         for i in range(self.estimated_covariance_matrix.shape[0]):
-            axs[i].plot(domain[50:], self.chain[50:, i])
+            axs[i].plot(domain[burn_in:], self.chain[burn_in:, i])
         plt.show()
 
-        plt.title("Likelihoods")
+        plt.title("Post-Burn-in Likelihoods")
         plt.plot(domain, self.likelihood_chain)
         plt.show()
-        corner(self.chain[50:])
+        corner(self.chain[burn_in:])
         plt.show()
 
     def prepare_chains_for_new_iters(self, num_of_new_iterations):
@@ -164,6 +174,23 @@ class Gaussian_HMC:
 
         accept = random() < acceptance_prob
         return accept, new_ln_likelihood, new_pos
+
+    def determine_burn_in_index(self) -> int:
+        """
+        Determines the burn-in cutoff index for an MCMC chain.
+        Returns:
+            int: The burn-in cutoff index.
+        """
+        max_idx = self.likelihood_chain.argmax()
+        max_likelihood = self.likelihood_chain[max_idx]
+        two_perc_iter = self.iteration_num // 50
+        upper_var_iter = min(self.iteration_num, max_idx + two_perc_iter)
+        lower_var_iter = max(0, max_idx - two_perc_iter)
+        var = np.std(self.likelihood_chain[lower_var_iter : upper_var_iter])
+        lower_likelihood = max_likelihood - var
+        burn_in_idx = find_first_greater(self.likelihood_chain, lower_likelihood)
+        self.burn_in_index = int(burn_in_idx)
+        return burn_in_idx
 
 def autocorrelation (x) :
     """
