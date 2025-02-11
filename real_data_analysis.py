@@ -477,6 +477,26 @@ def run_mcmc_code(
         mcmc.chain_to_plot_and_estimate()
         mcmc.corner_plot()
 
+        plt.figure()
+        plt.plot(times, flux, label="Data")
+        plt.plot(
+            times,
+            flux_data_from_params(true_vals, times, analytical_bool=True, batman_bool=batman_bool),
+            label="True",
+            ls="--",
+            alpha=0.5
+        )
+        plt.plot(
+            times,
+            flux_data_from_params(mcmc.chain[np.argmax(mcmc.likelihood_chain)],
+                                  times, analytical_bool=True, batman_bool=batman_bool),
+            label="Max-Likelihood",
+            ls=":",
+            alpha=0.5
+        )
+        plt.legend()
+        plt.show()
+
 
 def main():
     data = download_data_api()  # Todo
