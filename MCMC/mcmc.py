@@ -351,21 +351,23 @@ class MCMC:
         print("MCMC sampling completed.")
 
         plt.figure(figsize=(10, 8))
-        plt.xlabel("Iteration #")
+        fig, axs = plt.subplots(nrows=1, ncols=2)
+        axs[0].set_xlabel("Iteration #")
         x = np.arange(len(chain))
-        plt.plot(x, likelihoods)
+
+        axs[0].plot(x, likelihoods)
+        axs[1].plot(x[self.burn_in_index:], likelihoods[self.burn_in_index:])
 
         if true_vals is not None:
-            true_likelihoods = np.array(self.likelihood_func(true_vals))
-            true_vals = np.stack(
-                [true_vals[i, non_fixed_indexes[i]] for i in range(true_vals.shape[0])],
-                axis=0,
+            axs[1].hlines(
+                self.likelihood_func(true_vals), xmin=0, xmax=len(chain), linestyles="--", color="red", label="True"
             )
-            plt.hlines(
-                true_likelihoods, xmin=0, xmax=len(chain), linestyles="--", color="red"
-            )
+        axs[1].hlines(
+            max(likelihoods), xmin=0, xmax=len(chain), linestyles="--", color="red", label="Max-Likelihood"
+        )
+        plt.legend(loc="best")
 
-        plt.ylabel(r"Log Likelihoods")
+        axs[0].set_ylabel(r"Log Likelihoods")
         plt.tight_layout()
         plt.savefig(self.data_folder / "Liklihood_plot.pdf")
         # plt.show()
