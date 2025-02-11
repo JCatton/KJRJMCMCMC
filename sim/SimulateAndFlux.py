@@ -46,6 +46,7 @@ def flux_data_from_params(
     if analytical_bool:
         if batman_bool:
             stellar_params_to_input = stellar_params.copy()
+            # print(stellar_params_to_input)
             stellar_params_to_input[0] = stellar_params[0] * 1.496e11  # Convert radius to meters
             flux_values = use_batman(
                 stellar_params=stellar_params_to_input,
@@ -95,36 +96,47 @@ def flux_data_from_params(
 # Example Usage
 if __name__ == "__main__":
 
-    radius_toi_1181 = 1.961 * 696.34e6
-    mass_toi_1181 = 1.467 * 2e30 / 6e24
-    limb_darkening_model = "quadratic"
-    limb_darkening_coefficients = [0.295, 0.312]
+    radius_toi_1181 = 1.26 * 696.34e6 / 1.496e11
+    mass_toi_1181 = 1.46 * 2e30 / 6e24
+    limb_darkening_model = 2
+    limb_darkening_coefficients = [0.2192, 0.3127]
 
     stellar_params = [
         radius_toi_1181,
         mass_toi_1181,
         limb_darkening_model,
-        limb_darkening_coefficients,
+        limb_darkening_coefficients[0],
+        limb_darkening_coefficients[1],
+        0,
+        0,
+        0,
+        0,
     ]  # Based on WASP 148
+    
+
+
 
     eta1 = 0.3
     eta2 = 0.4
     # planet_params =[ [ eta,   a,     P,   e,               inc, omega, OHM, phase_lag ] ]
+
+
     planet_params = np.array(
         [
-            [eta1, 0.08215, 8.803809, 0, np.radians(90), 0, 0, -np.pi / 2, 0.287],
-            [eta2, 0.2044, 34.525, 0, np.radians(90), 0, 0, np.pi / 4, 0.392],
+            [0.09716, 0.02087, 0.9414526, 0.0091, np.radians(84.88), 4.69494, 0, 1.51935416, 0],
+            # [eta2, 0.2044, 34.525, 0, np.radians(90), 0, 0, np.pi / 4, 0.392],
         ]
     )
-    # True inclinations are 89.3 and 104.9 +- some
-    num_samples = 60000
-    number_max_period = 4
-    times_input = np.linspace(0, 4 * 34, 60000)  # Three orbital periods for planet 1
 
-    planet_params_analytical = planet_params[:, :-1]
+    input_array = np.vstack((stellar_params, planet_params))
+    # True inclinations are 89.3 and 104.9 +- some
+    num_samples = 400
+    number_max_period = 4
+    times_input = np.linspace(0, 1/4 * 34, num_samples)  # Three orbital periods for planet 1
+
+    input_array_analytical = input_array[:, :-1]
     output_analytical = flux_data_from_params(
-        stellar_params=stellar_params,
-        planet_params=planet_params_analytical,
+        input_params=input_array_analytical,
         times=times_input,
         analytical_bool=True,
         batman_bool=True,
@@ -137,8 +149,8 @@ if __name__ == "__main__":
     #     stellar_params=stellar_params, planet_params=planet_params_n_body, times=times_input, analytical_bool=False
     # )
 
-    np.save("../TestFluxesMultiple.npy", output_analytical)
-    np.save("../TestTimesMultiple.npy", times_input)
+    np.save("TestFluxes.npy", output_analytical)
+    np.save("TestTimes.npy", times_input)
 
     plt.plot(times_input, output_analytical, label="Analytical")
     # plt.plot(times_input, output_n_body, label="N Body")
