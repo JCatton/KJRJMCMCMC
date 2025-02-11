@@ -360,10 +360,12 @@ class MCMC:
 
         if true_vals is not None:
             axs[1].hlines(
-                self.likelihood_func(true_vals), xmin=0, xmax=len(chain), linestyles="--", color="red", label="True"
+                self.likelihood_func(true_vals), xmin=0, xmax=len(chain),
+                linestyles="--", color="red", label="True", alpha=0.5
             )
         axs[1].hlines(
-            max(likelihoods), xmin=0, xmax=len(chain), linestyles="--", color="red", label="Max-Likelihood"
+            max(likelihoods), xmin=0, xmax=len(chain),
+            linestyles=":", label="Max-Likelihood", alpha=0.5
         )
         plt.legend(loc="best")
 
