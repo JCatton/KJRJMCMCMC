@@ -194,7 +194,7 @@ def extend_params_for_stellar(planet_params: Params, stellar_params: list[float]
 def estimate_proposal(times: np.ndarray, flux: np.ndarray) -> Proposal:
     return np.atleast_2d(
         [
-            [5 * 1e-4, 2 * 1e-4, 2 * 1e-4, 0, 1 * 1e-4, 0, 0, 0, 0],  # Planet 1
+            [4*1e-4, 7*1e-5, 5*1e-5, 0, 5*1e-3, 0, 0, 0, 0],  # Planet 1
             # [1e-5, 1e-5, 1e-5, 1e-5, 0, 0, 0, 0, 0],   # Planet 2
         ]
     )
@@ -269,8 +269,8 @@ def extend_proposal_for_stellar(proposal: Proposal) -> Proposal:
     new_proposal[0,0] = 0
     new_proposal[0,1] = 0
     new_proposal[0,2] = 0
-    new_proposal[0,3] = 1e-3
-    new_proposal[0,4] = 1e-3
+    new_proposal[0,3] = 5*1e-4
+    new_proposal[0,4] = 5*1e-4
     new_proposal[0,5:] = 0
     new_proposal[1:] = proposal
     
@@ -440,12 +440,14 @@ def run_mcmc_code(
         ),
         label="Estimated",
         ls=":",
+        alpha=0.5
     )
     plt.plot(
         times,
         flux_data_from_params(true_vals, times, analytical_bool=True, batman_bool=batman_bool),
         label="True",
         ls="--",
+        alpha=0.5
     )
     plt.legend()
     plt.show()  
@@ -465,6 +467,7 @@ def run_mcmc_code(
             initial_param_fuzzer(input_params, proposal_std, param_bounds),
             param_bounds,
             proposal_std,
+            true_vals = true_vals,
             param_names=param_names,
             likelihood_func=likelihood_fn,
             inclination_rejection_func=lambda input_params: inclination_checker(
@@ -474,10 +477,11 @@ def run_mcmc_code(
             max_cpu_nodes=4,
         )
         mcmc.metropolis_hastings(iteration_num)
-        mcmc.chain_to_plot_and_estimate()
+        mcmc.chain_to_plot_and_estimate(true_vals)
         mcmc.corner_plot()
 
         plt.figure()
+        plt.title(f"Inferred Parameters vs True Fit\n{file}")
         plt.plot(times, flux, label="Data")
         plt.plot(
             times,
@@ -495,7 +499,9 @@ def run_mcmc_code(
             alpha=0.5
         )
         plt.legend()
+        plt.savefig(Path(file) / f"run_{i}" / "inferred_flux_plot.pdf", dpi=500)
         plt.show()
+
 
 
 def main():
@@ -560,7 +566,7 @@ if __name__ == "__main__":
         file="toi_1181",
         target_search_params=target_search_params,
         target_stellar_params=stellar_params,
-        iteration_num=60_00,
+        iteration_num=1_000_000,
         run_number=3,
         analytic_sim=True,
         batman_bool=True
