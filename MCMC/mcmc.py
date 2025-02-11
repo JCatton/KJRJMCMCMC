@@ -371,7 +371,7 @@ class MCMC:
 
         axs[0].set_ylabel(r"Log Likelihoods")
         plt.tight_layout()
-        plt.savefig(self.data_folder / "Liklihood_plot.pdf")
+        plt.savefig(self.data_folder / "Liklihood_plot.pdf", dpi=500)
         # plt.show()
         plt.close()
 
@@ -423,7 +423,7 @@ class MCMC:
                 axs[i, body].set_ylabel(f"{name}")
         plt.xlabel("Iteration #")
         plt.tight_layout()
-        plt.savefig(self.data_folder / "chain_plot_plot.pdf")
+        plt.savefig(self.data_folder / "chain_plot_plot.pdf", dpi=500)
         plt.close()
 
         fig, axs = plt.subplots(
@@ -467,7 +467,7 @@ class MCMC:
                 axs[i, body].set_ylabel(f"{name}")
 
         plt.tight_layout()
-        plt.savefig(self.data_folder / "chain_post_burn_in_plot_plot.pdf")
+        plt.savefig(self.data_folder / "chain_post_burn_in_plot_plot.pdf", dpi=500)
         plt.close()
 
     def corner_plot(
@@ -512,7 +512,7 @@ class MCMC:
             title_kwargs={"fontsize": 18},
             title_fmt=".2e",
         )
-        plt.savefig(self.data_folder / "corner_plot.pdf")
+        plt.savefig(self.data_folder / "corner_plot.pdf", dpi=500)
         # plt.show()
         plt.close()
 
