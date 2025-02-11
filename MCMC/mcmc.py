@@ -391,13 +391,20 @@ class MCMC:
 
         x = np.arange(len(chain))
 
+        true_val_idx = 0
+        remaining_true_vals = true_vals[non_fixed_indexes]
         for body in range(chain.shape[1]):
             for i, name in enumerate(param_names[body]):
+                try:
+                    if np.isnan(name):
+                        continue
+                except TypeError:
+                    pass
                 param_samples = chain[:, body, i]
                 print(
                     f"Estimated {name}: {np.mean(param_samples):.3e}",
                     (
-                        f", true {name}: {true_vals[body, i]}"
+                        f", true {name}: {remaining_true_vals[true_val_idx]:.3e}"
                         if true_vals is not None
                         else None
                     ),
@@ -406,7 +413,7 @@ class MCMC:
                 axs[i, body].plot(x, param_samples, label=name)
                 if true_vals is not None:
                     axs[i, body].hlines(
-                        true_vals[body, i],
+                        remaining_true_vals[true_val_idx],
                         xmin=0,
                         xmax=len(chain),
                         linestyles="--",
@@ -421,6 +428,7 @@ class MCMC:
                     color="red",
                 )
                 axs[i, body].set_ylabel(f"{name}")
+                true_val_idx += 1
         plt.xlabel("Iteration #")
         plt.tight_layout()
         plt.savefig(self.data_folder / "chain_plot_plot.pdf", dpi=500)
