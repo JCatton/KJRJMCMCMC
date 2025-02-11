@@ -67,6 +67,21 @@ def safe_exp(x: np.array) -> np.array:
     return result
 
 
+def pad_array(array, max_pad):
+    padded_array = []
+    for subarray in array:
+        pad_width = max_pad - subarray.shape[-1]
+        if pad_width > 0:
+            try:
+                subarray_padded = np.pad(subarray, pad_width=((0, 0) , (0, pad_width)), constant_values=np.nan)
+            except ValueError:
+                subarray_padded = np.pad(subarray, pad_width=((0, pad_width)), constant_values=np.nan)
+        else:
+            subarray_padded = subarray
+        padded_array.append(subarray_padded)
+    return padded_array
+
+
 class MCMC:
 
     def __init__(
@@ -314,20 +329,21 @@ class MCMC:
         if not isinstance(manual_burn_in_idx, np.int64 | int):
             raise TypeError(f"{manual_burn_in_idx=} is not an integer")
         non_fixed_indexes = np.array(self.proposal_std, dtype=bool)
-        chain = np.stack(
-            [
+        max_pad = max(np.sum(non_fixed_indexes, axis=1))
+
+        masked_chain = [
                 self.chain[manual_burn_in_idx:, i, non_fixed_indexes[i]]
                 for i in range(self.chain.shape[1])
-            ],
-            axis=1,
-        )
-        param_names = np.stack(
-            [
+            ]
+        masked_names = [
                 self.param_names[i, non_fixed_indexes[i]]
                 for i in range(self.param_names.shape[0])
-            ],
-            axis=0,
-        )
+                ]
+        padded_chain = pad_array(masked_chain, max_pad)
+        padded_names = pad_array(masked_names, max_pad)
+
+        chain = np.stack(padded_chain, axis=1)
+        param_names = np.stack(padded_names, axis=0)
         likelihoods = self.likelihood_chain[manual_burn_in_idx:]
 
         # print(f"{chain.shape=}, {param_names.shape=}, {true_vals.shape=}")
