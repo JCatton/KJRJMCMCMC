@@ -1,5 +1,5 @@
 from MCMC.mcmc import MCMC
-from MCMC.main import inclination_checker, prepare_arrays_for_mcmc
+from MCMC.main import inclination_checker, prepare_arrays_for_mcmc, add_gaussian_error
 from sim.SimulateAndFlux import flux_data_from_params
 from pathlib import Path
 from typing import Callable
@@ -323,6 +323,8 @@ def run_mcmc_code(
     run_number: int = 3,
     analytic_sim: bool = True,
     batman_bool: bool = False,
+    real_data_bool: bool = True,
+
 ):
     """
     Run the MCMC code on the data
@@ -342,14 +344,22 @@ def run_mcmc_code(
     """
     # times = np.load(file / 'times.npy')
     # flux = np.load(file / 'flux.npy')
-    # times, flux = download_data_api(*target_search_params)
+    if real_data_bool:
+        times, flux = download_data_api(*target_search_params)
+    else:
+        times = np.load("TestTimes.npy")
+        flux = np.load("TestFluxes.npy")
+        flux = add_gaussian_error(flux, 0, 5e-4)
+        plt.plot(times, flux)
+        plt.show()
+
 
     #Save the params for easier testing
     # np.save("Test-Params/times", times)
     # np.save("Test-Params/flux", flux)
 
-    times = np.load("Test-Params/times.npy")
-    flux = np.load("Test-Params/flux.npy")
+    # times = np.load("Test-Params/times.npy")
+    # flux = np.load("Test-Params/flux.npy")
 
 
 
@@ -543,10 +553,10 @@ if __name__ == "__main__":
     # plt.plot(times, flux)
     # plt.show()
 
-    radius_toi_1181 = 1.961 * 696.34e6 / 1.496e11
-    mass_toi_1181 = 1.467 * 2e30 / 6e24
+    radius_toi_1181 = 1.26 * 696.34e6 / 1.496e11
+    mass_toi_1181 = 1.46 * 2e30 / 6e24
     limb_darkening_model = 2
-    limb_darkening_coefficients = [0.295, 0.312]
+    limb_darkening_coefficients = [0.2192, 0.3127]
 
     stellar_params = [
         radius_toi_1181,
@@ -556,12 +566,6 @@ if __name__ == "__main__":
         limb_darkening_coefficients[1],
     ]  # Based on WASP 148
 
-    period_min = 1
-    period_max = 6
-    signal_detection_efficiency = 30
-    # estimated_params = estimate_parameters(times, flux, stellar_params, signal_detection_efficiency, period_min, period_max)
-    # print(estimated_params)
-
     run_mcmc_code(
         file="toi_1181",
         target_search_params=target_search_params,
@@ -569,5 +573,6 @@ if __name__ == "__main__":
         iteration_num=1_000_000,
         run_number=3,
         analytic_sim=True,
-        batman_bool=True
+        batman_bool=True,
+        real_data_bool=False,
     )
