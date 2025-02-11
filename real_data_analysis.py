@@ -365,18 +365,24 @@ def run_mcmc_code(
 
     # stellar_params = get_stellar_params(file, target_name) # Todo -> Currently just give the regular stellar params
     stellar_params = target_stellar_params  # [radius, mas, limb_darkening_model, limb_darkening_coefficients]
-    """initial_params = np.atleast_2d(
+    initial_params = np.atleast_2d(
         estimate_parameters(
             times,
             flux,
             stellar_params,
-            signal_detection_efficiency=30,
-            period_min=1,
-            period_max=6,
+            signal_detection_efficiency=10,
+            period_min=0.5,
+            period_max=3,
         )
-    )"""
+    )
     # np.save("Test-Params/initial_params", initial_params)
-    initial_params = np.load("Test-Params/initial_params.npy")
+
+
+
+    # initial_params = np.load("Test-Params/initial_params.npy")
+
+
+
     #     initial_params = np.atleast_2d([ 0.095751,  0.07806046,  3.5224991,  0.          ,np.radians(84),  0.,
     #    0.,         -3.6653389, 0])
 
@@ -386,12 +392,12 @@ def run_mcmc_code(
         np.array(
             [
                 [
-                    0.0764,
-                    0.03824559011,
-                    2.103195,
-                    0.011,
-                    np.radians(87.0),
-                    0,
+                    0.09716,
+                    0.02087,
+                    0.9414526,
+                    0.0091,
+                    np.radians(84.88),
+                    4.69494,
                     0,
                     1.51935416,
                     0,
@@ -525,14 +531,14 @@ if __name__ == "__main__":
     import matplotlib.pyplot as plt
 
     # main()
-    taget_name = "TIC 229510866"
+    taget_name = "TIC 100100827"
     exptime = None
     mission = None
     sector = None
     author = None
     cadence = None
     indicies_requested = (1, 5)
-    max_number_downloads = 4
+    max_number_downloads = 5
     use_regression_model = True
     target_search_params = [
         taget_name,
@@ -567,7 +573,7 @@ if __name__ == "__main__":
     ]  # Based on WASP 148
 
     run_mcmc_code(
-        file="toi_1181",
+        file="TIC_100100827",
         target_search_params=target_search_params,
         target_stellar_params=stellar_params,
         iteration_num=1_000_000,
