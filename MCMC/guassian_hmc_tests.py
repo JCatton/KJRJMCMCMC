@@ -81,7 +81,7 @@ class GaussianHMCTests(unittest.TestCase):
         hmc = Gaussian_HMC(ln_like, initial_parameters=inital_params, diagnostic_mean=mean, plot_save_folder=os.path.join(base_test_folder, save_folder))
         for i, new_iter in enumerate(num_iterations):
             timestep = np.pi / 2
-            hmc.gaussian_hmc(new_iter, timestep, cov_mat_est_interval=10)
+            hmc.gaussian_hmc(new_iter, timestep, estimate_interval=10)
             covs[i] = hmc.estimated_covariance_matrix
             means[i] = np.mean(hmc.chain, axis=0)
 

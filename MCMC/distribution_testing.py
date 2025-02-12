@@ -65,13 +65,14 @@ class Gaussian_HMC:
         empty_chain[0] = self.initial_parameters
         self.chain = empty_chain
         self.estimated_covariance_matrix = np.identity(self.initial_parameters.shape[0])
+        self.estimated_mean = self.mean
         self.likelihood_chain = np.atleast_1d(self.likelihood_func(self.initial_parameters))
 
 
     def gaussian_hmc(self, num_of_new_iterations: int,
                      timestep: float,
                      est_burn_in_end: int=5000,
-                     cov_mat_est_interval: int=1):
+                     estimate_interval: int=1):
 
         self.prepare_chains_for_new_iters(num_of_new_iterations)
 
@@ -97,8 +98,10 @@ class Gaussian_HMC:
             self.likelihood_chain[self.iteration_num] = current_ln_likelihood
             self.iteration_num += 1
             prev_iter += 1
-            if self.iteration_num >= est_burn_in_end and self.iteration_num % cov_mat_est_interval == 0:
-                self.estimated_covariance_matrix = self.update_covariance(cov_mat_est_interval, prev_iter)
+            if self.iteration_num >= est_burn_in_end and self.iteration_num % estimate_interval == 0:
+                self.determine_burn_in_index()
+                self.estimated_covariance_matrix = self.update_covariance(estimate_interval, prev_iter)
+                self.estimated_mean = self.update_mean(estimate_interval, prev_iter)
             pbar.update(1)
 
         print("\n", self.estimated_covariance_matrix)
@@ -158,8 +161,10 @@ class Gaussian_HMC:
         return max_iteration_number
 
     def update_covariance(self, interval, max_iter):
-        self.determine_burn_in_index()
         return np.corrcoef(self.chain[self.burn_in_index:max_iter:interval, :], rowvar=0)
+
+    def update_mean(self, interval, max_iter):
+        return np.mean(self.chain[self.burn_in_index:max_iter:interval, :], axis=0)
 
     def hamiltonian(self, cov, pos, mean, mom):
         delta = pos - mean
@@ -167,7 +172,7 @@ class Gaussian_HMC:
 
     def do_gaussian_hmc_step(self, current_ln_likelihood, current_pos, covariance_mat, timestep):
 
-        expected_mean = self.mean
+        expected_mean = self.estimated_mean
         current_normal = multivariate_normal(np.zeros(len(current_pos)), covariance_mat)
 
         current_mom = current_normal.rvs() # Velocity sample
