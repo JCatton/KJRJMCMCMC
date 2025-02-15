@@ -35,8 +35,9 @@ def kepler_solver(mean_anomaly, p, e, a, tol=1e-9, max_iter=40):
     eccentric_anomaly = mean_anomaly.copy()
     for _ in range(max_iter):
         # Newton-Raphson iteration
-        delta_e = (eccentric_anomaly - e * np.sin(eccentric_anomaly) - mean_anomaly) / \
-                  (1 - e * np.cos(eccentric_anomaly))
+        delta_e = (eccentric_anomaly - e * np.sin(eccentric_anomaly) - mean_anomaly) / (
+            1 - e * np.cos(eccentric_anomaly)
+        )
         eccentric_anomaly -= delta_e
 
         # Check for convergence
@@ -44,7 +45,11 @@ def kepler_solver(mean_anomaly, p, e, a, tol=1e-9, max_iter=40):
             break
 
     # true anomaly from Eccentric anomaly
-    sin_f = np.sqrt(1 - e**2) * np.sin(eccentric_anomaly) / (1 - e * np.cos(eccentric_anomaly))
+    sin_f = (
+        np.sqrt(1 - e**2)
+        * np.sin(eccentric_anomaly)
+        / (1 - e * np.cos(eccentric_anomaly))
+    )
     cos_f = (np.cos(eccentric_anomaly) - e) / (1 - e * np.cos(eccentric_anomaly))
     f = np.arctan2(sin_f, cos_f)
 
@@ -81,13 +86,13 @@ def n_body_sim_api(
 
     sim.add(m=stellar_mass)
 
-    shortest_period = np.min(planet_params[:,0])
+    shortest_period = np.min(planet_params[:, 0])
     sim.dt = shortest_period / num_steps_for_smallest_period
     # Add planets to sim
     for params in planet_params:
         p, e, inc, omega, big_ohm, phase_lag, mass = params
         mean_anomaly = phase_lag % (2 * np.pi)
-        sim.add(m=mass, P=p, e=e, inc = inc, omega=omega, Omega = big_ohm, M = mean_anomaly)
+        sim.add(m=mass, P=p, e=e, inc=inc, omega=omega, Omega=big_ohm, M=mean_anomaly)
 
     sim.move_to_com()
 
@@ -124,9 +129,7 @@ def analytical_coordinate_generator(
     mean_anomaly = mean_anomaly % (2 * np.pi)  # Wrap to [0, 2π]
 
     # Solve Kepler's equation to get radius and true anomaly
-    r, f = kepler_solver(
-        mean_anomaly, p, e, a
-    )
+    r, f = kepler_solver(mean_anomaly, p, e, a)
 
     x = r * (
         np.cos(big_ohm) * np.cos(omega + f)
@@ -181,22 +184,24 @@ if __name__ == "__main__":
     # Test case with HD 23472 -> Barros et al., 2022
     times = np.load("TestTimes.npy")
     radius_HD23472 = 0.912 * 696.34e6 / 1.496e11
-    mass_HD23472 = 0.67 * 2e30 / 6e24 # random radi for all vals
+    mass_HD23472 = 0.67 * 2e30 / 6e24  # random radi for all vals
 
     stellar_params = [radius_HD23472, mass_HD23472]  # Based on WASP 148
 
     # planet_params =[ [ eta,   a,     P,   e,               inc, omega, OHM, phase_lag, mass ] ]
     planet_params = np.array(
         [
-            [0.1, 0.04298, 3.97664, 0.0700, np.radians(90), 0, np.pi/2, 0, 0.55],
-            [0.2, 0.0680, 7.90754, 0.0700, np.radians(90), 0, 0, np.pi/3, 0.72],
-            [0.3, 0.0906, 12.1621839, 0.0700, np.radians(90), 0, 0, np.pi/2, 0.77],
-            [0.4, 0.1162, 17.667087, 0.0720, np.radians(90), 0, 0, 2 * np.pi/3, 8.32],
-            [0.5, 0.1646, 29.79749, 0.063, np.radians(90), 0, 0, 3/5 * np.pi, 3.41]
+            [0.1, 0.04298, 3.97664, 0.0700, np.radians(90), 0, np.pi / 2, 0, 0.55],
+            [0.2, 0.0680, 7.90754, 0.0700, np.radians(90), 0, 0, np.pi / 3, 0.72],
+            [0.3, 0.0906, 12.1621839, 0.0700, np.radians(90), 0, 0, np.pi / 2, 0.77],
+            [0.4, 0.1162, 17.667087, 0.0720, np.radians(90), 0, 0, 2 * np.pi / 3, 8.32],
+            [0.5, 0.1646, 29.79749, 0.063, np.radians(90), 0, 0, 3 / 5 * np.pi, 3.41],
         ]
     )
 
-    positions_analytical = analytical_positions_api(planet_params=planet_params[:, 1:-1], times=times)
+    positions_analytical = analytical_positions_api(
+        planet_params=planet_params[:, 1:-1], times=times
+    )
     flux_values_analytical = combined_delta_flux(
         x=positions_analytical[:, :, 0].transpose(),
         y=positions_analytical[:, :, 1].transpose(),
@@ -221,9 +226,9 @@ if __name__ == "__main__":
     print(f"{np.max(y[1])}")
     # print(f"{np.max(y[2])}")
     x_s, y_s, z_s = x[0], y[0], z[0]
-    x_p_rel = (x[1:] - x_s)
-    y_p_rel = (y[1:] - y_s)
-    z_p_rel = (z[1:] - z_s)
+    x_p_rel = x[1:] - x_s
+    y_p_rel = y[1:] - y_s
+    z_p_rel = z[1:] - z_s
     print(f"{y_p_rel.shape=}")
     print(f"{np.max(y_p_rel[:,0])=}")
     # print(f"{np.max(y_p_rel[:,1])=}")
@@ -240,25 +245,70 @@ if __name__ == "__main__":
     print(f"{x_p_rel.shape=}")
     colors = ["r", "g", "b", "black", "purple"]
     for i in range(x_p_rel.shape[0]):
-        plt.plot(x_p_rel[i, :], y_p_rel[i, :], label = f"Planet {i} n_body", color = colors[i], alpha = 0.5)
-        plt.plot(x_p_rel[i, 0], y_p_rel[i, 0],  marker = "o", ms = 5, color = colors[i], alpha = 0.5)
-        plt.plot(x_p_rel[i, 500], y_p_rel[i, 500],  marker = "x", ms = 5, color = colors[i], alpha = 0.5)
-        plt.plot(x_p_rel[i, 1000], y_p_rel[i, 1000],  marker = "^", ms = 5, color = colors[i], alpha = 0.5)
+        plt.plot(
+            x_p_rel[i, :],
+            y_p_rel[i, :],
+            label=f"Planet {i} n_body",
+            color=colors[i],
+            alpha=0.5,
+        )
+        plt.plot(
+            x_p_rel[i, 0], y_p_rel[i, 0], marker="o", ms=5, color=colors[i], alpha=0.5
+        )
+        plt.plot(
+            x_p_rel[i, 500],
+            y_p_rel[i, 500],
+            marker="x",
+            ms=5,
+            color=colors[i],
+            alpha=0.5,
+        )
+        plt.plot(
+            x_p_rel[i, 1000],
+            y_p_rel[i, 1000],
+            marker="^",
+            ms=5,
+            color=colors[i],
+            alpha=0.5,
+        )
     for i in range(positions_analytical.shape[1]):
-        plt.plot(positions_analytical[:, i, 0], positions_analytical[:, i, 1], label = f"Planet {i} analytical, x,y", linestyle = "--", color = colors[i])
-        plt.plot(positions_analytical[0, i, 0], positions_analytical[0, i, 1], marker = "o", ms = 5, color = colors[i])
+        plt.plot(
+            positions_analytical[:, i, 0],
+            positions_analytical[:, i, 1],
+            label=f"Planet {i} analytical, x,y",
+            linestyle="--",
+            color=colors[i],
+        )
+        plt.plot(
+            positions_analytical[0, i, 0],
+            positions_analytical[0, i, 1],
+            marker="o",
+            ms=5,
+            color=colors[i],
+        )
 
-        plt.plot(positions_analytical[500, i, 0], positions_analytical[500, i, 1], marker = "x", ms = 5, color = colors[i])
-        plt.plot(positions_analytical[1000, i, 0], positions_analytical[1000, i, 1], marker = "^", ms = 5, color = colors[i])
+        plt.plot(
+            positions_analytical[500, i, 0],
+            positions_analytical[500, i, 1],
+            marker="x",
+            ms=5,
+            color=colors[i],
+        )
+        plt.plot(
+            positions_analytical[1000, i, 0],
+            positions_analytical[1000, i, 1],
+            marker="^",
+            ms=5,
+            color=colors[i],
+        )
 
     plt.title("Orbital Paths")
     plt.legend()
     plt.show()
-    plt.plot(times, flux_values_analytical, label = "Analytical")
-    plt.plot(times, flux_values_n_body, label = "N-Body", linestyle = "--")
+    plt.plot(times, flux_values_analytical, label="Analytical")
+    plt.plot(times, flux_values_n_body, label="N-Body", linestyle="--")
     plt.legend()
 
     print(f"{np.max(a)=}, {np.min(a)=}")
-
 
     plt.show()
