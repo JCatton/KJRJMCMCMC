@@ -78,8 +78,8 @@ def prepare_arrays_for_mcmc(
     initial_params = initial_params[slc]
     proposal_std = proposal_std[slc]
     param_bounds = param_bounds[slc]
-    priors = priors[slc]
-    prior_transform_funcs = prior_transform_funcs[slc]
+    priors = priors[slc] if priors is not None else None
+    prior_transform_funcs = prior_transform_funcs[slc] if prior_transform_funcs is not None else None
     return param_names, true_vals, initial_params, proposal_std, param_bounds, priors, prior_transform_funcs
 
 def inclination_checker(

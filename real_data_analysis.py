@@ -411,7 +411,7 @@ def run_mcmc_code(
     noise = estimate_noise(times, flux)  # Todo
     param_names = np.atleast_2d(generate_param_names(initial_params))
 
-    param_names, true_vals, initial_params, proposal_std, param_bounds = (
+    param_names, true_vals, initial_params, proposal_std, param_bounds, priors, prior_transform_funcs = (
         prepare_arrays_for_mcmc(
             param_names,
             true_vals,
@@ -489,6 +489,8 @@ def run_mcmc_code(
             inclination_rejection_func=lambda input_params: inclination_checker(
                 proposals = input_params, r_star = r_star
             ),
+            priors=priors,
+            prior_transforms=prior_transform_funcs,
             specified_folder_name=Path(file) / f"run_{i}",
             max_cpu_nodes=4,
         )
@@ -576,7 +578,7 @@ if __name__ == "__main__":
         file="TIC_100100827",
         target_search_params=target_search_params,
         target_stellar_params=stellar_params,
-        iteration_num=1_000_000,
+        iteration_num=100_000,
         run_number=3,
         analytic_sim=True,
         batman_bool=True,
