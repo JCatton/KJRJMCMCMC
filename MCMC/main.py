@@ -55,8 +55,6 @@ def extract_timeseries_data(file_location: str) -> (np.ndarray, np.ndarray):
     timeseries = np.load(file_location, allow_pickle=True)
     return timeseries[0], timeseries[1]
 
-def prepare_arrays_for_mcmc(param_names, true_vals, initial_params, proposal_std, param_bounds,
-                            analytical_bool, priors, prior_transform_funcs):
 
 def prepare_arrays_for_mcmc(
     param_names=None,
