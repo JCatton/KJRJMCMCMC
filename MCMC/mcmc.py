@@ -410,7 +410,7 @@ class MCMC:
         accept = random() < acceptance_prob
         return accept, new_likelihood, new_pos
 
-   def chain_to_plot_and_estimate(
+    def chain_to_plot_and_estimate(
         self, true_vals: Optional[np.ndarray[float]] = None, manual_burn_in_idx: int = 0
     ):
         if not isinstance(manual_burn_in_idx, np.int64 | int):
