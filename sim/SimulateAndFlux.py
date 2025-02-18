@@ -39,6 +39,8 @@ def flux_data_from_params(
     Returns:
     - flux_values: Array of flux values
     """
+    if len(input_params.shape) == 1:
+        input_params = input_params.reshape(input_params.shape[0] // 8, 8)
     stellar_params = input_params[0]
     planet_params = input_params[1:]
     # print(f"{batman_bool=}")

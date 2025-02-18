@@ -1,5 +1,5 @@
 from MCMC.mcmc import MCMC
-from MCMC.main import inclination_checker, prepare_arrays_for_mcmc, add_gaussian_error
+from MCMC.main import inclination_checker, prepare_arrays_for_mcmc, add_gaussian_error, prior_transform_calcs
 from sim.SimulateAndFlux import flux_data_from_params
 from pathlib import Path
 from typing import Callable
@@ -334,7 +334,7 @@ def run_mcmc_code(
     analytic_sim: bool = True,
     batman_bool: bool = False,
     real_data_bool: bool = True,
-
+    do_nested_sampling: bool = False,
 ):
     """
     Run the MCMC code on the data
@@ -375,6 +375,8 @@ def run_mcmc_code(
 
     # stellar_params = get_stellar_params(file, target_name) # Todo -> Currently just give the regular stellar params
     stellar_params = target_stellar_params  # [radius, mas, limb_darkening_model, limb_darkening_coefficients]
+    estimated_params = estimate_parameters(times, flux, stellar_params, signal_detection_efficiency=10, period_min=0.5,
+                                     period_max=3, )
     initial_params = np.atleast_2d(
         np.vstack([estimated_params, np.array([0, 0, 0, 0, 0, 0, 0, np.pi / 4, 0.392])])
     )
@@ -434,6 +436,10 @@ def run_mcmc_code(
     proposal_std = extend_proposal_for_stellar(proposal_std)
     param_bounds = extend_param_bounds_for_stellar(param_bounds)
     true_vals = extend_params_for_stellar(true_vals, stellar_params)
+
+    priors = np.full(proposal_std.shape, None)
+    priors[1,0] = {"distribution": "gaussian", "lower_bound": 0.01, "upper_bound":0.2, "mean": input_params[1,0], "std":5*1e-2}
+    priors, prior_transform_funcs = prior_transform_calcs(priors, param_bounds, proposal_std, input_params)
 
     print(f"After {proposal_std.shape=}")
     
@@ -497,6 +503,10 @@ def run_mcmc_code(
             specified_folder_name=Path(file) / f"run_{i}",
             max_cpu_nodes=4,
         )
+
+        if do_nested_sampling:
+            mcmc.nested_sampling()
+            do_nested_sampling = False
         mcmc.metropolis_hastings(iteration_num)
         mcmc.chain_to_plot_and_estimate(true_vals)
         mcmc.corner_plot()
@@ -586,4 +596,5 @@ if __name__ == "__main__":
         analytic_sim=True,
         batman_bool=True,
         real_data_bool=False,
+        do_nested_sampling=True,
     )
