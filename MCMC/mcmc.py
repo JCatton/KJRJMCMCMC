@@ -36,6 +36,18 @@ def minmax(x):
     return (minimum, maximum)
 
 
+def autocorrelation (x) :
+    """
+    Compute the autocorrelation of the signal, based on the properties of the
+    power spectral density of the signal.
+    """
+    xp = x-np.mean(x)
+    f = np.fft.fft(xp)
+    p = np.array([np.real(v)**2+np.imag(v)**2 for v in f])
+    pi = np.fft.ifft(p)
+    return np.real(pi)[:x.size//2]/np.sum(xp**2)
+
+
 def build_folder_name(specified_folder_name: Optional[str | Path] = None) -> Path:
     if specified_folder_name:
         pth = Path(specified_folder_name)
@@ -107,6 +119,7 @@ class MCMC:
         self.max_cpu_nodes = max_cpu_nodes
         self.sim_number = 1
         self.data_folder = build_folder_name(specified_folder_name)
+        self.plot_save_folder = self.data_folder / "plots"
         self.param_names = param_names
         self.initial_parameters = initial_parameters
 
@@ -344,6 +357,117 @@ class MCMC:
         print(f"{acceptance_rate=}")
         pbar.close()
         self.chain_wrap_up()
+
+    def gaussian_hmc(self, num_of_new_iterations: int,
+                     timestep: float,
+                     est_burn_in_end: int=5000,
+                     estimate_interval: int=1):
+
+        self.prepare_chains_for_new_iters(num_of_new_iterations)
+
+
+        pbar = tqdm(
+            initial=1, total=num_of_new_iterations, desc="MCMC Run "
+        )
+        prev_iter = self.iteration_num - 1
+        current_position = self.chain[prev_iter]
+        current_ln_likelihood = self.likelihood_func(current_position)
+
+        for i in range(num_of_new_iterations):
+            accept, new_likelihood, new_pos = self.do_gaussian_hmc_step(current_ln_likelihood, current_position,
+                                                                   self.estimated_covariance_matrix, timestep)
+            if accept:
+                current_position = new_pos
+                current_ln_likelihood = new_likelihood
+                self.acceptance_num += 1
+            else:
+                self.rejection_num += 1
+
+            self.chain[self.iteration_num] = current_position
+            self.likelihood_chain[self.iteration_num] = current_ln_likelihood
+            self.iteration_num += 1
+            prev_iter += 1
+            if self.iteration_num >= est_burn_in_end and self.iteration_num % estimate_interval == 0:
+                self.determine_burn_in_index()
+                self.estimated_covariance_matrix = self.update_covariance(estimate_interval, prev_iter)
+                self.estimated_mean = self.update_mean(estimate_interval, prev_iter)
+            pbar.update(1)
+
+        print("\n", self.estimated_covariance_matrix)
+        acceptance_rate = self.acceptance_num / (self.rejection_num + self.acceptance_num)
+
+        burn_in = self.determine_burn_in_index()
+        autoc = autocorrelation(self.chain[burn_in:])
+        print(f"{acceptance_rate=}")
+        print(f"ESF={1/(1+2*np.sum(autoc))}")
+        domain = np.arange(self.iteration_num)
+        fig, axs = plt.subplots(
+                nrows=self.chain.shape[1], ncols=1, figsize=(10, 8)
+            )
+        fig.suptitle("Chains")
+        for i in range(self.estimated_covariance_matrix.shape[0]):
+            axs[i].plot(domain, self.chain[:, i])#
+        plt.savefig(self.plot_save_folder + "/chains.png")
+        plt.close()
+        fig, axs = plt.subplots(
+            nrows=self.chain.shape[1], ncols=1, figsize=(10, 8)
+        )
+        fig.suptitle("Burn-in chains")
+        for i in range(self.estimated_covariance_matrix.shape[0]):
+            axs[i].plot(domain[:burn_in], self.chain[:burn_in, i])
+        plt.savefig(self.plot_save_folder + "/burn-in_chains.png")
+        plt.close()
+
+        fig, axs = plt.subplots(
+            nrows=self.chain.shape[1], ncols=1, figsize=(10, 8)
+        )
+        fig.suptitle("Post-Burn-in chains")
+        for i in range(self.estimated_covariance_matrix.shape[0]):
+            axs[i].plot(domain[burn_in:], self.chain[burn_in:, i])
+        plt.savefig(self.plot_save_folder + "/post-burn-in_chains.png")
+        plt.close()
+
+        plt.title("Post-Burn-in Likelihoods")
+        plt.plot(domain, self.likelihood_chain)
+        plt.savefig(self.plot_save_folder + "/post-burn-in_likelihood.png")
+        plt.close()
+        corner(self.chain[burn_in:])
+        plt.savefig(self.plot_save_folder + "/corner.png")
+        plt.close()
+
+        self.chain_wrap_up()
+
+    def update_covariance(self, interval, max_iter):
+        return np.corrcoef(self.chain[self.burn_in_index:max_iter:interval, :], rowvar=0)
+
+    def update_mean(self, interval, max_iter):
+        return np.mean(self.chain[self.burn_in_index:max_iter:interval, :], axis=0)
+
+    def hamiltonian(self, cov, pos, mean, mom):
+        delta = pos - mean
+        return -self.likelihood_func(pos) + 0.5 * mom.transpose() @ np.linalg.inv(cov) @ mom
+
+    def do_gaussian_hmc_step(self, current_ln_likelihood, current_pos, covariance_mat, timestep):
+
+        expected_mean = self.estimated_mean
+        current_normal = multivariate_normal(np.zeros(len(current_pos)), covariance_mat)
+
+        current_mom = current_normal.rvs() # Velocity sample
+        a_i = np.linalg.inv(covariance_mat) @ current_mom
+        b_i = current_pos - expected_mean
+
+        new_pos = expected_mean + a_i * np.sin(timestep) + b_i * np.cos(timestep)
+        new_mom = covariance_mat @ (a_i * np.cos(timestep) - b_i * np.sin(timestep))
+
+        new_ln_likelihood = self.likelihood_func(new_pos)
+
+        old_h = self.hamiltonian(covariance_mat, current_pos, expected_mean, current_mom)
+        new_h = self.hamiltonian(covariance_mat, new_pos, expected_mean, new_mom)
+
+        acceptance_prob = np.exp(-new_h + old_h)
+
+        accept = random() < acceptance_prob
+        return accept, new_ln_likelihood, new_pos
 
     def prepare_chains_for_new_iters(self, num_of_new_iterations):
         max_iteration_number = self.iteration_num + num_of_new_iterations
