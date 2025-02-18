@@ -93,7 +93,7 @@ def apply_regressor(tpf):
     aper = tpf.create_threshold_mask()
     uncorrected_lc = tpf.to_lightcurve(aperture_mask=aper)
 
-    uncorrected_lc = uncorrected_lc.remove_nans()
+    lc_raw = tpf.to_lightcurve(aperture_mask=aper)
 
     clean_flux = tpf.flux[~np.isnan(tpf.to_lightcurve(aperture_mask=aper).flux), :, :]
 
@@ -125,7 +125,7 @@ def tpfs_to_lightcurves(tpfs):
     stiched_corr_lc = corr_lc_collection.stitch()
     stiched_un_corr_lc = un_corr_lc_old_collection.stitch()
 
-    return stiched_un_corr_lc, stiched_corr_lc
+    return stiched_corr_lc
 
 
 if __name__ == "__main__":
