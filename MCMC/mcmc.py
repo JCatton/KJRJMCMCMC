@@ -36,7 +36,7 @@ def minmax(x):
     return (minimum, maximum)
 
 
-def build_folder_name(specified_folder_name: Optional[str | Path] = None):
+def build_folder_name(specified_folder_name: Optional[str | Path] = None) -> Path:
     if specified_folder_name:
         pth = Path(specified_folder_name)
         if not pth.is_dir():
@@ -195,6 +195,13 @@ class MCMC:
                             "Error occurred due to missing data in the MCMC save state"
                         )
                         raise e
+
+                    try:
+                        with open(data_folder / "nested_sampling_results.pkl", "rb") as f:
+                            obj.nested_results = dill.load(f)
+                    except FileNotFoundError as e:
+                        print("Nested Sampling result not found. Skipping."
+                        )
                 return obj
             except Exception as e:
                 raise TypeError(f"Failed to load object: {e}")
@@ -208,10 +215,13 @@ class MCMC:
         flat_prior_trans = self.prior_transforms.flatten()
         prior_transform = lambda u: [flat_prior_trans[i](u_i) for i, u_i in enumerate(u)]
         ndim = self.initial_parameters.flatten().shape[0]
-        sampler = dynesty.NestedSampler(loglikelihood=li_fn, prior_transform=prior_transform, ndim=ndim)
+        sampler = dynesty.NestedSampler(loglikelihood=li_fn, prior_transform=prior_transform,
+                                        ndim=ndim, nlive=200_000)
         sampler.run_nested()
         sresults = sampler.results
         self.nested_results = sresults
+        with open(self.data_folder / "nested_sampling_results.pkl", "wb") as f:
+            dill.dump(sresults, f)
         dyplot.runplot(sresults)
         plt.show()
         dyplot.cornerplot(sresults)
