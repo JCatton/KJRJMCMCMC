@@ -49,6 +49,7 @@ def download_data_api(
         cadence=cadence,
         indicies_requested=indicies_requested,
         max_number_downloads=max_number_downloads,
+        apply_regressor_bool=use_regression_model,
     )
 
     return times, fluxes
