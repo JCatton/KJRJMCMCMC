@@ -468,7 +468,7 @@ def run_mcmc_code(
         alpha=0.5
     )
     plt.legend()
-    plt.savefig(Path(file) / f"run_{i}" / "inferred_flux_plot_before.pdf", dpi=500)
+    plt.savefig("inferred_flux_plot_before.pdf", dpi=500)
     plt.show()  
 
     # print(f"{input_params.shape=}")
