@@ -15,7 +15,7 @@ def download_data(
     cadence=None,
     indicies_requested=None,
     max_number_downloads: int = 20,
-    apply_regressor_bool = True,
+    apply_regressor_bool = False,
     pipeline_aper_bool = True,
 ) -> tuple:
     """
