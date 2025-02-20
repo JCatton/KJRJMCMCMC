@@ -121,7 +121,7 @@ def tpfs_to_lightcurves(tpfs, apply_regressor_bool = False, pipeline_aper_bool =
     """
     un_corr = []
     corr = []
-    for tpf in tqdm(tpfs, desc="Processing Light Curves"):
+    for i, tpf in tqdm(enumerate(tpfs), desc="Processing Light Curves"):
         if pipeline_aper_bool:
             aperture_mask = tpf.pipeline_mask
         else:
@@ -134,7 +134,11 @@ def tpfs_to_lightcurves(tpfs, apply_regressor_bool = False, pipeline_aper_bool =
         else:
             uncorrected_lc = tpf.to_lightcurve(aperture_mask=aperture_mask)
             un_corr.append(uncorrected_lc)
-            corr.append(uncorrected_lc.remove_nans().normalize())
+            # ax = uncorrected_lc.normalize().plot(label=f"Uncorrected lc for {i}")
+            corrected_lc = uncorrected_lc.remove_outliers().remove_nans().normalize()
+            # corrected_lc.plot(ax=ax, label=f"Corrected lc for {i}", ls = "--")
+            corr.append(corrected_lc)
+            # plt.show()
 
     corr_lc_collection = LightCurveCollection(corr)
     un_corr_lc_old_collection = LightCurveCollection(un_corr)
