@@ -8,6 +8,7 @@ from TransitAnalysis.TransitDataExtractor import download_data
 import numpy as np
 import asyncio
 import shutil
+from sim.Decorators import TimeMeasure
 
 # from sim.ExampleSimulation import stellar_paramss
 
@@ -315,7 +316,7 @@ def gaussian_error_ln_likelihood(
     ln_likelihood = log_prior - deviation_lh - np.sum(observed_lh)
     return ln_likelihood
 
-
+@TimeMeasure
 def run_mcmc_code(
     file: Path,
     target_search_params: list,
