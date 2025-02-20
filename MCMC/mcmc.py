@@ -11,7 +11,8 @@ import dynesty
 from dynesty import plotting as dyplot
 from corner import corner
 from numpy import ndarray
-from numpy.random import normal, multivariate_normal
+from numpy.random import normal
+from scipy.stats import multivariate_normal
 from pathos.multiprocessing import ProcessingPool as Pool
 from tqdm import tqdm
 
@@ -375,7 +376,7 @@ class MCMC:
 
         for i in range(num_of_new_iterations):
             accept, new_likelihood, new_pos = self.do_gaussian_hmc_step(current_ln_likelihood, current_position,
-                                                                   self.estimated_covariance_matrix, timestep)
+                                                                        self.estimated_covariance_matrix, timestep)
             if accept:
                 current_position = new_pos
                 current_ln_likelihood = new_likelihood
@@ -402,8 +403,8 @@ class MCMC:
         print(f"ESF={1/(1+2*np.sum(autoc))}")
         domain = np.arange(self.iteration_num)
         fig, axs = plt.subplots(
-                nrows=self.chain.shape[1], ncols=1, figsize=(10, 8)
-            )
+            nrows=self.chain.shape[1], ncols=1, figsize=(10, 8)
+        )
         fig.suptitle("Chains")
         for i in range(self.estimated_covariance_matrix.shape[0]):
             axs[i].plot(domain, self.chain[:, i])#
