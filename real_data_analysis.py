@@ -380,7 +380,9 @@ def run_mcmc_code(
     estimated_params = np.array([[0.10277215, 0.0213727 , 0.94179918, 0.        , 1.57079633,
         0.        , 0.        , 1.52347761, 0.        ]])
     initial_params = np.atleast_2d(
-        np.vstack([estimated_params, np.array([0, 0, 0, 0, 0, 0, 0, np.pi / 4, 0.392])])
+        np.vstack([estimated_params,
+                   # np.array([0, 0, 0, 0, 0, 0, 0, np.pi / 4, 0.392])
+                   ])
     )
     # np.save("Test-Params/initial_params", initial_params)
 
