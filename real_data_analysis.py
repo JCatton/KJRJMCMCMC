@@ -195,7 +195,7 @@ def estimate_proposal(times: np.ndarray, flux: np.ndarray) -> Proposal:
     return np.atleast_2d(
         [
             [4*1e-4, 7*1e-5, 5*1e-5, 0, 5*1e-3, 0, 0, 0, 0],  # Planet 1
-            [1e-5, 1e-5, 1e-5, 1e-5, 0, 0, 0, 0, 0],   # Planet 2
+            # [1e-5, 1e-5, 1e-5, 1e-5, 0, 0, 0, 0, 0],   # Planet 2
         ]
     )
 
@@ -218,17 +218,17 @@ def estimate_bounds(times: np.ndarray, flux: np.ndarray) -> Bounds:
                 (-6, 6),
                 (0, 6000),
             ],
-            [
-                (1e-5, 0.4),
-                (1e-3, 0.5),
-                (0, 1e4),
-                (0, 0.3),
-                (np.radians(80), np.pi),
-                (-np.pi / 8, np.pi / 8),
-                (-np.pi / 8, np.pi / 8),
-                (-6, 6),
-                (0, 6000),
-            ]
+            # [
+            #     (1e-5, 0.4),
+            #     (1e-3, 0.5),
+            #     (0, 1e4),
+            #     (0, 0.3),
+            #     (np.radians(80), np.pi),
+            #     (-np.pi / 8, np.pi / 8),
+            #     (-np.pi / 8, np.pi / 8),
+            #     (-6, 6),
+            #     (0, 6000),
+            # ]
         ]
     )
 
@@ -375,8 +375,10 @@ def run_mcmc_code(
 
     # stellar_params = get_stellar_params(file, target_name) # Todo -> Currently just give the regular stellar params
     stellar_params = target_stellar_params  # [radius, mas, limb_darkening_model, limb_darkening_coefficients]
-    estimated_params = estimate_parameters(times, flux, stellar_params, signal_detection_efficiency=10, period_min=0.5,
-                                     period_max=3, )
+    # estimated_params = estimate_parameters(times, flux, stellar_params, signal_detection_efficiency=10, period_min=0.5,
+    #                                  period_max=3, )
+    estimated_params = np.array([[0.10277215, 0.0213727 , 0.94179918, 0.        , 1.57079633,
+        0.        , 0.        , 1.52347761, 0.        ]])
     initial_params = np.atleast_2d(
         np.vstack([estimated_params, np.array([0, 0, 0, 0, 0, 0, 0, np.pi / 4, 0.392])])
     )
@@ -507,7 +509,8 @@ def run_mcmc_code(
         if do_nested_sampling:
             mcmc.nested_sampling()
             do_nested_sampling = False
-        mcmc.metropolis_hastings(iteration_num)
+        # mcmc.metropolis_hastings(iteration_num)
+        mcmc.gaussian_hmc(iteration_num)
         mcmc.chain_to_plot_and_estimate(true_vals)
         mcmc.corner_plot()
 
