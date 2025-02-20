@@ -291,9 +291,9 @@ def extend_param_bounds_for_stellar(param_bounds: Bounds) -> Bounds:
 
     new_param_bounds = np.zeros((param_bounds.shape[0] + 1, param_bounds.shape[1], param_bounds.shape[2]))
 
-    new_param_bounds[0,0] = (0, 5)
-    new_param_bounds[0,1] = (0, 1e40)
-    new_param_bounds[0,2] = (0, 1e10)
+    new_param_bounds[0,0] = (1e-4, 2)
+    new_param_bounds[0,1] = (1e5, 10e7)
+    new_param_bounds[0,2] = (0, 10)
     new_param_bounds[0,3] = (0, 1)
     new_param_bounds[0,4] = (0, 1)
     new_param_bounds[0,5:] = (0, 5)
