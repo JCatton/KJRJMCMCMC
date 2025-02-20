@@ -500,8 +500,8 @@ def run_mcmc_code(
             inclination_rejection_func=lambda input_params: inclination_checker(
                 proposals = input_params, r_star = r_star
             ),
-            priors=priors,
-            prior_transforms=prior_transform_funcs,
+            # priors=priors,
+            # prior_transforms=prior_transform_funcs,
             specified_folder_name=Path(file) / f"run_{i}",
             max_cpu_nodes=4,
         )
@@ -599,5 +599,5 @@ if __name__ == "__main__":
         analytic_sim=True,
         batman_bool=True,
         real_data_bool=False,
-        do_nested_sampling=True,
+        do_nested_sampling=False,
     )
