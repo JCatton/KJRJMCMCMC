@@ -194,7 +194,7 @@ def extend_params_for_stellar(planet_params: Params, stellar_params: list[float]
 def estimate_proposal(times: np.ndarray, flux: np.ndarray) -> Proposal:
     return np.atleast_2d(
         [
-            [4*1e-4, 7*1e-5, 5*1e-5, 3*5e-3, 5*1e-3, 5e-3, 0, 5e-3, 0],  # Planet 1
+            [0.5*4*1e-4, 0.5*7*1e-5, 3*1e-5, 5e-3, 1e-3, 5e-3, 0, 5e-3, 0],  # Planet 1
             # [1e-5, 1e-5, 1e-5, 1e-5, 0, 0, 0, 0, 0],   # Planet 2
         ]
     )
@@ -269,8 +269,8 @@ def extend_proposal_for_stellar(proposal: Proposal) -> Proposal:
     new_proposal[0,0] = 0
     new_proposal[0,1] = 0
     new_proposal[0,2] = 0
-    new_proposal[0,3] = 0  # 5*1e-4
-    new_proposal[0,4] = 0  # 5*1e-4
+    new_proposal[0,3] = 5*1e-4  # 5*1e-4
+    new_proposal[0,4] = 5*1e-4  # 5*1e-4
     new_proposal[0,5:] = 0
     new_proposal[1:] = proposal
     
@@ -371,8 +371,8 @@ def run_mcmc_code(
             flux,
             stellar_params,
             signal_detection_efficiency=6,
-            period_min=2,
-            period_max=3,
+            period_min=2.08,
+            period_max=2.14,
         )
     )
     # np.save("Test-Params/initial_params", initial_params)
@@ -397,9 +397,9 @@ def run_mcmc_code(
                     2.103195,
                     0.0011,
                     np.radians(88.96862026914545),
-                    np.radians(90),
                     0,
-                    3.00466762,
+                    0,
+                    0.01763774,
                     0,
                 ],
             ]
@@ -537,7 +537,7 @@ if __name__ == "__main__":
     sector = None
     author = "SPOC"
     cadence = 120
-    indicies_requested = (0, 31)
+    indicies_requested = (4, 5)
     max_number_downloads = 31
     use_regression_model = True
     target_search_params = [
@@ -576,7 +576,7 @@ if __name__ == "__main__":
         file="TOI-1181 2",
         target_search_params=target_search_params,
         target_stellar_params=stellar_params,
-        iteration_num=2_00_000,
+        iteration_num=1_000_000,
         run_number=3,
         analytic_sim=True,
         batman_bool=True,
