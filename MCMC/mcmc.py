@@ -360,12 +360,22 @@ class MCMC:
         self.chain_wrap_up()
 
     def gaussian_hmc(self, num_of_new_iterations: int,
-                     timestep: float,
+                     timestep: float=np.pi/2,
                      est_burn_in_end: int=5000,
                      estimate_interval: int=1):
 
-        self.prepare_chains_for_new_iters(num_of_new_iterations)
+        param_number_sq = self.proposal_std.flatten().shape[0] ** 2
+        mh_iter = param_number_sq - self.iteration_num
+        if self.iteration_num <= param_number_sq:
+            self.metropolis_hastings(mh_iter)
+            self.iteration_num -= 1 # Temporary Solution that will probably become permanent
+            prev_iter = self.iteration_num - 1
 
+            self.chain = self.chain.reshape(self.chain.shape[0], -1)
+
+            self.estimated_covariance_matrix = self.update_covariance(estimate_interval, prev_iter)
+            self.estimated_mean = self.update_mean(estimate_interval, prev_iter)
+        self.prepare_chains_for_new_iters(min(10,num_of_new_iterations - mh_iter))
 
         pbar = tqdm(
             initial=1, total=num_of_new_iterations, desc="MCMC Run "
