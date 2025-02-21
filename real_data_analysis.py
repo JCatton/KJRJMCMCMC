@@ -463,7 +463,7 @@ def run_mcmc_code(
     plt.plot(
         times,
         flux_data_from_params(true_vals, times, analytical_bool=True, batman_bool=batman_bool),
-        label="True",
+        label="Literature-reported Value",
         ls="--",
         alpha=0.5
     )
@@ -500,12 +500,12 @@ def run_mcmc_code(
         mcmc.corner_plot()
 
         plt.figure()
-        plt.title(f"Inferred Parameters vs True Fit\n{file}")
+        plt.title(f"Inferred Parameters vs Literature-reported Fit\n{file}")
         plt.plot(times, flux, label="Data")
         plt.plot(
             times,
             flux_data_from_params(true_vals, times, analytical_bool=True, batman_bool=batman_bool),
-            label="True",
+            label="Literature-reported Value",
             ls="--",
             alpha=0.5
         )
