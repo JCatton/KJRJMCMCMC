@@ -128,19 +128,21 @@ def plot_tls_stuff(
 
     ax = plt.gca()
     ax.axvline(results.period, alpha=0.4, lw=3)
-    plt.title(f"Power spectrum of the data with period {results.period}")
+    plt.title(f"Power spectrum of the data with period {round(results.period,3)}")
     plt.xlim(np.min(results.periods), np.max(results.periods))
     for n in range(2, 10):
         ax.axvline(n * results.period, alpha=0.4, lw=1, linestyle="dashed")
         ax.axvline(results.period / n, alpha=0.4, lw=1, linestyle="dashed")
-    plt.ylabel(r"SDE")
+    plt.ylabel(r"Signal Detection Efficiency")
     plt.xlabel("Period (days)")
     plt.plot(results.periods, results.power, color="black", lw=0.5)
     plt.xlim(0, max(results.periods))
+    plt.savefig("TLS_Power_spectrum.pdf")
     if save_loc is not None:
         plt.savefig(f"{save_loc}/TLS_Power_spectrum_{index}.pdf")
     else:
         plt.show()
+    
 
 
 def search_for_transits(
