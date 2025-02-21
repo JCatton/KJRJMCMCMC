@@ -28,6 +28,7 @@ def download_data_api(
     indicies_requested=None,
     max_number_downloads: int = 20,
     use_regression_model=True,
+    use_lightcurve_direct=False,
 ):
     """
     Downloads data from the target_name
@@ -51,6 +52,7 @@ def download_data_api(
         indicies_requested=indicies_requested,
         max_number_downloads=max_number_downloads,
         apply_regressor_bool=use_regression_model,
+        use_lightcurve_direct=use_lightcurve_direct,
     )
 
     return times, fluxes
@@ -542,7 +544,8 @@ if __name__ == "__main__":
     cadence = 120
     indicies_requested = (4, 5)
     max_number_downloads = 31
-    use_regression_model = True
+    use_regression_model = False
+    use_lightcurve_direct = True
     target_search_params = [
         taget_name,
         exptime,
@@ -553,6 +556,7 @@ if __name__ == "__main__":
         indicies_requested,
         max_number_downloads,
         use_regression_model,
+        use_lightcurve_direct
     ]
 
     # times, flux = download_data_api(*target_search_params)

@@ -17,6 +17,7 @@ def download_data(
     max_number_downloads: int = 20,
     apply_regressor_bool = False,
     pipeline_aper_bool = True,
+    use_lightcurve_direct = False,
 ) -> tuple:
     """
     Downloads data from the target_name
@@ -42,20 +43,34 @@ def download_data(
         key: value for key, value in search_params.items() if value is not None
     }
     # search_results = lk.search_tesscut(target_name)
-    search_results = lk.search_targetpixelfile(target = target_name, mission = mission, author = author, exptime=exptime)
-    # print(f"Searching for data with metadata \n{"\n".join([f"{k:=^9}: {v:<20}" for k,v in search_params.items()])}")
-    # search_results = lk.search_lightcurve(target_name, **search_params)
 
-    print(search_results)
+    #If want to use lightcurve directly
+    if use_lightcurve_direct:
+        # Search for the light curve
+        search_results = lk.search_lightcurve(target_name, mission = mission, author = author, exptime=exptime)
+        print(search_results)
+        # Download the light curve
+        if indicies_requested == None:
+            corr = search_results.download_all()
+        else:
+            lower = indicies_requested[0]
+            upper = indicies_requested[1]
+            corr = search_results[lower:upper].download_all()
+        # Remove outliers and nans
+        corr = corr.stitch().remove_outliers().remove_nans()
 
-    if indicies_requested == None:
-        tpf_collection = search_results.download_all()
+    #If want to use targetpixelfile
     else:
-        lower = indicies_requested[0]
-        upper = indicies_requested[1]
-        tpf_collection = search_results[lower:upper].download_all()
+        search_results = lk.search_targetpixelfile(target = target_name, mission = mission, author = author, exptime=exptime)   
+        print(search_results)
+        if indicies_requested == None:
+            tpf_collection = search_results.download_all()
+        else:
+            lower = indicies_requested[0]
+            upper = indicies_requested[1]
+            tpf_collection = search_results[lower:upper].download_all()
 
-    corr = tpfs_to_lightcurves(tpf_collection, apply_regressor_bool=apply_regressor_bool, pipeline_aper_bool = pipeline_aper_bool)
+        corr = tpfs_to_lightcurves(tpf_collection, apply_regressor_bool=apply_regressor_bool, pipeline_aper_bool = pipeline_aper_bool)
 
     # Filter the arrays
     combined_array_corr = np.array([corr.time.value, corr.flux])
