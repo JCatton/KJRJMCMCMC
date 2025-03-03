@@ -302,6 +302,7 @@ class MCMC:
                     self.acceptance_num += 1
                     self.chain[prev_iter] = proposals[s]
                     self.likelihood_chain[prev_iter] = proposal_likelihoods[s]
+                    self.num_planets_chain[prev_iter] = proposals[s].shape[0]  # Update Number of planets based on the proposal size
                     break  # Exit after accepting a proposal
                 else:
                     self.rejection_num += 1
