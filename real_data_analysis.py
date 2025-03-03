@@ -273,8 +273,8 @@ def extend_proposal_for_stellar(proposal: Proposal) -> Proposal:
     new_proposal[0,0] = 0
     new_proposal[0,1] = 0
     new_proposal[0,2] = 0
-    new_proposal[0,3] = 5*1e-4  # 5*1e-4
-    new_proposal[0,4] = 5*1e-4  # 5*1e-4
+    new_proposal[0,3] = 0  # 5*1e-4
+    new_proposal[0,4] = 0  # 5*1e-4
     new_proposal[0,5:] = 0
     new_proposal[1:] = proposal
     
