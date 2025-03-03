@@ -367,19 +367,19 @@ class MCMC:
         max_pad = max(np.sum(non_fixed_indexes, axis=1))
 
         masked_chain = [
-                self.chain[manual_burn_in_idx:, i, non_fixed_indexes[i]]
-                for i in range(self.chain.shape[1])
+                chain[manual_burn_in_idx:, i, non_fixed_indexes[i]]
+                for i in range(chain.shape[1])
             ]
         masked_names = [
-                self.param_names[i, non_fixed_indexes[i]]
-                for i in range(self.param_names.shape[0])
+                param_names[i, non_fixed_indexes[i]]
+                for i in range(param_names.shape[0])
                 ]
         padded_chain = pad_array(masked_chain, max_pad)
         padded_names = pad_array(masked_names, max_pad)
 
         chain = np.stack(padded_chain, axis=1)
         param_names = np.stack(padded_names, axis=0)
-        likelihoods = self.likelihood_chain[manual_burn_in_idx:]
+        likelihoods = likelihood_chain[manual_burn_in_idx:]
 
         # print(f"{chain.shape=}, {param_names.shape=}, {true_vals.shape=}")
 
@@ -548,8 +548,8 @@ class MCMC:
         # Flatten the chain to have shape (samples, parameters)
         flattened_chain = np.concatenate(
             [
-                self.chain[burn_in_index:, i, non_fixed_indexes[i]]
-                for i in range(self.chain.shape[1])
+                chain[burn_in_index:, i, non_fixed_indexes[i]]
+                for i in range(chain.shape[1])
             ],
             axis=1,
         )
@@ -557,8 +557,8 @@ class MCMC:
         # Flatten param_names and true_vals to match the flattened_chain dimensions
         flattened_param_names = np.concatenate(
             [
-                self.param_names[i, non_fixed_indexes[i]]
-                for i in range(self.param_names.shape[0])
+                param_names[i, non_fixed_indexes[i]]
+                for i in range(param_names.shape[0])
             ]
         )
 
