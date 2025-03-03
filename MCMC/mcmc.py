@@ -247,6 +247,7 @@ class MCMC:
         while self.iteration_num < (max_iteration_number - 1):
             current_params = self.chain[prev_iter]
             current_likelihood = self.likelihood_chain[prev_iter]
+            current_num_planets = self.num_planets_chain[prev_iter]
             proposals = current_params + normal(
                 0, self.proposal_std, size=(self.sim_number, *self.chain[0].shape)
             )
@@ -259,6 +260,7 @@ class MCMC:
                 self.rejection_num += 1
                 self.chain[prev_iter + 1] = current_params
                 self.likelihood_chain[prev_iter + 1] = current_likelihood
+                self.num_planets_chain[prev_iter + 1] = current_num_planets
                 self.iteration_num += 1
                 prev_iter += 1
                 pbar.update(1)
@@ -305,6 +307,7 @@ class MCMC:
                     self.rejection_num += 1
                     self.chain[prev_iter] = current_params
                     self.likelihood_chain[prev_iter] = current_likelihood
+                    self.num_planets_chain[prev_iter] = current_num_planets
 
             # Because iteration number is the number of the next iteration
             # due to 0 indexing
