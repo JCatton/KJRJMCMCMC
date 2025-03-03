@@ -363,7 +363,7 @@ class MCMC:
         
         if not isinstance(manual_burn_in_idx, np.int64 | int):
             raise TypeError(f"{manual_burn_in_idx=} is not an integer")
-        non_fixed_indexes = np.array(self.proposal_std, dtype=bool)
+        non_fixed_indexes = np.array(proposal_std, dtype=bool)
         max_pad = max(np.sum(non_fixed_indexes, axis=1))
 
         masked_chain = [
