@@ -561,6 +561,20 @@ class MCMC:
         burn_in_idx = find_first_greater(self.likelihood_chain, lower_likelihood)
         self.burn_in_index = int(burn_in_idx)
         return burn_in_idx
+    
+    def marginalize_by_model(self):
+        unique_models = np.unique(self.num_planets_chain)
+        marginalized_data = {}
+
+        for model in unique_models:
+            mask = self.num_planets_chain == model
+            marginalized_data[model] = {
+                "likelihoods": self.likelihood_chain[mask], 
+                "parameters": self.chain[mask]
+            }
+
+        return marginalized_data
+
 
 
 class Statistics:
