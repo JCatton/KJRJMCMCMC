@@ -194,7 +194,8 @@ def extend_params_for_stellar(planet_params: Params, stellar_params: list[float]
 def estimate_proposal(times: np.ndarray, flux: np.ndarray) -> Proposal:
     return np.atleast_2d(
         [
-            [4*1e-4, 7*1e-5, 5*1e-5, 0, 5*1e-3, 0, 0, 0, 0],  # Planet 1
+            # [4*1e-4, 7*1e-5, 5*1e-5, 0, 5*1e-3, 0, 0, 0, 0],  # Planet 1
+            [4*1e-4, 7*1e-5, 0, 0, 5*1e-3, 0, 0, 0, 0],  # Planet 1
             # [1e-5, 1e-5, 1e-5, 1e-5, 0, 0, 0, 0, 0],   # Planet 2
         ]
     )
@@ -212,7 +213,7 @@ def estimate_bounds(times: np.ndarray, flux: np.ndarray) -> Bounds:
                 (1e-3, 0.5),
                 (0, 1e4),
                 (0, 0.3),
-                (np.radians(80), np.pi),
+                (np.radians(70), np.radians(110)),
                 (-np.pi / 8, np.pi / 8),
                 (-np.pi / 8, np.pi / 8),
                 (-6, 6),
@@ -502,8 +503,8 @@ def run_mcmc_code(
             inclination_rejection_func=lambda input_params: inclination_checker(
                 proposals = input_params, r_star = r_star
             ),
-            # priors=priors,
-            # prior_transforms=prior_transform_funcs,
+            priors=priors,
+            prior_transforms=prior_transform_funcs,
             specified_folder_name=Path(file) / f"run_{i}",
             max_cpu_nodes=4,
         )
@@ -596,10 +597,10 @@ if __name__ == "__main__":
         file="TIC_100100827",
         target_search_params=target_search_params,
         target_stellar_params=stellar_params,
-        iteration_num=100_000,
+        iteration_num=150_000,
         run_number=3,
         analytic_sim=True,
         batman_bool=True,
         real_data_bool=False,
-        do_nested_sampling=False,
+        do_nested_sampling=True,
     )

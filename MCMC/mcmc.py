@@ -142,8 +142,17 @@ class MCMC:
         self.lower_bounds = self.param_bounds[:, :, 0]
         self.upper_bounds = self.param_bounds[:, :, 1]
         self.proposal_std: ndarray = proposal_std
+        self.varying_mask = np.where(self.proposal_std != 0, True, False).flatten()
+        self.fixed_mask = np.where(self.proposal_std == 0, True, False).flatten()
         self.likelihood_func: Callable = likelihood_func
         self.inclination_rejection_func: Callable = inclination_rejection_func
+
+        def flat_likelihood_func(current_varied_params: ndarray) -> float:
+            params = self.initial_parameters.flatten().copy()
+            params[self.varying_mask] = current_varied_params
+            return self.likelihood_func(params)
+
+        self.flat_likelihood_func = flat_likelihood_func
 
         # MCMC-Runtime
         empty_chain = np.empty_like(
@@ -225,12 +234,12 @@ class MCMC:
             )
 
     def nested_sampling(self):
-        li_fn = self.likelihood_func
-        flat_prior_trans = self.prior_transforms.flatten()
+        li_fn = self.flat_likelihood_func
+        flat_prior_trans = self.prior_transforms.flatten()[self.varying_mask]
         prior_transform = lambda u: [flat_prior_trans[i](u_i) for i, u_i in enumerate(u)]
-        ndim = self.initial_parameters.flatten().shape[0]
+        ndim = np.sum(self.varying_mask)
         sampler = dynesty.NestedSampler(loglikelihood=li_fn, prior_transform=prior_transform,
-                                        ndim=ndim, nlive=200_000)
+                                        ndim=ndim, nlive=1_500)
         sampler.run_nested()
         sresults = sampler.results
         self.nested_results = sresults
