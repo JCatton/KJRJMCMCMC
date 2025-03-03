@@ -225,11 +225,19 @@ class MCMC:
             self.likelihood_chain, shape=max_iteration_number
         )
 
+        empty_planet_num = np.empty_like(
+            self.num_planets_chain, shape=max_iteration_number
+        )
+
+
+
         empty_chain[: len(self.chain)] = self.chain
         empty_likelihood[: len(self.chain)] = self.likelihood_chain
+        empty_planet_num[: len(self.chain)] = self.num_planets_chain
 
         self.chain = empty_chain
         self.likelihood_chain = empty_likelihood
+        self.num_planets_chain = empty_planet_num
 
         prev_iter = self.iteration_num - 1
 
