@@ -338,8 +338,29 @@ class MCMC:
         self.save()
 
     def chain_to_plot_and_estimate(
-        self, true_vals: Optional[np.ndarray[float]] = None, manual_burn_in_idx: int = 0
+        self, 
+        true_vals: Optional[np.ndarray[float]] = None, 
+        manual_burn_in_idx: int = 0,
+        chain: Optional[np.ndarray] = None,
+        param_names: Optional[np.ndarray] = None,
+        likelihood_chain: Optional[np.ndarray] = None,
+        proposal_std: Optional[np.ndarray] = None,
+        planet_number: Optional[int] = None
     ):
+        
+        if chain is None:
+            chain = np.copy(self.chain)
+        if param_names is None:
+            param_names = np.copy(self.param_names)
+        if likelihood_chain is None:
+            likelihood_chain = np.copy(self.likelihood_chain)
+        if proposal_std is None:
+            proposal_std = np.copy(self.proposal_std)
+        
+
+        
+        
+        
         if not isinstance(manual_burn_in_idx, np.int64 | int):
             raise TypeError(f"{manual_burn_in_idx=} is not an integer")
         non_fixed_indexes = np.array(self.proposal_std, dtype=bool)
@@ -500,9 +521,27 @@ class MCMC:
         plt.close()
 
     def corner_plot(
-        self, true_vals: Optional[np.ndarray] = None, burn_in_index: int = None
+        self, 
+        true_vals: Optional[np.ndarray] = None, 
+        burn_in_index: int = None,
+        chain: Optional[np.ndarray] = None,
+        param_names: Optional[np.ndarray] = None,
+        likelihood_chain: Optional[np.ndarray] = None,
+        proposal_std: Optional[np.ndarray] = None,
+        planet_number: Optional[int] = None,
     ):
-        non_fixed_indexes = np.array(self.proposal_std, dtype=bool)
+        
+        if chain is None:
+            chain = np.copy(self.chain)
+        if param_names is None:
+            param_names = np.copy(self.param_names)
+        if likelihood_chain is None:
+            likelihood_chain = np.copy(self.likelihood_chain)
+        if proposal_std is None:
+            proposal_std = np.copy(self.proposal_std)
+
+        non_fixed_indexes = np.array(proposal_std, dtype=bool)
+
         if burn_in_index is None:
             burn_in_index = self.burn_in_index
 
