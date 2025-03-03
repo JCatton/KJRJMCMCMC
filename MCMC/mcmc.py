@@ -125,6 +125,7 @@ class MCMC:
         self.proposal_std: ndarray = proposal_std
         self.likelihood_func: Callable = likelihood_func
         self.inclination_rejection_func: Callable = inclination_rejection_func
+        self.num_planets_chain = np.zeros((1), dtype=int)
 
         # MCMC-Runtime
         empty_chain = np.empty_like(
@@ -133,6 +134,7 @@ class MCMC:
         empty_chain[0] = initial_parameters
         self.chain = empty_chain
         self.likelihood_chain = np.array(self.likelihood_func(initial_parameters))
+        self.num_planets_chain[0] = initial_parameters.shape[0]
 
         if kwargs:
             # This is used for re-loading the object from a saved file.
