@@ -387,6 +387,8 @@ class MCMC:
 
         plt.figure(figsize=(10, 8))
         fig, axs = plt.subplots(nrows=1, ncols=2)
+        if planet_number is not None:
+            fig.suptitle(f"Likelihood Iterations for {planet_number} planets")
         axs[0].set_xlabel("Iteration #")
         x = np.arange(len(chain))
 
@@ -422,7 +424,10 @@ class MCMC:
             axs = np.expand_dims(axs, axis=0)  # Add row dimension
 
         # axs = axs.reshape(chain[0].shape)
-        fig.suptitle("Parameter Iterations")
+        if planet_number is not None:
+            fig.suptitle(f"Parameter Iterations for {planet_number} planets")
+        else:
+            fig.suptitle("Parameter Iterations")
 
         x = np.arange(len(chain))
 
@@ -466,7 +471,10 @@ class MCMC:
                 true_val_idx += 1
         plt.xlabel("Iteration #")
         plt.tight_layout()
-        plt.savefig(self.data_folder / "chain_plot_plot.pdf", dpi=500)
+        if planet_number is not None:
+            plt.savefig(self.data_folder / f"chain_plot_plot_for_{planet_number}_planets.pdf", dpi=500)
+        else:
+            plt.savefig(self.data_folder / "chain_plot_plot.pdf", dpi=500)
         plt.close()
 
         fig, axs = plt.subplots(
@@ -481,7 +489,10 @@ class MCMC:
         elif chain.shape[2] == 1:
             axs = np.expand_dims(axs, axis=0)  # Add row dimension
 
-        fig.suptitle("Parameter Iterations After Burn In")
+        if planet_number is not None:
+            fig.suptitle(f"Parameter Iterations After Burn In for {planet_number} planets")
+        else:
+            fig.suptitle("Parameter Iterations After Burn In")
         plt.xlabel("Iteration #")
         chain = chain[self.burn_in_index :]
         x = np.arange(len(chain))
@@ -517,7 +528,10 @@ class MCMC:
                 true_val_idx += 1
 
         plt.tight_layout()
-        plt.savefig(self.data_folder / "chain_post_burn_in_plot_plot.pdf", dpi=500)
+        if planet_number is not None:
+            plt.savefig(self.data_folder / f"chain_post_burn_in_plot_plot_for_{planet_number}_planets.pdf", dpi=500)
+        else:
+            plt.savefig(self.data_folder / "chain_post_burn_in_plot_plot.pdf", dpi=500)
         plt.close()
 
     def corner_plot(
@@ -580,7 +594,10 @@ class MCMC:
             title_kwargs={"fontsize": 18},
             title_fmt=".2e",
         )
-        plt.savefig(self.data_folder / "corner_plot.pdf", dpi=500)
+        if planet_number is not None:
+            plt.savefig(self.data_folder / f"corner_plot_for_{planet_number}_planets.pdf", dpi=500)
+        else:
+            plt.savefig(self.data_folder / f"corner_plot.pdf", dpi=500)
         # plt.show()
         plt.close()
 
