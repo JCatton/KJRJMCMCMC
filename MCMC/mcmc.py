@@ -736,7 +736,7 @@ class MCMC:
         Returns:
             int: The burn-in cutoff index.
         """
-        max_idx = self.likelihood_chain.argmax()
+        max_idx = self.likelihood_chain[:self.iteration_num].argmax()
         max_likelihood = self.likelihood_chain[max_idx]
         two_perc_iter = self.iteration_num // 50
         upper_var_iter = min(self.iteration_num, max_idx + two_perc_iter)
