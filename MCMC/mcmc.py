@@ -107,7 +107,7 @@ class MCMC:
         param_bounds: ndarray[List[Tuple[float, float]]],
         proposal_std: ndarray,
         likelihood_func: Callable[[ndarray], float],
-        param_names=list[str],
+        param_names=np.ndarray,
         specified_folder_name: Optional[str | Path] = None,
         inclination_rejection_func: Optional[Callable[[ndarray], bool]] = None,
         priors: Optional[ndarray[Callable]] = None,
@@ -245,11 +245,12 @@ class MCMC:
         self.nested_results = sresults
         with open(self.data_folder / "nested_sampling_results.pkl", "wb") as f:
             dill.dump(sresults, f)
+        labels = self.param_names.flatten()[self.varying_mask]
         dyplot.runplot(sresults)
         plt.show()
-        dyplot.cornerplot(sresults)
+        dyplot.cornerplot(sresults, labels=labels)
         plt.show()
-        dyplot.traceplot(sresults)
+        dyplot.traceplot(sresults, labels=labels)
         plt.show()
 
 
