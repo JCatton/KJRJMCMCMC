@@ -630,6 +630,34 @@ class MCMC:
             }
 
         return marginalized_data
+    
+
+    def plot_for_varying_planets(self):
+        marginalized_data = self.marginalize_by_model()
+        for model, data in marginalized_data.items():
+            chain = data["parameters"]
+            likelihoods = data["likelihoods"]
+            model_param_names = self.param_names[:model]
+            new_proposal_std = self.proposal_std[:model]
+            # new_true_vals = self.initial_parameters[:model]
+            planet_number = model
+
+
+
+            
+
+            self.chain_to_plot_and_estimate(manual_burn_in_idx=self.burn_in_index,
+                                            chain=chain, 
+                                            param_names=model_param_names, 
+                                            likelihood_chain=likelihoods,
+                                            proposal_std=new_proposal_std, 
+                                            planet_number=planet_number)
+            self.corner_plot(burn_in_index=self.burn_in_index,
+                            chain=chain, 
+                            param_names=model_param_names, 
+                            likelihood_chain=likelihoods,
+                            proposal_std=new_proposal_std, 
+                            planet_number=planet_number)
 
 
 
