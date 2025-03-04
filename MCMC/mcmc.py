@@ -240,8 +240,8 @@ class MCMC:
         prior_transform = lambda u: [flat_prior_trans[i](u_i) for i, u_i in enumerate(u)]
         ndim = np.sum(self.varying_mask)
         sampler = dynesty.NestedSampler(loglikelihood=li_fn, prior_transform=prior_transform,
-                                        ndim=ndim, nlive=1_500)
-        sampler.run_nested()
+                                        ndim=ndim, nlive=20_000)
+        sampler.run_nested(dlogz=0.0001)
         sresults = sampler.results
         self.nested_results = sresults
         with open(self.data_folder / "nested_sampling_results.pkl", "wb") as f:
@@ -251,7 +251,10 @@ class MCMC:
         plt.show()
         dyplot.cornerplot(sresults, labels=labels)
         plt.show()
-        dyplot.traceplot(sresults, labels=labels)
+        dyplot.traceplot(sresults,
+                         truth_color='black', show_titles=True,
+                         trace_cmap='viridis', connect=True,
+                         connect_highlight=range(5), labels=labels)
         plt.show()
 
 
