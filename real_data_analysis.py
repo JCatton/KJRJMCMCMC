@@ -8,6 +8,7 @@ from TransitAnalysis.TransitDataExtractor import download_data
 import numpy as np
 import asyncio
 import shutil
+from sim.Decorators import TimeMeasure
 
 # from sim.ExampleSimulation import stellar_paramss
 
@@ -27,6 +28,7 @@ def download_data_api(
     indicies_requested=None,
     max_number_downloads: int = 20,
     use_regression_model=True,
+    use_lightcurve_direct=False,
 ):
     """
     Downloads data from the target_name
@@ -49,6 +51,8 @@ def download_data_api(
         cadence=cadence,
         indicies_requested=indicies_requested,
         max_number_downloads=max_number_downloads,
+        apply_regressor_bool=use_regression_model,
+        use_lightcurve_direct=use_lightcurve_direct,
     )
 
     return times, fluxes
@@ -194,8 +198,7 @@ def extend_params_for_stellar(planet_params: Params, stellar_params: list[float]
 def estimate_proposal(times: np.ndarray, flux: np.ndarray) -> Proposal:
     return np.atleast_2d(
         [
-            # [4*1e-4, 7*1e-5, 5*1e-5, 0, 5*1e-3, 0, 0, 0, 0],  # Planet 1
-            [4*1e-4, 7*1e-5, 0, 0, 5*1e-3, 0, 0, 0, 0],  # Planet 1
+            [0.5*4*1e-4, 0.5*7*1e-5, 3*1e-5, 5e-3, 1e-3, 5e-3, 0, 5e-3, 0],  # Planet 1
             # [1e-5, 1e-5, 1e-5, 1e-5, 0, 0, 0, 0, 0],   # Planet 2
         ]
     )
@@ -214,8 +217,8 @@ def estimate_bounds(times: np.ndarray, flux: np.ndarray) -> Bounds:
                 (0, 1e4),
                 (0, 0.3),
                 (np.radians(70), np.radians(110)),
-                (-np.pi / 8, np.pi / 8),
-                (-np.pi / 8, np.pi / 8),
+                (-np.pi, np.pi),
+                (-np.pi, np.pi),
                 (-6, 6),
                 (0, 6000),
             ],
@@ -280,8 +283,8 @@ def extend_proposal_for_stellar(proposal: Proposal) -> Proposal:
     new_proposal[0,0] = 0
     new_proposal[0,1] = 0
     new_proposal[0,2] = 0
-    new_proposal[0,3] = 0 #5*1e-4
-    new_proposal[0,4] = 0 #5*1e-4
+    new_proposal[0,3] = 0  # 5*1e-4
+    new_proposal[0,4] = 0  # 5*1e-4
     new_proposal[0,5:] = 0
     new_proposal[1:] = proposal
     
@@ -325,7 +328,7 @@ def gaussian_error_ln_likelihood(
     ln_likelihood = log_prior - deviation_lh - np.sum(observed_lh)
     return ln_likelihood
 
-
+@TimeMeasure
 def run_mcmc_code(
     file: Path,
     target_search_params: list,
@@ -376,8 +379,14 @@ def run_mcmc_code(
 
     # stellar_params = get_stellar_params(file, target_name) # Todo -> Currently just give the regular stellar params
     stellar_params = target_stellar_params  # [radius, mas, limb_darkening_model, limb_darkening_coefficients]
-    # estimated_params = estimate_parameters(times, flux, stellar_params, signal_detection_efficiency=10, period_min=0.5,
-    #                                  period_max=3, )
+    # estimated_params = estimate_parameters(
+    #             times,
+    #             flux,
+    #             stellar_params,
+    #             signal_detection_efficiency=6,
+    #             period_min=2.08,
+    #             period_max=2.14,
+    #         )
     estimated_params = np.array([[0.10277215, 0.0213727 , 0.94179918, 0.        , 1.57079633,
         0.        , 0.        , 1.52347761, 0.        ]])
     initial_params = np.atleast_2d(
@@ -402,14 +411,14 @@ def run_mcmc_code(
         np.array(
             [
                 [
-                    0.09716,
-                    0.02087,
-                    0.9414526,
-                    0.0091,
-                    np.radians(84.88),
-                    4.69494,
+                    0.07947,
+                    0.035052416,
+                    2.103195,
+                    0.0011,
+                    np.radians(88.96862026914545),
                     0,
-                    1.51935416,
+                    0,
+                    0.01763774,
                     0,
                 ],
             ]
@@ -475,12 +484,13 @@ def run_mcmc_code(
     plt.plot(
         times,
         flux_data_from_params(true_vals, times, analytical_bool=True, batman_bool=batman_bool),
-        label="True",
+        label="Literature-reported Value",
         ls="--",
         alpha=0.5
     )
     plt.legend()
-    plt.show()  
+    plt.savefig("inferred_flux_plot_before.pdf", dpi=500)
+    plt.show()
 
     # print(f"{input_params.shape=}")
     # print(f"{input_params[0]=}")
@@ -518,12 +528,12 @@ def run_mcmc_code(
         mcmc.corner_plot()
 
         plt.figure()
-        plt.title(f"Inferred Parameters vs True Fit\n{file}")
+        plt.title(f"Inferred Parameters vs Literature-reported Fit\n{file}")
         plt.plot(times, flux, label="Data")
         plt.plot(
             times,
             flux_data_from_params(true_vals, times, analytical_bool=True, batman_bool=batman_bool),
-            label="True",
+            label="Literature-reported Value",
             ls="--",
             alpha=0.5
         )
@@ -536,7 +546,7 @@ def run_mcmc_code(
             alpha=0.5
         )
         plt.legend()
-        plt.savefig(Path(file) / f"run_{i}" / "inferred_flux_plot.pdf", dpi=500)
+        plt.savefig(Path(file) / f"run_{i}" / "inferred_flux_plot_after.pdf", dpi=500)
         plt.show()
 
 
@@ -552,15 +562,16 @@ if __name__ == "__main__":
     import matplotlib.pyplot as plt
 
     # main()
-    taget_name = "TIC 100100827"
-    exptime = None
-    mission = None
+    taget_name = "TOI-1181"
+    exptime = 120
+    mission = "TESS"
     sector = None
-    author = None
-    cadence = None
-    indicies_requested = (1, 5)
-    max_number_downloads = 5
-    use_regression_model = True
+    author = "SPOC"
+    cadence = 120
+    indicies_requested = (4, 5)
+    max_number_downloads = 31
+    use_regression_model = False
+    use_lightcurve_direct = True
     target_search_params = [
         taget_name,
         exptime,
@@ -571,6 +582,7 @@ if __name__ == "__main__":
         indicies_requested,
         max_number_downloads,
         use_regression_model,
+        use_lightcurve_direct
     ]
 
     # times, flux = download_data_api(*target_search_params)
@@ -580,10 +592,10 @@ if __name__ == "__main__":
     # plt.plot(times, flux)
     # plt.show()
 
-    radius_toi_1181 = 1.26 * 696.34e6 / 1.496e11
-    mass_toi_1181 = 1.46 * 2e30 / 6e24
+    radius_toi_1181 =   1.961 * 696.34e6 / 1.496e11
+    mass_toi_1181 = 	1.19 * 2e30 / 6e24
     limb_darkening_model = 2
-    limb_darkening_coefficients = [0.2192, 0.3127]
+    limb_darkening_coefficients = [0.119, 0.156]
 
     stellar_params = [
         radius_toi_1181,
@@ -594,7 +606,7 @@ if __name__ == "__main__":
     ]  # Based on WASP 148
 
     run_mcmc_code(
-        file="TIC_100100827",
+        file="TOI-1181 2",
         target_search_params=target_search_params,
         target_stellar_params=stellar_params,
         iteration_num=150_000,

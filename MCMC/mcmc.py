@@ -147,6 +147,7 @@ class MCMC:
         self.fixed_mask = np.where(self.proposal_std == 0, True, False).flatten()
         self.likelihood_func: Callable = likelihood_func
         self.inclination_rejection_func: Callable = inclination_rejection_func
+        self.num_planets_chain = np.zeros((1), dtype=int)
 
         def flat_likelihood_func(current_varied_params: ndarray) -> float:
             params = self.initial_parameters.flatten().copy()
@@ -161,6 +162,7 @@ class MCMC:
         )
         empty_chain[0] = initial_parameters
         self.chain = empty_chain
+        self.num_planets_chain[0] = initial_parameters.shape[0]
         self.likelihood_chain = np.atleast_1d(self.likelihood_func(initial_parameters))
         self.momentum = None
 
@@ -290,6 +292,7 @@ class MCMC:
         while self.iteration_num < (max_iteration_number - 1):
             current_params = self.chain[prev_iter]
             current_likelihood = self.likelihood_chain[prev_iter]
+            current_num_planets = self.num_planets_chain[prev_iter]
             proposals = current_params + normal(
                 0, self.proposal_std, size=(self.sim_number, *self.chain[0].shape)
             )
@@ -302,6 +305,7 @@ class MCMC:
                 self.rejection_num += 1
                 self.chain[prev_iter + 1] = current_params
                 self.likelihood_chain[prev_iter + 1] = current_likelihood
+                self.num_planets_chain[prev_iter + 1] = current_num_planets
                 self.iteration_num += 1
                 prev_iter += 1
                 pbar.update(1)
@@ -343,11 +347,13 @@ class MCMC:
                     self.acceptance_num += 1
                     self.chain[prev_iter] = proposals[s]
                     self.likelihood_chain[prev_iter] = proposal_likelihoods[s]
+                    self.num_planets_chain[prev_iter] = proposals[s].shape[0]  # Update Number of planets based on the proposal size
                     break  # Exit after accepting a proposal
                 else:
                     self.rejection_num += 1
                     self.chain[prev_iter] = current_params
                     self.likelihood_chain[prev_iter] = current_likelihood
+                    self.num_planets_chain[prev_iter] = current_num_planets
 
             # Because iteration number is the number of the next iteration
             # due to 0 indexing
@@ -513,10 +519,19 @@ class MCMC:
         empty_likelihood = np.empty_like(
             self.likelihood_chain, shape=max_iteration_number
         )
+        empty_planet_num = np.empty_like(
+            self.num_planets_chain, shape=max_iteration_number
+        )
+
+
         empty_chain[: len(self.chain)] = self.chain
         empty_likelihood[: len(self.chain)] = self.likelihood_chain
+        empty_planet_num[: len(self.chain)] = self.num_planets_chain
+
         self.chain = empty_chain
         self.likelihood_chain = empty_likelihood
+        self.num_planets_chain = empty_planet_num
+
         return max_iteration_number
 
     def chain_wrap_up(self):
@@ -526,27 +541,48 @@ class MCMC:
         self.save()
 
     def chain_to_plot_and_estimate(
-        self, true_vals: Optional[np.ndarray[float]] = None, manual_burn_in_idx: int = 0
+        self,
+        true_vals: Optional[np.ndarray[float]] = None,
+        manual_burn_in_idx: int = 0,
+        chain: Optional[np.ndarray] = None,
+        param_names: Optional[np.ndarray] = None,
+        likelihood_chain: Optional[np.ndarray] = None,
+        proposal_std: Optional[np.ndarray] = None,
+        planet_number: Optional[int] = None
     ):
+
+        if chain is None:
+            chain = np.copy(self.chain)
+        if param_names is None:
+            param_names = np.copy(self.param_names)
+        if likelihood_chain is None:
+            likelihood_chain = np.copy(self.likelihood_chain)
+        if proposal_std is None:
+            proposal_std = np.copy(self.proposal_std)
+
+
+
+
+
         if not isinstance(manual_burn_in_idx, np.int64 | int):
             raise TypeError(f"{manual_burn_in_idx=} is not an integer")
-        non_fixed_indexes = np.array(self.proposal_std, dtype=bool)
+        non_fixed_indexes = np.array(proposal_std, dtype=bool)
         max_pad = max(np.sum(non_fixed_indexes, axis=1))
 
         masked_chain = [
-                self.chain[manual_burn_in_idx:, i, non_fixed_indexes[i]]
-                for i in range(self.chain.shape[1])
+                chain[manual_burn_in_idx:, i, non_fixed_indexes[i]]
+                for i in range(chain.shape[1])
             ]
         masked_names = [
-                self.param_names[i, non_fixed_indexes[i]]
-                for i in range(self.param_names.shape[0])
+                param_names[i, non_fixed_indexes[i]]
+                for i in range(param_names.shape[0])
                 ]
         padded_chain = pad_array(masked_chain, max_pad)
         padded_names = pad_array(masked_names, max_pad)
 
         chain = np.stack(padded_chain, axis=1)
         param_names = np.stack(padded_names, axis=0)
-        likelihoods = self.likelihood_chain[manual_burn_in_idx:]
+        likelihoods = likelihood_chain[manual_burn_in_idx:]
 
         # print(f"{chain.shape=}, {param_names.shape=}, {true_vals.shape=}")
 
@@ -554,6 +590,8 @@ class MCMC:
 
         plt.figure(figsize=(10, 8))
         fig, axs = plt.subplots(nrows=1, ncols=2)
+        if planet_number is not None:
+            fig.suptitle(f"Likelihood Iterations for {planet_number} planets")
         axs[0].set_xlabel("Iteration #")
         x = np.arange(len(chain))
 
@@ -589,7 +627,10 @@ class MCMC:
             axs = np.expand_dims(axs, axis=0)  # Add row dimension
 
         # axs = axs.reshape(chain[0].shape)
-        fig.suptitle("Parameter Iterations")
+        if planet_number is not None:
+            fig.suptitle(f"Parameter Iterations for {planet_number} planets")
+        else:
+            fig.suptitle("Parameter Iterations")
 
         x = np.arange(len(chain))
 
@@ -633,7 +674,10 @@ class MCMC:
                 true_val_idx += 1
         plt.xlabel("Iteration #")
         plt.tight_layout()
-        plt.savefig(self.data_folder / "chain_plot_plot.pdf", dpi=500)
+        if planet_number is not None:
+            plt.savefig(self.data_folder / f"chain_plot_plot_for_{planet_number}_planets.pdf", dpi=500)
+        else:
+            plt.savefig(self.data_folder / "chain_plot_plot.pdf", dpi=500)
         plt.close()
 
         fig, axs = plt.subplots(
@@ -648,7 +692,10 @@ class MCMC:
         elif chain.shape[2] == 1:
             axs = np.expand_dims(axs, axis=0)  # Add row dimension
 
-        fig.suptitle("Parameter Iterations After Burn In")
+        if planet_number is not None:
+            fig.suptitle(f"Parameter Iterations After Burn In for {planet_number} planets")
+        else:
+            fig.suptitle("Parameter Iterations After Burn In")
         plt.xlabel("Iteration #")
         chain = chain[self.burn_in_index :]
         x = np.arange(len(chain))
@@ -684,21 +731,42 @@ class MCMC:
                 true_val_idx += 1
 
         plt.tight_layout()
-        plt.savefig(self.data_folder / "chain_post_burn_in_plot_plot.pdf", dpi=500)
+        if planet_number is not None:
+            plt.savefig(self.data_folder / f"chain_post_burn_in_plot_plot_for_{planet_number}_planets.pdf", dpi=500)
+        else:
+            plt.savefig(self.data_folder / "chain_post_burn_in_plot_plot.pdf", dpi=500)
         plt.close()
 
     def corner_plot(
-        self, true_vals: Optional[np.ndarray] = None, burn_in_index: int = None
+        self,
+        true_vals: Optional[np.ndarray] = None,
+        burn_in_index: int = None,
+        chain: Optional[np.ndarray] = None,
+        param_names: Optional[np.ndarray] = None,
+        likelihood_chain: Optional[np.ndarray] = None,
+        proposal_std: Optional[np.ndarray] = None,
+        planet_number: Optional[int] = None,
     ):
-        non_fixed_indexes = np.array(self.proposal_std, dtype=bool)
+
+        if chain is None:
+            chain = np.copy(self.chain)
+        if param_names is None:
+            param_names = np.copy(self.param_names)
+        if likelihood_chain is None:
+            likelihood_chain = np.copy(self.likelihood_chain)
+        if proposal_std is None:
+            proposal_std = np.copy(self.proposal_std)
+
+        non_fixed_indexes = np.array(proposal_std, dtype=bool)
+
         if burn_in_index is None:
             burn_in_index = self.burn_in_index
 
         # Flatten the chain to have shape (samples, parameters)
         flattened_chain = np.concatenate(
             [
-                self.chain[burn_in_index:, i, non_fixed_indexes[i]]
-                for i in range(self.chain.shape[1])
+                chain[burn_in_index:, i, non_fixed_indexes[i]]
+                for i in range(chain.shape[1])
             ],
             axis=1,
         )
@@ -706,8 +774,8 @@ class MCMC:
         # Flatten param_names and true_vals to match the flattened_chain dimensions
         flattened_param_names = np.concatenate(
             [
-                self.param_names[i, non_fixed_indexes[i]]
-                for i in range(self.param_names.shape[0])
+                param_names[i, non_fixed_indexes[i]]
+                for i in range(param_names.shape[0])
             ]
         )
 
@@ -729,7 +797,10 @@ class MCMC:
             title_kwargs={"fontsize": 18},
             title_fmt=".2e",
         )
-        plt.savefig(self.data_folder / "corner_plot.pdf", dpi=500)
+        if planet_number is not None:
+            plt.savefig(self.data_folder / f"corner_plot_for_{planet_number}_planets.pdf", dpi=500)
+        else:
+            plt.savefig(self.data_folder / f"corner_plot.pdf", dpi=500)
         # plt.show()
         plt.close()
 
@@ -749,6 +820,48 @@ class MCMC:
         burn_in_idx = find_first_greater(self.likelihood_chain, lower_likelihood)
         self.burn_in_index = int(burn_in_idx)
         return burn_in_idx
+
+    def marginalize_by_model(self):
+        unique_models = np.unique(self.num_planets_chain)
+        marginalized_data = {}
+
+        for model in unique_models:
+            mask = self.num_planets_chain == model
+            marginalized_data[model] = {
+                "likelihoods": self.likelihood_chain[mask],
+                "parameters": self.chain[mask]
+            }
+
+        return marginalized_data
+
+
+    def plot_for_varying_planets(self):
+        marginalized_data = self.marginalize_by_model()
+        for model, data in marginalized_data.items():
+            chain = data["parameters"]
+            likelihoods = data["likelihoods"]
+            model_param_names = self.param_names[:model]
+            new_proposal_std = self.proposal_std[:model]
+            # new_true_vals = self.initial_parameters[:model]
+            planet_number = model
+
+
+
+
+
+            self.chain_to_plot_and_estimate(manual_burn_in_idx=self.burn_in_index,
+                                            chain=chain,
+                                            param_names=model_param_names,
+                                            likelihood_chain=likelihoods,
+                                            proposal_std=new_proposal_std,
+                                            planet_number=planet_number)
+            self.corner_plot(burn_in_index=self.burn_in_index,
+                            chain=chain,
+                            param_names=model_param_names,
+                            likelihood_chain=likelihoods,
+                            proposal_std=new_proposal_std,
+                            planet_number=planet_number)
+
 
 
 class Statistics:
