@@ -147,7 +147,7 @@ class MCMC:
         self.fixed_mask = np.where(self.proposal_std == 0, True, False).flatten()
         self.likelihood_func: Callable = likelihood_func
         self.inclination_rejection_func: Callable = inclination_rejection_func
-        self.num_planets_chain = np.zeros((1), dtype=int)
+        self.num_planets_chain = np.zeros(1, dtype=int)
 
         def flat_likelihood_func(current_varied_params: ndarray) -> float:
             params = self.initial_parameters.flatten().copy()
@@ -162,7 +162,7 @@ class MCMC:
         )
         empty_chain[0] = initial_parameters
         self.chain = empty_chain
-        self.num_planets_chain[0] = initial_parameters.shape[0]
+        self.num_planets_chain[0] = initial_parameters.shape[0] - 1
         self.likelihood_chain = np.atleast_1d(self.likelihood_func(initial_parameters))
         self.momentum = None
 
