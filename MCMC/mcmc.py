@@ -243,7 +243,7 @@ class MCMC:
         ndim = np.sum(self.varying_mask)
         sampler = dynesty.NestedSampler(loglikelihood=li_fn, prior_transform=prior_transform,
                                         ndim=ndim, nlive=20_000)
-        sampler.run_nested(dlogz=0.0001)
+        sampler.run_nested()
         sresults = sampler.results
         self.nested_results = sresults
         with open(self.data_folder / "nested_sampling_results.pkl", "wb") as f:
