@@ -198,8 +198,8 @@ def extend_params_for_stellar(planet_params: Params, stellar_params: list[float]
 def estimate_proposal(times: np.ndarray, flux: np.ndarray) -> Proposal:
     return np.atleast_2d(
         [
-            [0.5*4*1e-4, 0.5*7*1e-5, 3*1e-5, 5e-3, 1e-3, 5e-3, 0, 5e-3, 0],  # Planet 1
-            # [1e-5, 1e-5, 1e-5, 1e-5, 0, 0, 0, 0, 0],   # Planet 2
+            [6*1e-4, 1e-3, 0, 0, 0, 0, 0, 0, 0],  # Planet 1
+            [6*1e-4, 1e-3, 0, 0, 0, 0, 0, 0, 0],   # Planet 2
         ]
     )
 
@@ -212,7 +212,7 @@ def estimate_bounds(times: np.ndarray, flux: np.ndarray) -> Bounds:
     return np.atleast_3d(
         [
             [
-                (1e-5, 0.4),
+                (0.07, 0.4),
                 (1e-3, 0.5),
                 (0, 1e4),
                 (0, 0.3),
@@ -222,17 +222,17 @@ def estimate_bounds(times: np.ndarray, flux: np.ndarray) -> Bounds:
                 (-6, 6),
                 (0, 6000),
             ],
-            # [
-            #     (1e-5, 0.4),
-            #     (1e-3, 0.5),
-            #     (0, 1e4),
-            #     (0, 0.3),
-            #     (np.radians(80), np.pi),
-            #     (-np.pi / 8, np.pi / 8),
-            #     (-np.pi / 8, np.pi / 8),
-            #     (-6, 6),
-            #     (0, 6000),
-            # ]
+            [
+                (0.03, 0.07),
+                (1e-3, 0.5),
+                (0, 1e4),
+                (0, 0.3),
+                (np.radians(70), np.radians(110)),
+                (-np.pi, np.pi),
+                (-np.pi, np.pi),
+                (-6, 6),
+                (0, 6000),
+            ],
         ]
     )
 
@@ -387,8 +387,10 @@ def run_mcmc_code(
     #             period_min=2.08,
     #             period_max=2.14,
     #         )
-    estimated_params = np.array([[0.10277215, 0.0213727 , 0.94179918, 0.        , 1.57079633,
-        0.        , 0.        , 1.52347761, 0.        ]])
+    estimated_params = np.array([
+                [0.09716, 0.02087, 0.9414526, 0.0091, np.radians(84.88), 1.5484, 0, 1.51935416, 0],
+                [0.04716, 0.02588, 1.3, 0.0091, np.radians(84.88), 1.5484, 0, 1.51935416, 0]
+    ])
     initial_params = np.atleast_2d(
         np.vstack([estimated_params,
                    # np.array([0, 0, 0, 0, 0, 0, 0, np.pi / 4, 0.392])
@@ -410,17 +412,8 @@ def run_mcmc_code(
     true_vals = np.atleast_2d(
         np.array(
             [
-                [
-                    0.07947,
-                    0.035052416,
-                    2.103195,
-                    0.0011,
-                    np.radians(88.96862026914545),
-                    0,
-                    0,
-                    0.01763774,
-                    0,
-                ],
+                [0.09716, 0.02087, 0.9414526, 0.0091, np.radians(84.88), 1.5484, 0, 1.51935416, 0],
+                [0.04716, 0.02588, 1.3, 0.0091, np.radians(84.88), 1.5484, 0, 1.51935416, 0]
             ]
         )
     )
@@ -522,8 +515,8 @@ def run_mcmc_code(
         if do_nested_sampling:
             mcmc.nested_sampling()
             do_nested_sampling = False
-        # mcmc.metropolis_hastings(iteration_num)
-        mcmc.gaussian_hmc(iteration_num)
+        mcmc.metropolis_hastings(iteration_num)
+        # mcmc.gaussian_hmc(iteration_num)
         mcmc.chain_to_plot_and_estimate(true_vals)
         mcmc.corner_plot()
 

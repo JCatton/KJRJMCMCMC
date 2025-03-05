@@ -125,8 +125,8 @@ if __name__ == "__main__":
 
     planet_params = np.array(
         [
-            [0.09716, 0.02087, 0.9414526, 0.0091, np.radians(84.88), 4.69494, 0, 1.51935416, 0],
-            [0.04716, 0.02588, 1.3, 0.0091, np.radians(84.88), 4.69494, 0, 1.51935416, 0],
+            [0.09716, 0.02087, 0.9414526, 0.0091, np.radians(84.88), 1.5484, 0, 1.51935416, 0],
+            [0.04716, 0.02588, 1.3, 0.0091, np.radians(84.88), 1.5484, 0, 1.51935416, 0],
             # [eta2, 0.2044, 34.525, 0, np.radians(90), 0, 0, np.pi / 4, 0.392],
         ]
     )
@@ -152,7 +152,7 @@ if __name__ == "__main__":
     #     stellar_params=stellar_params, planet_params=planet_params_n_body, times=times_input, analytical_bool=False
     # )
 
-    np.save("TestFluxes.npy", output_analytical)
+    np.save("../TestFluxes.npy", output_analytical)
     np.save("TestTimes.npy", times_input)
 
     plt.plot(times_input, output_analytical, label="Analytical")
