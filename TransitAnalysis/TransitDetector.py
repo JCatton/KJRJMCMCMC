@@ -205,8 +205,6 @@ def search_for_transits(
         )
         results_list.append(dictionary_entry)
 
-        break
-
     estimated_params = estimate_params_from_tls_data(results_list, stellar_params)
 
     return estimated_params
