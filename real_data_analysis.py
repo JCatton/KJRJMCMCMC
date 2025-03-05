@@ -522,7 +522,14 @@ def run_mcmc_code(
         plt.legend()
         plt.savefig(Path(file) / f"run_{i}" / "inferred_flux_plot_after.pdf", dpi=500)
         plt.show()
+    
+        our_values = mcmc.chain[np.argmax(mcmc.likelihood_chain)]
 
+        np.save(Path(file) / f"run_{i}" /"Input_values.npy", input_params)
+        np.save(Path(file) / f"run_{i}" /"Literature_values.npy", true_vals)
+        np.save(Path(file) / f"run_{i}" /"our_values.npy", our_values)
+        np.save(Path(file) / f"run_{i}" /"times.npy", times)
+        np.save(Path(file) / f"run_{i}" /"flux.npy", flux)
 
 
 def main():
