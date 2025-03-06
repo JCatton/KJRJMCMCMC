@@ -107,7 +107,6 @@ def plot_phase_curve(file_name, xlims:tuple = None, ylims:tuple = None, num_bins
             binned_input_times, binned_input_fluxes = bin_data(input_times, input_fluxes, num_bins=num_bins)
 
             # zero the times
-            print(f"{find_mid_transit(binned_raw_times, binned_raw_fluxes)=}")
             binned_raw_times = binned_raw_times - find_mid_transit(binned_raw_times, binned_raw_fluxes)
 
             binned_literature_times = binned_literature_times - find_mid_transit(binned_literature_times, binned_literature_fluxes)
@@ -122,7 +121,7 @@ def plot_phase_curve(file_name, xlims:tuple = None, ylims:tuple = None, num_bins
             #title
             ax.set_title(f"Planet {planet_index} Phase Curve")
             # raw data
-            ax.plot(binned_raw_times, binned_raw_fluxes, label="Raw Data", color="black")
+            ax.plot(binned_raw_times, binned_raw_fluxes, "x", label="Raw Data", color="black")
 
             # literature data
             ax.plot(binned_literature_times, binned_literature_fluxes, label="Literature Data", color="red")
@@ -159,4 +158,4 @@ if __name__ == "__main__":
     import matplotlib.pyplot as plt
     import lightkurve as lk
 
-    plot_phase_curve("TOI-1181 4", xlims=(-0.2, 0.2), ylims=(0.9925, 1.0025), num_bins=10)
+    plot_phase_curve("TOI-1811", xlims=(-0.07, 0.07), ylims=(0.978, 1.0025), num_bins=10)
