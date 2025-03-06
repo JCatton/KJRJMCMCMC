@@ -151,7 +151,7 @@ def search_for_transits(
     stellar_params: tuple,
     limb_darkening_model: str,
     limb_darkening_coefficients: list,
-    signal_detection_efficiency: float = 10.0,
+    signal_detection_efficiency: float = 8.0,
     plot_bool=False,
     save_loc=None,
     duration_multiplier=4,
