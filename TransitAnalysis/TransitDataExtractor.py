@@ -57,7 +57,7 @@ def download_data(
             upper = indicies_requested[1]
             corr = search_results[lower:upper].download_all()
         # Remove outliers and nans
-        corr = corr.stitch().remove_outliers().remove_nans()
+        corr = corr.stitch().remove_outliers(sigma = 8).remove_nans()
 
     #If want to use targetpixelfile
     else:
@@ -111,7 +111,7 @@ def apply_regressor(tpf, aper):
     """
 
     lc_raw = tpf.to_lightcurve(aperture_mask=aper)
-    uncorrected_lc = lc_raw.remove_nans().remove_outliers()
+    uncorrected_lc = lc_raw.remove_nans().remove_outliers(sigma = 8)
 
     # Create a time mask: find which TPF timestamps are present in the cleaned light curve
     time_mask = np.in1d(tpf.time.value, uncorrected_lc.time.value)
@@ -150,7 +150,7 @@ def tpfs_to_lightcurves(tpfs, apply_regressor_bool = False, pipeline_aper_bool =
             uncorrected_lc = tpf.to_lightcurve(aperture_mask=aperture_mask)
             un_corr.append(uncorrected_lc)
             # ax = uncorrected_lc.normalize().plot(label=f"Uncorrected lc for {i}")
-            corrected_lc = uncorrected_lc.remove_outliers().remove_nans().normalize()
+            corrected_lc = uncorrected_lc.remove_outliers(sigma = 8).remove_nans().normalize()
             # corrected_lc.plot(ax=ax, label=f"Corrected lc for {i}", ls = "--")
             corr.append(corrected_lc)
             # plt.show()
