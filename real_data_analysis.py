@@ -273,8 +273,8 @@ def extend_proposal_for_stellar(proposal: Proposal) -> Proposal:
     new_proposal[0,0] = 0
     new_proposal[0,1] = 0
     new_proposal[0,2] = 0
-    new_proposal[0,3] = 0  # 5*1e-4
-    new_proposal[0,4] = 0  # 5*1e-4
+    new_proposal[0,3] = 5e-4  # 5*1e-4
+    new_proposal[0,4] = 5e-4  # 5*1e-4
     new_proposal[0,5:] = 0
     new_proposal[1:] = proposal
     
@@ -288,8 +288,8 @@ def extend_param_bounds_for_stellar(param_bounds: Bounds) -> Bounds:
     new_param_bounds[0,0] = (0, 5)
     new_param_bounds[0,1] = (0, 1e40)
     new_param_bounds[0,2] = (0, 1e10)
-    new_param_bounds[0,3] = (0, 1)
-    new_param_bounds[0,4] = (0, 1)
+    new_param_bounds[0,3] = (-1, 1)
+    new_param_bounds[0,4] = (-1, 1)
     new_param_bounds[0,5:] = (0, 5)
 
     new_param_bounds[1:] = param_bounds
@@ -374,9 +374,9 @@ def run_mcmc_code(
             times,
             flux,
             stellar_params,
-            signal_detection_efficiency=6,
-            period_min=2.08,
-            period_max=2.14,
+            signal_detection_efficiency=10,
+            period_min=3.5,
+            period_max=3.9,
         )
     )
     # np.save("Test-Params/initial_params", initial_params)
@@ -396,14 +396,14 @@ def run_mcmc_code(
         np.array(
             [
                 [
-                    0.07947,
-                    0.035052416,
-                    2.103195,
-                    0.0011,
-                    np.radians(88.96862026914545),
+                    0.13272,
+                    0.04389,
+                    3.7130765,
+                    0.0520,
+                    np.radians(86.48),
+                    np.radians(21),
                     0,
-                    0,
-                    0.01763774,
+                    4.50157939,
                     0,
                 ],
             ]
@@ -543,13 +543,13 @@ if __name__ == "__main__":
     import matplotlib.pyplot as plt
 
     # main()
-    taget_name = "TOI-1181"
+    taget_name = "TIC 376524552"
     exptime = 120
     mission = "TESS"
     sector = None
     author = "SPOC"
     cadence = 120
-    indicies_requested = (4, 5)
+    indicies_requested = (0, 2)
     max_number_downloads = 31
     use_regression_model = False
     use_lightcurve_direct = True
@@ -573,21 +573,21 @@ if __name__ == "__main__":
     # plt.plot(times, flux)
     # plt.show()
 
-    radius_toi_1181 =   1.961 * 696.34e6 / 1.496e11
-    mass_toi_1181 = 	1.19 * 2e30 / 6e24
+    radius_toi_1811 =   0.769 * 696.34e6 / 1.496e11
+    mass_toi_1811 = 	0.817 * 2e30 / 6e24
     limb_darkening_model = 2
-    limb_darkening_coefficients = [0.119, 0.156]
+    limb_darkening_coefficients = [0.417, -0.032]
 
     stellar_params = [
-        radius_toi_1181,
-        mass_toi_1181,
+        radius_toi_1811,
+        mass_toi_1811,
         limb_darkening_model,
         limb_darkening_coefficients[0],
         limb_darkening_coefficients[1],
     ]  # Based on WASP 148
 
     run_mcmc_code(
-        file="TOI-1181 2",
+        file="TOI-1811",
         target_search_params=target_search_params,
         target_stellar_params=stellar_params,
         iteration_num=1_000_000,
