@@ -549,7 +549,7 @@ if __name__ == "__main__":
     sector = None
     author = "SPOC"
     cadence = 120
-    indicies_requested = (0, 2)
+    indicies_requested = (0, 1)
     max_number_downloads = 31
     use_regression_model = False
     use_lightcurve_direct = True
