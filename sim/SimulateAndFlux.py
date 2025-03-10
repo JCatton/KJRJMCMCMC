@@ -153,6 +153,9 @@ if __name__ == "__main__":
     # )
 
     np.save("../TestFluxes.npy", output_analytical)
+    from MCMC.main import add_gaussian_error
+    output_analytical = add_gaussian_error(output_analytical ,0, 5e-4)
+    np.save("../TestFluxesNoise.npy", output_analytical)
     np.save("TestTimes.npy", times_input)
 
     plt.plot(times_input, output_analytical, label="Analytical")

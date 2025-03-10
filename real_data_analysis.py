@@ -362,8 +362,8 @@ def run_mcmc_code(
         times, flux = download_data_api(*target_search_params)
     else:
         times = np.load("TestTimes.npy")
-        flux = np.load("TestFluxes.npy")
-        flux = add_gaussian_error(flux, 0, 5e-4)
+        flux = np.load("TestFluxesNoise.npy")
+        # flux = add_gaussian_error(flux, 0, 5e-4)
         plt.plot(times, flux)
         plt.show()
 
