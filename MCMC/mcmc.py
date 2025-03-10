@@ -375,6 +375,111 @@ class MCMC:
         # Ignore the last one in chain as this seems to go nan / inf
         self.chain = self.chain[:-1]
         self.likelihood_chain = self.likelihood_chain[:-1]
+        self.num_planets_chain = self.num_planets_chain[:-1]
+        print(f"{acceptance_rate=}")
+        pbar.close()
+        self.chain_wrap_up()
+
+    def rj_mh(self, num_of_new_iterations: float):
+        """
+        Performs Reversible jump using Metropolis-Hastings MCMC sampling.
+        """
+        max_iteration_number = self.prepare_chains_for_new_iters(num_of_new_iterations)
+
+        prev_iter = self.iteration_num - 1
+
+        pbar = tqdm(initial=1, total=num_of_new_iterations, desc="MCMC Run ")
+
+        remaining_iter = num_of_new_iterations
+        while self.iteration_num < (max_iteration_number - 1):
+            current_params = self.chain[prev_iter]
+            current_likelihood = self.likelihood_chain[prev_iter]
+            current_num_planets = self.num_planets_chain[prev_iter]
+
+            proposed_num_planets = np.random.choice([1,2])
+            covariance_proposal = normal(0, self.proposal_std, size=(self.sim_number, *self.chain[0].shape))
+            covariance_proposal[proposed_num_planets:, :] = 0
+            proposals = current_params + covariance_proposal
+
+            proposal_within_bounds = self.proposal_within_bounds(proposals)
+
+            if self.inclination_rejection_func and not self.inclination_rejection_func(
+                proposals[:,1:,:]
+            ):
+                self.rejection_num += 1
+                self.chain[prev_iter + 1] = current_params
+                self.likelihood_chain[prev_iter + 1] = current_likelihood
+                self.num_planets_chain[prev_iter + 1] = current_num_planets
+                self.iteration_num += 1
+                prev_iter += 1
+                pbar.update(1)
+                remaining_iter -= 1
+                continue  # Skip to the next iteration
+
+            # Keep clipping as easiest solution that works with multiprocessing and
+            # negligible run cost
+            for planet_index in range(self.param_bounds.shape[0]):  # Number of planets
+                for param_index in range(
+                    self.param_bounds.shape[1]
+                ):  # Number of parameters per planet
+                    lower, upper = self.param_bounds[planet_index, param_index]
+                    proposals[:, planet_index, param_index] = np.clip(
+                        proposals[:, planet_index, param_index], lower, upper
+                    )
+
+            if self.max_cpu_nodes == 1:
+                proposal_likelihoods = np.atleast_1d(self.likelihood_func(proposals[0, :proposed_num_planets + 1, :]))
+            else:
+                with Pool(nodes=self.max_cpu_nodes) as pool:
+                    proposal_likelihoods = pool.map(self.likelihood_func, proposals[:, :proposed_num_planets + 1, :])
+
+            acceptance_probs = np.minimum(
+                1,
+                safe_exp(
+                    np.array(proposal_likelihoods) - self.likelihood_chain[prev_iter]
+                ),
+            )
+
+            for s in range(self.sim_number):
+                self.iteration_num += 1
+                prev_iter += 1
+                pbar.update(1)
+                remaining_iter -= 1
+                if proposal_within_bounds[s].all() and (
+                    np.random.rand() < acceptance_probs[s]
+                ):
+                    self.acceptance_num += 1
+                    self.chain[prev_iter] = proposals[s]
+                    self.likelihood_chain[prev_iter] = proposal_likelihoods[s]
+                    self.num_planets_chain[prev_iter] = proposed_num_planets # Update Number of planets based on the proposal size
+                    break  # Exit after accepting a proposal
+                else:
+                    self.rejection_num += 1
+                    self.chain[prev_iter] = current_params
+                    self.likelihood_chain[prev_iter] = current_likelihood
+                    self.num_planets_chain[prev_iter] = current_num_planets
+
+            # Because iteration number is the number of the next iteration
+            # due to 0 indexing
+            acceptance_rate = self.acceptance_num / prev_iter
+            self.sim_number = int(
+                min(
+                    (
+                        np.ceil(1 / acceptance_rate)
+                        if acceptance_rate > 0
+                        else self.sim_number
+                    ),
+                    self.max_cpu_nodes,
+                )
+            )
+            self.sim_number = min(self.sim_number, remaining_iter)
+            # self.chain[self.iteration_num] = current_params
+            # self.likelihood_chain[self.iteration_num] = current_likelihood
+
+        # Ignore the last one in chain as this seems to go nan / inf
+        self.chain = self.chain[:-1]
+        self.likelihood_chain = self.likelihood_chain[:-1]
+        self.num_planets_chain = self.num_planets_chain[:-1]
         print(f"{acceptance_rate=}")
         pbar.close()
         self.chain_wrap_up()
@@ -611,7 +716,10 @@ class MCMC:
 
         axs[0].set_ylabel(r"Log Likelihoods")
         plt.tight_layout()
-        plt.savefig(self.data_folder / "Liklihood_plot.pdf", dpi=500)
+        if planet_number is not None:
+            plt.savefig(self.data_folder / f"Liklihood_plot_{planet_number}.pdf", dpi=500)
+        else:
+            plt.savefig(self.data_folder / "Liklihood_plot.pdf", dpi=500)
         # plt.show()
         plt.close()
 
