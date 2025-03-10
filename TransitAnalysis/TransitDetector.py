@@ -206,10 +206,10 @@ def search_for_transits(
         results_list.append(dictionary_entry)
 
     plt.plot(times_input, data)
-    plt.title("Data with transits found by TLS")
+    plt.title("Data with all transits found by TLS Removed")
     plt.show()
     print(f"Found {len(results_list)} transits")
-    print(f"Flux after TLS: {np.mean(data)}")
+    print(f"Flux after TLS: {np.mean(data)} This should be close to one")
 
     estimated_params = estimate_params_from_tls_data(results_list, stellar_params)
 
@@ -312,7 +312,7 @@ if __name__ == "__main__":
         save_loc=None,
         duration_multiplier=4,
     )
-    # results = search_for_transits(fluxes,  "linear", [0], signal_detection_efficiency=10.0, plot_bool=True, save_loc=None, duration_multiplier=4)
+    # results = search_for_transits(fluxes,  "linear", [0], signal_detection_efficiency=10.0, plot_bool=True, save_loc=None, duration_multiplier=8)
 
     output_array = np.zeros((len(results), 9))
 
