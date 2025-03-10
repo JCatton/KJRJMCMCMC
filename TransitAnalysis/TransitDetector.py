@@ -205,6 +205,12 @@ def search_for_transits(
         )
         results_list.append(dictionary_entry)
 
+    plt.plot(times_input, data)
+    plt.title("Data with transits found by TLS")
+    plt.show()
+    print(f"Found {len(results_list)} transits")
+    print(f"Flux after TLS: {np.mean(data)}")
+
     estimated_params = estimate_params_from_tls_data(results_list, stellar_params)
 
     return estimated_params
