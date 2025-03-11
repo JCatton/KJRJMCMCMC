@@ -384,23 +384,14 @@ def run_mcmc_code(
 
     # stellar_params = get_stellar_params(file, target_name) # Todo -> Currently just give the regular stellar params
     stellar_params = target_stellar_params  # [radius, mas, limb_darkening_model, limb_darkening_coefficients]
-    # estimated_params = estimate_parameters(
-    #             times,
-    #             flux,
-    #             stellar_params,
-    #             signal_detection_efficiency=10,
-    #             period_min=3,
-    #             period_max=9,
-    #         )
-    estimated_params = np.array([[0.11946044, 0.07106616, 8.34280155, 0.        , 1.57079633,
-        0.        , 0.        , 2.73798487, 0.        ],
-       [0.04668363, 0.04405248, 4.07167491, 0.        , 1.57079633,
-        0.        , 0.        , 0.97389479, 0.        ]])
-    initial_params = np.atleast_2d(
-        np.vstack([estimated_params,
-                   # np.array([0, 0, 0, 0, 0, 0, 0, np.pi / 4, 0.392])
-                   ])
-    )
+    initial_params = estimate_parameters(
+                times,
+                flux,
+                stellar_params,
+                signal_detection_efficiency=10,
+                period_min=0.5,
+                period_max=4,
+            )
     # np.save("Test-Params/initial_params", initial_params)
 
 
