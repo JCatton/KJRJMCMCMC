@@ -65,6 +65,7 @@ def run_tls(
         "t_0": t_0,
     }
 
+    print(f"{transit_depth=}")
     intransit = transit_mask(
         times_input, results.period, results.duration * duration_multiplier, results.T0
     )
