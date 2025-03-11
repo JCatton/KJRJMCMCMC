@@ -361,11 +361,15 @@ def run_mcmc_code(
     # flux = np.load(file / 'flux.npy')
     if real_data_bool:
         times, flux = download_data_api(*target_search_params)
-    else:
-        times = np.load("TestTimes.npy")
-        flux = np.load("TestFluxesNoise.npy")
-        # flux = add_gaussian_error(flux, 0, 5e-4)
+    else:   
+        times = np.linspace(0, 10, int(20000/4))
+        flux = flux_data_from_params(extend_params_for_stellar(true_vals, target_stellar_params), times, analytical_bool=True, batman_bool=batman_bool)
+        flux = add_gaussian_error(flux, 0, 5e-4)
+        # bin the flux
+        # flux = np.mean(flux.reshape(-1, 100), axis=1)
+        # times = np.mean(times.reshape(-1, 100), axis=1)
         plt.plot(times, flux)
+        plt.title("Simulated Data")
         plt.show()
 
 
