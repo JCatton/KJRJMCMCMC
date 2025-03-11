@@ -198,8 +198,8 @@ def extend_params_for_stellar(planet_params: Params, stellar_params: list[float]
 def estimate_proposal(times: np.ndarray, flux: np.ndarray) -> Proposal:
     return np.atleast_2d(
         [
-            [6*1e-4, 1e-3, 0, 1e-4, 0, 0, 0, 0, 0],  # Planet 1
-            [6*1e-4, 1e-3, 0, 1e-4, 0, 0, 0, 0, 0],   # Planet 2
+            [6*1e-3, 0*2*1e-3, 0, 0, 1e-3, 0, 0, 0, 0],  # Planet 1
+            # [6*1e-4, 1e-3, 0, 1e-4, 0, 0, 0, 0, 0],   # Planet 2
         ]
     )
 
@@ -212,13 +212,13 @@ def estimate_bounds(times: np.ndarray, flux: np.ndarray) -> Bounds:
     return np.atleast_3d(
         [
             [
-                (0.07, 0.4),
+                (0.007, 0.4),
                 (1e-3, 0.5),
                 (0, 1e4),
                 (0, 0.3),
                 (np.radians(70), np.radians(110)),
-                (-np.pi, np.pi),
-                (-np.pi, np.pi),
+                (0, 2*np.pi),
+                (-2*np.pi, 2*np.pi),
                 (-6, 6),
                 (0, 6000),
             ],
