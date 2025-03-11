@@ -10,6 +10,7 @@ import asyncio
 import shutil
 from sim.Decorators import TimeMeasure
 
+
 # from sim.ExampleSimulation import stellar_paramss
 
 # Type Aliases
@@ -425,13 +426,24 @@ def run_mcmc_code(
 
     print(f"After {initial_params.shape=}")
     print(f"After {proposal_std.shape=}")
-
+    true_vals = extend_params_for_stellar(true_vals, target_stellar_params)
     input_params = extend_params_for_stellar(initial_params, stellar_params)
+
+
     print(f"After {input_params.shape=}")
     param_names = extend_names_for_stellar(param_names)
     proposal_std = extend_proposal_for_stellar(proposal_std)
     param_bounds = extend_param_bounds_for_stellar(param_bounds)
-    true_vals = extend_params_for_stellar(true_vals, stellar_params)
+
+    fixed_params_indicies = np.where(proposal_std == 0)
+
+    input_params[fixed_params_indicies] = true_vals[fixed_params_indicies]
+
+    print(f"{proposal_std=}")   
+
+    # input_params[1,4] = np.radians(90)
+    # input_params[1,0] = 0.171
+    print(f"After {input_params=}")
 
     priors = np.full(proposal_std.shape, None)
     # priors[1,0] = {"distribution": "gaussian", "lower_bound": 0.01, "upper_bound":0.2, "mean": input_params[1,0], "std":5*1e-2}
@@ -481,7 +493,7 @@ def run_mcmc_code(
     r_star = input_params[0,0]  
 
     # print(f"{r_star=}")
-
+    print(f"{run_number=}")
     for i in range(run_number):
         # print(f"{input_params.shape=}")
         mcmc = MCMC(
@@ -505,28 +517,14 @@ def run_mcmc_code(
             mcmc.nested_sampling()
             do_nested_sampling = False
             return
-        mcmc.rj_mh(iteration_num)
+        mcmc.metropolis_hastings(iteration_num)
         marginalised = mcmc.marginalize_by_model()
+        print(f"{marginalised=}")
 
         mcmc.chain_to_plot_and_estimate(true_vals)
         mcmc.corner_plot()
 
-        for model in marginalised:
-            print(f"{model=:=^30}")
-            mcmc.chain_to_plot_and_estimate(true_vals=true_vals,
-                                            chain=marginalised[model]["parameters"],
-                                            likelihood_chain=marginalised[model]["likelihoods"],
-                                            planet_number=model)
-            try:
-                mcmc.corner_plot(true_vals=true_vals,
-                                 chain=marginalised[model]["parameters"],
-                                 likelihood_chain=marginalised[model]["likelihoods"],
-                                 planet_number=model)
-            except AssertionError:
-                pass
-        # mcmc.metropolis_hastings(iteration_num)
-        # mcmc.gaussian_hmc(iteration_num)
-
+     
         plt.figure()
         plt.title(f"Inferred Parameters vs Literature-reported Fit\n{file}")
         plt.plot(times, flux, label="Data")
@@ -600,9 +598,9 @@ if __name__ == "__main__":
     # plt.show()
 
     radius_toi_1811 =   0.687 * 696.34e6 / 1.496e11
-    mass_toi_1811 = 	0.684 * 2e30 / 6e24
+    mass_toi_1811 = 	64*0.684 * 2e30 / 6e24
     limb_darkening_model = 2
-    limb_darkening_coefficients = [0.50, 0.27]
+    limb_darkening_coefficients = [0.51, 0.17]
 
     stellar_params = [
         radius_toi_1811,
@@ -618,34 +616,23 @@ if __name__ == "__main__":
                     [
                         0.171,  #  +- 0.005 eta
                         0.0731,    # a
-                        8.3501898, # P
+                        1, # P
                         0.0398, # e
                         np.radians(87.61), # inc
-                        np.radians(182.5), # omega
+                        (np.radians(182.5))%(2*np.pi), # omega
                         0, # big_ohm
                         2.73763007, # phase_lag
                         0, # mass
-                    ],
-                    [
-                        0.0480,
-                        0.0453,
-                        4.074554,
-                        0.052162,
-                        np.radians(87.49),
-                        np.radians(141.11),
-                        0,
-                        0.97367272,
-                        0,
                     ],
                 ]
             )
         )
 
     run_mcmc_code(
-        file="TOI-1130_test_3",
+        file="TOI-1130_test_4",
         target_search_params=target_search_params,
         target_stellar_params=stellar_params,
-        iteration_num=4_000_000,
+        iteration_num=1_500_000,
         run_number=1,
         analytic_sim=True,
         batman_bool=True,
