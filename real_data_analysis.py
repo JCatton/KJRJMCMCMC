@@ -554,13 +554,13 @@ if __name__ == "__main__":
     import matplotlib.pyplot as plt
 
     # main()
-    taget_name = "TIC 376524552"
-    exptime = 120
+    taget_name = "Toi-1130"
+    exptime = None
     mission = "TESS"
     sector = None
     author = "SPOC"
-    cadence = 120
-    indicies_requested = (0, 1)
+    cadence = None
+    indicies_requested = (0, 2)
     max_number_downloads = 31
     use_regression_model = False
     use_lightcurve_direct = True
@@ -598,7 +598,7 @@ if __name__ == "__main__":
     ]  # Based on WASP 148
 
     run_mcmc_code(
-        file="TOI-1811",
+        file="TOI-1130 test",
         target_search_params=target_search_params,
         target_stellar_params=stellar_params,
         iteration_num=1_000_000,
