@@ -375,8 +375,8 @@ def run_mcmc_code(
             flux,
             stellar_params,
             signal_detection_efficiency=10,
-            period_min=3.5,
-            period_max=3.9,
+            period_min=3,
+            period_max=9,
         )
     )
     # np.save("Test-Params/initial_params", initial_params)
@@ -396,14 +396,25 @@ def run_mcmc_code(
         np.array(
             [
                 [
-                    0.13272,
-                    0.04389,
-                    3.7130765,
-                    0.0520,
-                    np.radians(86.48),
-                    np.radians(21),
+                    0.171,  #  +- 0.005 eta
+                    0.0731,    # a
+                    8.3501898, # P
+                    0.0398, # e
+                    np.radians(87.61), # inc
+                    np.radians(182.5), # omega
+                    0, # big_ohm
+                    2.73763007, # phase_lag
+                    0, # mass
+                ],
+                [
+                    0.0480,
+                    0.0453,
+                    4.074554,
+                    0.052162,
+                    np.radians(87.49),
+                    np.radians(141.11),
                     0,
-                    4.50157939,
+                    0.97367272,
                     0,
                 ],
             ]
@@ -573,10 +584,10 @@ if __name__ == "__main__":
     # plt.plot(times, flux)
     # plt.show()
 
-    radius_toi_1811 =   0.769 * 696.34e6 / 1.496e11
-    mass_toi_1811 = 	0.817 * 2e30 / 6e24
+    radius_toi_1811 =   0.687 * 696.34e6 / 1.496e11
+    mass_toi_1811 = 	0.684 * 2e30 / 6e24
     limb_darkening_model = 2
-    limb_darkening_coefficients = [0.417, -0.032]
+    limb_darkening_coefficients = [0.50, 0.27]
 
     stellar_params = [
         radius_toi_1811,
