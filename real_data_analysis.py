@@ -198,8 +198,8 @@ def extend_params_for_stellar(planet_params: Params, stellar_params: list[float]
 def estimate_proposal(times: np.ndarray, flux: np.ndarray) -> Proposal:
     return np.atleast_2d(
         [
-            [6*1e-4, 1e-3, 0, 0, 0, 0, 0, 0, 0],  # Planet 1
-            [6*1e-4, 1e-3, 0, 0, 0, 0, 0, 0, 0],   # Planet 2
+            [6*1e-4, 1e-3, 0, 1e-4, 0, 0, 0, 0, 0],  # Planet 1
+            [6*1e-4, 1e-3, 0, 1e-4, 0, 0, 0, 0, 0],   # Planet 2
         ]
     )
 
@@ -223,7 +223,7 @@ def estimate_bounds(times: np.ndarray, flux: np.ndarray) -> Bounds:
                 (0, 6000),
             ],
             [
-                (0.03, 0.07),
+                (0.01, 0.07),
                 (1e-3, 0.5),
                 (0, 1e4),
                 (0, 0.3),
@@ -379,14 +379,18 @@ def run_mcmc_code(
 
     # stellar_params = get_stellar_params(file, target_name) # Todo -> Currently just give the regular stellar params
     stellar_params = target_stellar_params  # [radius, mas, limb_darkening_model, limb_darkening_coefficients]
-    estimated_params = estimate_parameters(
-                times,
-                flux,
-                stellar_params,
-                signal_detection_efficiency=10,
-                period_min=3,
-                period_max=9,
-            )
+    # estimated_params = estimate_parameters(
+    #             times,
+    #             flux,
+    #             stellar_params,
+    #             signal_detection_efficiency=10,
+    #             period_min=3,
+    #             period_max=9,
+    #         )
+    estimated_params = np.array([[0.11946044, 0.07106616, 8.34280155, 0.        , 1.57079633,
+        0.        , 0.        , 2.73798487, 0.        ],
+       [0.04668363, 0.04405248, 4.07167491, 0.        , 1.57079633,
+        0.        , 0.        , 0.97389479, 0.        ]])
     initial_params = np.atleast_2d(
         np.vstack([estimated_params,
                    # np.array([0, 0, 0, 0, 0, 0, 0, np.pi / 4, 0.392])
@@ -640,13 +644,13 @@ if __name__ == "__main__":
     ]  # Based on WASP 148
 
     run_mcmc_code(
-        file="TOI-1130 test",
+        file="TOI-1130_test_3",
         target_search_params=target_search_params,
         target_stellar_params=stellar_params,
-        iteration_num=1_000_000,
-        run_number=3,
+        iteration_num=4_000_000,
+        run_number=1,
         analytic_sim=True,
         batman_bool=True,
         real_data_bool=True,
-        do_nested_sampling=True,
+        do_nested_sampling=False,
     )
