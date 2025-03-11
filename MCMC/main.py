@@ -6,9 +6,11 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 
 from MCMC.mcmc import Statistics
+from MCMC.priors import Priors
 
 
-from typing import Callable, Optional
+
+from typing import Callable, List, Dict, Optional, Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -25,17 +27,19 @@ def add_gaussian_error(input_arr: np.ndarray, mu: float, sigma: float) -> np.nda
 
 def gaussian_error_ln_likelihood(
     observed: np.array,
-    prior_funcs: list[Callable[..., float]],
+    prior_funcs: List[List[Callable[..., float]]],
     analytic_func: Callable[..., float],
     params: np.array,
     sigma_n: float,
 ) -> float:
+    log_prior = 0
+
     if prior_funcs is not None:
-        log_prior = np.sum(
-            np.log([prior_funcs[i](params[i]) for i in range(len(params))])
-        )
-    else:
-        log_prior = 0
+        params = np.reshape(params, prior_funcs.shape)
+        for p_fns, body_params in zip(prior_funcs, params):
+                log_prior += np.sum(
+                    np.log([p_fn(param) for p_fn, param in zip(p_fns, body_params) if p_fn])
+                )
     deviation_lh = 1 / 2 * np.log(sigma_n)
     observed_lh = np.power(observed - analytic_func(params), 2) / (2 * sigma_n**2)
     ln_likelihood = log_prior - deviation_lh - np.sum(observed_lh)
@@ -59,27 +63,24 @@ def prepare_arrays_for_mcmc(
     proposal_std=None,
     param_bounds=None,
     analytical_bool=None,
+    priors=None,
+    prior_transform_funcs=None,
 ):
     if analytical_bool is None:
         raise ValueError("analytical_bool must be set to True or False")
 
-    if analytical_bool:
-        param_names = param_names[:, :-1] if param_names is not None else None
-        true_vals = true_vals[:, :-1] if true_vals is not None else None
-        initial_params = initial_params[:, :-1]
-        proposal_std = proposal_std[:, :-1]
-        param_bounds = param_bounds[:, :-1]
-        return param_names, true_vals, initial_params, proposal_std, param_bounds
+    # Mask gets rid of mass or semi-major axis depending on analytical_bool
+    n_body_mask = np.array([True, False, True, True, True, True, True, True, True])
+    slc = (slice(None), slice(None, -1)) if analytical_bool else (slice(None), n_body_mask)
 
-    elif analytical_bool == False:
-        n_body_mask = np.array([True, False, True, True, True, True, True, True, True])
-        param_names = param_names[:, n_body_mask] if param_names is not None else None
-        true_vals = true_vals[:, n_body_mask] if true_vals is not None else None
-        initial_params = initial_params[:, n_body_mask]
-        proposal_std = proposal_std[:, n_body_mask]
-        param_bounds = param_bounds[:, n_body_mask]
-        return param_names, true_vals, initial_params, proposal_std, param_bounds
-
+    param_names = param_names[slc] if param_names is not None else None
+    true_vals = true_vals[slc] if true_vals is not None else None
+    initial_params = initial_params[slc]
+    proposal_std = proposal_std[slc]
+    param_bounds = param_bounds[slc]
+    priors = priors[slc] if priors is not None else None
+    prior_transform_funcs = prior_transform_funcs[slc] if prior_transform_funcs is not None else None
+    return param_names, true_vals, initial_params, proposal_std, param_bounds, priors, prior_transform_funcs
 
 def inclination_checker(
     proposals: np.ndarray,
@@ -123,6 +124,35 @@ def inclination_checker(
     return np.any(
         valid_inclination
     )  # Return True provided at least one point inclination is good
+
+
+def prior_transform_calcs(priors: List[List[Optional[Dict]]],
+                          param_bounds: List[List[Tuple]],
+                          proposal_stds: List[List[float]],
+                          initial_params: List[List[float]]) -> Tuple[np.ndarray[Callable],np.ndarray[Callable]]:
+    prior_transforms = []
+    prior_densities = []
+    for body_idx, body_bounds in enumerate(param_bounds):
+        prior_transforms.append([])
+        prior_densities.append([])
+        body = prior_transforms[body_idx]
+
+        for param_idx, p_bounds in enumerate(body_bounds):
+            body.append([None])
+            prior_densities[body_idx].append([None])
+            if proposal_stds[body_idx][param_idx] == 0:
+                initial_param = initial_params[body_idx][param_idx]
+                prior = Priors.get_dirac_prior(initial_param)
+                # body[param_idx] = lambda x, initial_param=initial_param: dirac_delta_transform(initial_param, x)
+            elif isinstance(priors[body_idx][param_idx], dict):
+                prior = Priors.get_prior_by_config(priors[body_idx][param_idx])
+            elif priors[body_idx][param_idx] is None:
+                prior = Priors.get_uniform_prior(p_bounds[0], p_bounds[1])
+                # body[param_idx] = lambda x, p0=p0, p1=p1: uniform_transform(p0, p1, x)
+            body[param_idx]= prior.transform_func
+            prior_densities[body_idx][param_idx] = prior.prior_func
+    return np.array(prior_densities), np.array(prior_transforms)
+
 
 
 def main():
@@ -199,6 +229,12 @@ def main():
         ]
     )
 
+
+    analytical_bool = True
+    priors = [
+        [{"distribution": "gaussian", "lower_bound": 0.05, "upper_bound":0.15, "mean": 0.1, "std":5*1e-2}, None, None, None, None, None, None, None, None],
+        [{"distribution": "gaussian", "lower_bound": 0.1, "upper_bound":0.5, "mean": 0.3, "std":5*1e-2}, None, None, None, None, None, None, None, None]
+    ]
     param_bounds = np.array(
         [
             [
@@ -226,18 +262,18 @@ def main():
         ]
     )
 
-    analytical_bool = True
+    priors, prior_transform_funcs = prior_transform_calcs(priors, param_bounds, proposal_std, initial_params)
 
-    param_names, true_vals, initial_params, proposal_std, param_bounds = (
-        prepare_arrays_for_mcmc(
-            param_names,
-            true_vals,
-            initial_params,
-            proposal_std,
-            param_bounds,
-            analytical_bool,
-        )
-    )
+    (param_names, true_vals, initial_params, proposal_std,
+     param_bounds, priors, prior_transform_funcs) = prepare_arrays_for_mcmc(param_names,
+                                                                             true_vals,
+                                                                             initial_params,
+                                                                             proposal_std,
+                                                                             param_bounds,
+                                                                             analytical_bool,
+                                                                             priors,
+                                                                             prior_transform_funcs)
+
 
     print(
         param_names.shape,
@@ -248,7 +284,7 @@ def main():
     )
     sigma_n = 1e-3
     fluxes = add_gaussian_error(inp_fluxes, 0, sigma_n)
-    num_iterations = int(5_000_000)
+    num_iterations = int(25_000)
 
     radius_wasp148_a = 0.912 * 696.34e6 / 1.496e11
     mass_wasp_a = 0.9540 * 2e30 / 6e24
@@ -270,7 +306,7 @@ def main():
     def likelihood_fn(params):
         return gaussian_error_ln_likelihood(
             fluxes,
-            None,
+            priors,
             lambda params: flux_data_from_params(
                 stellar_params, params, times, analytical_bool=analytical_bool
             ),
@@ -291,8 +327,13 @@ def main():
             proposals, r_star
         ),
         max_cpu_nodes=8,
+        prior_transforms=prior_transform_funcs,
     )
 
+    # mcmc.nested_sampling()
+    # mcmc.run_hmc(num_iterations=num_iterations, step_size=0.005, n_leapfrog=10)
+    # mcmc.chain_to_plot_and_estimate(true_vals)
+    # mcmc.corner_plot(true_vals)
     mcmc.metropolis_hastings(num_iterations)
     mcmc.chain_to_plot_and_estimate(true_vals)
     mcmc.corner_plot(true_vals)

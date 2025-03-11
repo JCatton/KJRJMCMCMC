@@ -39,6 +39,8 @@ def flux_data_from_params(
     Returns:
     - flux_values: Array of flux values
     """
+    if len(input_params.shape) == 1:
+        input_params = input_params.reshape(input_params.shape[0] // 8, 8)
     stellar_params = input_params[0]
     planet_params = input_params[1:]
     # print(f"{batman_bool=}")
@@ -112,7 +114,7 @@ if __name__ == "__main__":
         0,
         0,
     ]  # Based on WASP 148
-    
+
 
 
 
@@ -123,7 +125,8 @@ if __name__ == "__main__":
 
     planet_params = np.array(
         [
-            [0.09716, 0.02087, 0.9414526, 0.0091, np.radians(84.88), 4.69494, 0, 1.51935416, 0],
+            [0.09716, 0.02087, 0.9414526, 0.0091, np.radians(84.88), 1.5484, 0, 1.51935416, 0],
+            [0.04716, 0.02588, 1.3, 0.0091, np.radians(84.88), 1.5484, 0, 1.51935416, 0],
             # [eta2, 0.2044, 34.525, 0, np.radians(90), 0, 0, np.pi / 4, 0.392],
         ]
     )
@@ -149,7 +152,10 @@ if __name__ == "__main__":
     #     stellar_params=stellar_params, planet_params=planet_params_n_body, times=times_input, analytical_bool=False
     # )
 
-    np.save("TestFluxes.npy", output_analytical)
+    np.save("../TestFluxes.npy", output_analytical)
+    from MCMC.main import add_gaussian_error
+    output_analytical = add_gaussian_error(output_analytical ,0, 5e-4)
+    np.save("../TestFluxesNoise.npy", output_analytical)
     np.save("TestTimes.npy", times_input)
 
     plt.plot(times_input, output_analytical, label="Analytical")

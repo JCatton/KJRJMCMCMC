@@ -1,5 +1,5 @@
 from MCMC.mcmc import MCMC
-from MCMC.main import inclination_checker, prepare_arrays_for_mcmc, add_gaussian_error
+from MCMC.main import inclination_checker, prepare_arrays_for_mcmc, add_gaussian_error, prior_transform_calcs
 from sim.SimulateAndFlux import flux_data_from_params
 from pathlib import Path
 from typing import Callable
@@ -198,8 +198,8 @@ def extend_params_for_stellar(planet_params: Params, stellar_params: list[float]
 def estimate_proposal(times: np.ndarray, flux: np.ndarray) -> Proposal:
     return np.atleast_2d(
         [
-            [0.5*4*1e-4, 0.5*7*1e-5, 3*1e-5, 5e-3, 1e-3, 5e-3, 0, 5e-3, 0],  # Planet 1
-            # [1e-5, 1e-5, 1e-5, 1e-5, 0, 0, 0, 0, 0],   # Planet 2
+            [6*1e-4, 1e-3, 0, 1e-4, 0, 0, 0, 0, 0],  # Planet 1
+            [6*1e-4, 1e-3, 0, 1e-4, 0, 0, 0, 0, 0],   # Planet 2
         ]
     )
 
@@ -212,17 +212,27 @@ def estimate_bounds(times: np.ndarray, flux: np.ndarray) -> Bounds:
     return np.atleast_3d(
         [
             [
-                (1e-5, 0.4),
+                (0.07, 0.4),
                 (1e-3, 0.5),
                 (0, 1e4),
                 (0, 0.3),
-                (np.radians(80), np.pi),
+                (np.radians(70), np.radians(110)),
                 (-np.pi, np.pi),
                 (-np.pi, np.pi),
                 (-6, 6),
                 (0, 6000),
             ],
-            # [(1e-5, 0.4), (1e-3, 0.5), (0, 1e10), (0, 0.3), (np.radians(86.8), np.pi), (-np.pi/8, np.pi/8), (-np.pi/8, np.pi/8), (-6, 6), (0, 6000)]
+            [
+                (0.01, 0.07),
+                (1e-3, 0.5),
+                (0, 1e4),
+                (0, 0.3),
+                (np.radians(70), np.radians(110)),
+                (-np.pi, np.pi),
+                (-np.pi, np.pi),
+                (-6, 6),
+                (0, 6000),
+            ],
         ]
     )
 
@@ -285,9 +295,9 @@ def extend_param_bounds_for_stellar(param_bounds: Bounds) -> Bounds:
 
     new_param_bounds = np.zeros((param_bounds.shape[0] + 1, param_bounds.shape[1], param_bounds.shape[2]))
 
-    new_param_bounds[0,0] = (0, 5)
-    new_param_bounds[0,1] = (0, 1e40)
-    new_param_bounds[0,2] = (0, 1e10)
+    new_param_bounds[0,0] = (1e-4, 2)
+    new_param_bounds[0,1] = (1e5, 10e7)
+    new_param_bounds[0,2] = (0, 1e3)
     new_param_bounds[0,3] = (-1, 1)
     new_param_bounds[0,4] = (-1, 1)
     new_param_bounds[0,5:] = (0, 5)
@@ -329,7 +339,7 @@ def run_mcmc_code(
     batman_bool: bool = False,
     real_data_bool: bool = True,
     true_vals: np.ndarray = None,
-
+    do_nested_sampling: bool = False,
 ):
     """
     Run the MCMC code on the data
@@ -353,8 +363,8 @@ def run_mcmc_code(
         times, flux = download_data_api(*target_search_params)
     else:
         times = np.load("TestTimes.npy")
-        flux = np.load("TestFluxes.npy")
-        flux = add_gaussian_error(flux, 0, 5e-4)
+        flux = np.load("TestFluxesNoise.npy")
+        # flux = add_gaussian_error(flux, 0, 5e-4)
         plt.plot(times, flux)
         plt.show()
 
@@ -370,15 +380,22 @@ def run_mcmc_code(
 
     # stellar_params = get_stellar_params(file, target_name) # Todo -> Currently just give the regular stellar params
     stellar_params = target_stellar_params  # [radius, mas, limb_darkening_model, limb_darkening_coefficients]
+    # estimated_params = estimate_parameters(
+    #             times,
+    #             flux,
+    #             stellar_params,
+    #             signal_detection_efficiency=10,
+    #             period_min=3,
+    #             period_max=9,
+    #         )
+    estimated_params = np.array([[0.11946044, 0.07106616, 8.34280155, 0.        , 1.57079633,
+        0.        , 0.        , 2.73798487, 0.        ],
+       [0.04668363, 0.04405248, 4.07167491, 0.        , 1.57079633,
+        0.        , 0.        , 0.97389479, 0.        ]])
     initial_params = np.atleast_2d(
-        estimate_parameters(
-            times,
-            flux,
-            stellar_params,
-            signal_detection_efficiency=10,
-            period_min=3,
-            period_max=9,
-        )
+        np.vstack([estimated_params,
+                   # np.array([0, 0, 0, 0, 0, 0, 0, np.pi / 4, 0.392])
+                   ])
     )
     # np.save("Test-Params/initial_params", initial_params)
 
@@ -400,7 +417,7 @@ def run_mcmc_code(
     noise = estimate_noise(times, flux)  # Todo
     param_names = np.atleast_2d(generate_param_names(initial_params))
 
-    param_names, true_vals, initial_params, proposal_std, param_bounds = (
+    param_names, true_vals, initial_params, proposal_std, param_bounds, priors, prior_transform_funcs = (
         prepare_arrays_for_mcmc(
             param_names,
             true_vals,
@@ -420,6 +437,10 @@ def run_mcmc_code(
     proposal_std = extend_proposal_for_stellar(proposal_std)
     param_bounds = extend_param_bounds_for_stellar(param_bounds)
     true_vals = extend_params_for_stellar(true_vals, stellar_params)
+
+    priors = np.full(proposal_std.shape, None)
+    # priors[1,0] = {"distribution": "gaussian", "lower_bound": 0.01, "upper_bound":0.2, "mean": input_params[1,0], "std":5*1e-2}
+    priors, prior_transform_funcs = prior_transform_calcs(priors, param_bounds, proposal_std, input_params)
 
     print(f"After {proposal_std.shape=}")
     
@@ -456,7 +477,7 @@ def run_mcmc_code(
     )
     plt.legend()
     plt.savefig("inferred_flux_plot_before.pdf", dpi=500)
-    plt.show()  
+    plt.show()
 
     # print(f"{input_params.shape=}")
     # print(f"{input_params[0]=}")
@@ -479,12 +500,37 @@ def run_mcmc_code(
             inclination_rejection_func=lambda input_params: inclination_checker(
                 proposals = input_params, r_star = r_star
             ),
+            priors=priors,
+            prior_transforms=prior_transform_funcs,
             specified_folder_name=Path(file) / f"run_{i}",
             max_cpu_nodes=4,
         )
-        mcmc.metropolis_hastings(iteration_num)
+
+        if do_nested_sampling:
+            mcmc.nested_sampling()
+            do_nested_sampling = False
+            return
+        mcmc.rj_mh(iteration_num)
+        marginalised = mcmc.marginalize_by_model()
+
         mcmc.chain_to_plot_and_estimate(true_vals)
         mcmc.corner_plot()
+
+        for model in marginalised:
+            print(f"{model=:=^30}")
+            mcmc.chain_to_plot_and_estimate(true_vals=true_vals,
+                                            chain=marginalised[model]["parameters"],
+                                            likelihood_chain=marginalised[model]["likelihoods"],
+                                            planet_number=model)
+            try:
+                mcmc.corner_plot(true_vals=true_vals,
+                                 chain=marginalised[model]["parameters"],
+                                 likelihood_chain=marginalised[model]["likelihoods"],
+                                 planet_number=model)
+            except AssertionError:
+                pass
+        # mcmc.metropolis_hastings(iteration_num)
+        # mcmc.gaussian_hmc(iteration_num)
 
         plt.figure()
         plt.title(f"Inferred Parameters vs Literature-reported Fit\n{file}")
@@ -507,7 +553,7 @@ def run_mcmc_code(
         plt.legend()
         plt.savefig(Path(file) / f"run_{i}" / "inferred_flux_plot_after.pdf", dpi=500)
         plt.show()
-    
+
         our_values = mcmc.chain[np.argmax(mcmc.likelihood_chain)]
 
         np.save(Path(file) / f"run_{i}" /"Input_values.npy", input_params)
@@ -601,13 +647,14 @@ if __name__ == "__main__":
         )
 
     run_mcmc_code(
-        file="TOI-1130 test",
+        file="TOI-1130_test_3",
         target_search_params=target_search_params,
         target_stellar_params=stellar_params,
-        iteration_num=1_000_000,
-        run_number=3,
+        iteration_num=4_000_000,
+        run_number=1,
         analytic_sim=True,
         batman_bool=True,
         real_data_bool=False,
         true_vals = true_vals,
+        do_nested_sampling=False,
     )
