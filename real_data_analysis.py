@@ -445,7 +445,7 @@ def run_mcmc_code(
     true_vals = extend_params_for_stellar(true_vals, stellar_params)
 
     priors = np.full(proposal_std.shape, None)
-    priors[1,0] = {"distribution": "gaussian", "lower_bound": 0.01, "upper_bound":0.2, "mean": input_params[1,0], "std":5*1e-2}
+    # priors[1,0] = {"distribution": "gaussian", "lower_bound": 0.01, "upper_bound":0.2, "mean": input_params[1,0], "std":5*1e-2}
     priors, prior_transform_funcs = prior_transform_calcs(priors, param_bounds, proposal_std, input_params)
 
     print(f"After {proposal_std.shape=}")
@@ -515,10 +515,28 @@ def run_mcmc_code(
         if do_nested_sampling:
             mcmc.nested_sampling()
             do_nested_sampling = False
-        mcmc.metropolis_hastings(iteration_num)
-        # mcmc.gaussian_hmc(iteration_num)
+            return
+        mcmc.rj_mh(iteration_num)
+        marginalised = mcmc.marginalize_by_model()
+
         mcmc.chain_to_plot_and_estimate(true_vals)
         mcmc.corner_plot()
+
+        for model in marginalised:
+            print(f"{model=:=^30}")
+            mcmc.chain_to_plot_and_estimate(true_vals=true_vals,
+                                            chain=marginalised[model]["parameters"],
+                                            likelihood_chain=marginalised[model]["likelihoods"],
+                                            planet_number=model)
+            try:
+                mcmc.corner_plot(true_vals=true_vals,
+                                 chain=marginalised[model]["parameters"],
+                                 likelihood_chain=marginalised[model]["likelihoods"],
+                                 planet_number=model)
+            except AssertionError:
+                pass
+        # mcmc.metropolis_hastings(iteration_num)
+        # mcmc.gaussian_hmc(iteration_num)
 
         plt.figure()
         plt.title(f"Inferred Parameters vs Literature-reported Fit\n{file}")
