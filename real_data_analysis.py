@@ -649,7 +649,7 @@ if __name__ == "__main__":
         run_number=1,
         analytic_sim=True,
         batman_bool=True,
-        real_data_bool=True,
+        real_data_bool=False,
         true_vals = true_vals,
         do_nested_sampling=False,
     )
