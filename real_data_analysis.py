@@ -246,11 +246,11 @@ def initial_param_fuzzer(
 def generate_param_names(initial_parameters: Params) -> np.ndarray:
     depth, _ = initial_parameters.shape
     base_names = [
-        r"\eta",
+        r"$\eta$",
         "a",
         "P",
         "e",
-        "inc",
+        "i",
         "omega",
         "big_ohm",
         "phase_lag",
