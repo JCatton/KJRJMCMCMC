@@ -96,9 +96,9 @@ def plot_phase_curve(file_name, xlims:tuple = None, ylims:tuple = None, num_bins
             folded_raw_times, folded_raw_fluxes = phase_fold(times, flux, period)
 
 
-            literature_times, literature_fluxes = generate_flux_and_phase_fold(literature_params, times, period)
-            our_times, our_fluxes = generate_flux_and_phase_fold(our_params, times, period)
-            input_times, input_fluxes = generate_flux_and_phase_fold(input_params, times, period)   
+            literature_times, literature_fluxes = generate_flux_and_phase_fold(literature_params, times, literature_params[planet_index][2])
+            our_times, our_fluxes = generate_flux_and_phase_fold(our_params, times, our_params[planet_index][2])
+            input_times, input_fluxes = generate_flux_and_phase_fold(input_params, times, input_params[planet_index][2])   
 
             # Bin the data
             if fit_x_shift == False:
@@ -161,4 +161,4 @@ if __name__ == "__main__":
     import matplotlib.pyplot as plt
     import lightkurve as lk
 
-    plot_phase_curve("TOI-1130_test_4", xlims=(-0.015, 0.015), ylims=(0.978, 1.0025), num_bins=2, fit_x_shift=[+0.0,-0,-0,-0])
+    plot_phase_curve("Simulated_for_viva_modeled_after_TOI-1516", xlims=(-0.1, 0.1), ylims=(0.9825, 1.0075), num_bins=2, fit_x_shift=[+0.0033,-0.0,-0,-0])
