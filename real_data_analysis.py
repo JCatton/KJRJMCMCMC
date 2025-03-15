@@ -427,11 +427,22 @@ def run_mcmc_code(
     print(f"After {proposal_std.shape=}")
     true_vals = extend_params_for_stellar(true_vals, target_stellar_params)
     input_params = extend_params_for_stellar(initial_params, stellar_params)
+
+
     print(f"After {input_params.shape=}")
     param_names = extend_names_for_stellar(param_names)
     proposal_std = extend_proposal_for_stellar(proposal_std)
     param_bounds = extend_param_bounds_for_stellar(param_bounds)
-    true_vals = extend_params_for_stellar(true_vals, stellar_params)
+
+    fixed_params_indicies = np.where(proposal_std == 0)
+
+    input_params[fixed_params_indicies] = true_vals[fixed_params_indicies]
+
+    print(f"{proposal_std=}")   
+
+    # input_params[1,4] = np.radians(90)
+    # input_params[1,0] = 0.171
+    print(f"After {input_params=}")
 
     priors = np.full(proposal_std.shape, None)
     # priors[1,0] = {"distribution": "gaussian", "lower_bound": 0.01, "upper_bound":0.2, "mean": input_params[1,0], "std":5*1e-2}
