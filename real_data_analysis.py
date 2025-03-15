@@ -338,6 +338,7 @@ def run_mcmc_code(
     analytic_sim: bool = True,
     batman_bool: bool = False,
     real_data_bool: bool = True,
+    true_vals: np.ndarray = None,
     do_nested_sampling: bool = False,
 ):
     """
@@ -404,34 +405,7 @@ def run_mcmc_code(
 
 
 
-    true_vals = np.atleast_2d(
-        np.array(
-            [
-                [
-                    0.171,  #  +- 0.005 eta
-                    0.0731,    # a
-                    8.3501898, # P
-                    0.0398, # e
-                    np.radians(87.61), # inc
-                    np.radians(182.5), # omega
-                    0, # big_ohm
-                    2.73763007, # phase_lag
-                    0, # mass
-                ],
-                [
-                    0.0480,
-                    0.0453,
-                    4.074554,
-                    0.052162,
-                    np.radians(87.49),
-                    np.radians(141.11),
-                    0,
-                    0.97367272,
-                    0,
-                ],
-            ]
-        )
-    )
+    
     print(f"{initial_params=}, {initial_params.shape=}")
     proposal_std = np.atleast_2d(estimate_proposal(times, flux))  # Todo
     param_bounds = np.atleast_2d(estimate_bounds(times, flux))  # Todo
@@ -451,7 +425,7 @@ def run_mcmc_code(
 
     print(f"After {initial_params.shape=}")
     print(f"After {proposal_std.shape=}")
-
+    true_vals = extend_params_for_stellar(true_vals, target_stellar_params)
     input_params = extend_params_for_stellar(initial_params, stellar_params)
     print(f"After {input_params.shape=}")
     param_names = extend_names_for_stellar(param_names)
@@ -638,6 +612,35 @@ if __name__ == "__main__":
         limb_darkening_coefficients[1],
     ]  # Based on WASP 148
 
+    true_vals = np.atleast_2d(
+        np.array(
+            [
+                [
+                    0.171,  #  +- 0.005 eta
+                    0.0731,    # a
+                    8.3501898, # P
+                    0.0398, # e
+                    np.radians(87.61), # inc
+                    np.radians(182.5), # omega
+                    0, # big_ohm
+                    2.73763007, # phase_lag
+                    0, # mass
+                ],
+                [
+                    0.0480,
+                    0.0453,
+                    4.074554,
+                    0.052162,
+                    np.radians(87.49),
+                    np.radians(141.11),
+                    0,
+                    0.97367272,
+                    0,
+                ],
+            ]
+        )
+    )
+
     run_mcmc_code(
         file="TOI-1130_test_3",
         target_search_params=target_search_params,
@@ -647,5 +650,6 @@ if __name__ == "__main__":
         analytic_sim=True,
         batman_bool=True,
         real_data_bool=True,
+        true_vals = true_vals,
         do_nested_sampling=False,
     )
