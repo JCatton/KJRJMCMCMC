@@ -247,11 +247,11 @@ def initial_param_fuzzer(
 def generate_param_names(initial_parameters: Params) -> np.ndarray:
     depth, _ = initial_parameters.shape
     base_names = [
-        r"\eta",
+        r"$\eta$",
         "a",
         "P",
         "e",
-        "inc",
+        "i",
         "omega",
         "big_ohm",
         "phase_lag",
@@ -363,9 +363,9 @@ def run_mcmc_code(
     if real_data_bool:
         times, flux = download_data_api(*target_search_params)
     else:   
-        times = np.linspace(0, 10, int(20000/4))
+        times = np.linspace(0, 16, int(20000))
         flux = flux_data_from_params(extend_params_for_stellar(true_vals, target_stellar_params), times, analytical_bool=True, batman_bool=batman_bool)
-        flux = add_gaussian_error(flux, 0, 5e-4)
+        flux = add_gaussian_error(flux, 0, 2e-3)
         # bin the flux
         # flux = np.mean(flux.reshape(-1, 100), axis=1)
         # times = np.mean(times.reshape(-1, 100), axis=1)
