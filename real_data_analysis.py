@@ -199,7 +199,7 @@ def extend_params_for_stellar(planet_params: Params, stellar_params: list[float]
 def estimate_proposal(times: np.ndarray, flux: np.ndarray) -> Proposal:
     return np.atleast_2d(
         [
-            [6*1e-3, 0*2*1e-3, 0, 0, 1e-3, 0, 0, 0, 0],  # Planet 1
+            [6*1e-4, 2e-4, 1e-4, 0, 3*1e-4, 0, 0, 0, 0],  # Planet 1
             # [6*1e-4, 1e-3, 0, 1e-4, 0, 0, 0, 0, 0],   # Planet 2
         ]
     )
@@ -597,10 +597,10 @@ if __name__ == "__main__":
     # plt.plot(times, flux)
     # plt.show()
 
-    radius_toi_1811 =   0.687 * 696.34e6 / 1.496e11
-    mass_toi_1811 = 	64*0.684 * 2e30 / 6e24
+    radius_toi_1811 =   1.14 * 696.34e6 / 1.496e11
+    mass_toi_1811 = 	1.14 * 2e30 / 6e24
     limb_darkening_model = 2
-    limb_darkening_coefficients = [0.51, 0.17]
+    limb_darkening_coefficients = [0.3, 0.4]
 
     stellar_params = [
         radius_toi_1811,
@@ -614,14 +614,14 @@ if __name__ == "__main__":
             np.array(
                 [
                     [
-                        0.171,  #  +- 0.005 eta
-                        0.0731,    # a
-                        1, # P
-                        0.0398, # e
-                        np.radians(87.61), # inc
-                        (np.radians(182.5))%(2*np.pi), # omega
+                        0.10,  #  +- 0.005 eta
+                        0.03300539887,    # a
+                        2.056014, # P
+                        0.0, # e
+                        np.radians(87), # inc
+                        (np.radians(0))%(2*np.pi), # omega
                         0, # big_ohm
-                        2.73763007, # phase_lag
+                        np.pi/4, # phase_lag
                         0, # mass
                     ],
                 ]
@@ -629,10 +629,10 @@ if __name__ == "__main__":
         )
 
     run_mcmc_code(
-        file="TOI-1130_test_4",
+        file="Simulated_for_viva_modeled_after_TOI-1516",
         target_search_params=target_search_params,
         target_stellar_params=stellar_params,
-        iteration_num=1_500_000,
+        iteration_num=3_000_000,
         run_number=1,
         analytic_sim=True,
         batman_bool=True,
