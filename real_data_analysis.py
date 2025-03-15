@@ -522,7 +522,7 @@ def run_mcmc_code(
         print(f"{marginalised=}")
 
         mcmc.chain_to_plot_and_estimate(true_vals)
-        mcmc.corner_plot()
+        mcmc.corner_plot(true_vals=true_vals)
 
      
         plt.figure()
