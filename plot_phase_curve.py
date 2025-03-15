@@ -59,7 +59,7 @@ def bin_data(times, fluxes, num_bins=10):
 
 
 
-def plot_phase_curve(file_name, xlims:tuple = None, ylims:tuple = None, num_bins = 10):
+def plot_phase_curve(file_name, xlims:tuple = None, ylims:tuple = None, num_bins = 10, fit_x_shift=False):
 
     # get the number of folders in the file
     num_folders = len(os.listdir(file_name))
@@ -96,24 +96,27 @@ def plot_phase_curve(file_name, xlims:tuple = None, ylims:tuple = None, num_bins
             folded_raw_times, folded_raw_fluxes = phase_fold(times, flux, period)
 
 
-            literature_times, literature_fluxes = generate_flux_and_phase_fold(literature_params, times, period)
-            our_times, our_fluxes = generate_flux_and_phase_fold(our_params, times, period)
-            input_times, input_fluxes = generate_flux_and_phase_fold(input_params, times, period)   
+            literature_times, literature_fluxes = generate_flux_and_phase_fold(literature_params, times, literature_params[planet_index][2])
+            our_times, our_fluxes = generate_flux_and_phase_fold(our_params, times, our_params[planet_index][2])
+            input_times, input_fluxes = generate_flux_and_phase_fold(input_params, times, input_params[planet_index][2])   
 
             # Bin the data
-            binned_raw_times, binned_raw_fluxes = bin_data(folded_raw_times, folded_raw_fluxes, num_bins=num_bins)
-            binned_literature_times, binned_literature_fluxes = bin_data(literature_times, literature_fluxes, num_bins=num_bins)
-            binned_our_times, binned_our_fluxes = bin_data(our_times, our_fluxes, num_bins=num_bins)
-            binned_input_times, binned_input_fluxes = bin_data(input_times, input_fluxes, num_bins=num_bins)
+            if fit_x_shift == False:
+                fit_x_shift = np.array([0,0,0,0])
+            binned_raw_times, binned_raw_fluxes = bin_data(folded_raw_times, folded_raw_fluxes, num_bins=num_bins) 
+            binned_literature_times, binned_literature_fluxes = bin_data(literature_times, literature_fluxes, num_bins=num_bins) 
+            binned_our_times, binned_our_fluxes = bin_data(our_times, our_fluxes, num_bins=num_bins) 
+            binned_input_times, binned_input_fluxes = bin_data(input_times, input_fluxes, num_bins=num_bins) 
+            
 
             # zero the times
-            binned_raw_times = binned_raw_times - find_mid_transit(binned_raw_times, binned_raw_fluxes)
+            binned_raw_times = binned_raw_times - find_mid_transit(binned_raw_times, binned_raw_fluxes) + fit_x_shift[0]
 
-            binned_literature_times = binned_literature_times - find_mid_transit(binned_literature_times, binned_literature_fluxes)
+            binned_literature_times = binned_literature_times - find_mid_transit(binned_literature_times, binned_literature_fluxes) + fit_x_shift[1]
 
-            binned_our_times = binned_our_times - find_mid_transit(binned_our_times, binned_our_fluxes)
+            binned_our_times = binned_our_times - find_mid_transit(binned_our_times, binned_our_fluxes) + fit_x_shift[2]
 
-            binned_input_times = binned_input_times - find_mid_transit(binned_input_times, binned_input_fluxes) 
+            binned_input_times = binned_input_times - find_mid_transit(binned_input_times, binned_input_fluxes) + fit_x_shift[3]
 
 
             fig, ax = plt.subplots((1))
@@ -158,4 +161,4 @@ if __name__ == "__main__":
     import matplotlib.pyplot as plt
     import lightkurve as lk
 
-    plot_phase_curve("TOI-1811", xlims=(-0.07, 0.07), ylims=(0.978, 1.0025), num_bins=10)
+    plot_phase_curve("Simulated_for_viva_modeled_after_TOI-1516", xlims=(-0.1, 0.1), ylims=(0.9825, 1.0075), num_bins=2, fit_x_shift=[+0.0033,-0.0,-0,-0])
