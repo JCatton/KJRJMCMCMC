@@ -93,16 +93,16 @@ def plot_phase_curve(file_name, xlims:tuple = None, ylims:tuple = None, num_bins
             our_params = our_values_input[boolean_map.astype(bool)]
 
 
-            period = our_params[planet_index][2]
+            period = our_params[1][2]
 
 
             # Phase Fold the data
             folded_raw_times, folded_raw_fluxes = phase_fold(times, flux, period)
 
 
-            literature_times, literature_fluxes = generate_flux_and_phase_fold(literature_params, times, literature_params[planet_index][2])
-            our_times, our_fluxes = generate_flux_and_phase_fold(our_params, times, our_params[planet_index][2])
-            input_times, input_fluxes = generate_flux_and_phase_fold(input_params, times, input_params[planet_index][2])   
+            literature_times, literature_fluxes = generate_flux_and_phase_fold(literature_params, times, literature_params[1][2])
+            our_times, our_fluxes = generate_flux_and_phase_fold(our_params, times, our_params[1][2])
+            input_times, input_fluxes = generate_flux_and_phase_fold(input_params, times, input_params[1][2])   
 
             # Bin the data
             if fit_x_shift == False:
