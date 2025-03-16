@@ -363,6 +363,7 @@ def run_mcmc_code(
     if real_data_bool:
         times, flux = download_data_api(*target_search_params)
     else:   
+        print("Using simulated data")
         times = np.linspace(0, 16, int(20000))
         flux = flux_data_from_params(extend_params_for_stellar(true_vals, target_stellar_params), times, analytical_bool=True, batman_bool=batman_bool)
         flux = add_gaussian_error(flux, 0, 2e-3)

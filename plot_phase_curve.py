@@ -9,6 +9,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import lightkurve as lk
 
+from TransitAnalysis.TransitDetector import run_tls
 
 def generate_flux_and_phase_fold(params, times, period):
     fluxes = flux_data_from_params(params, times, no_loading_bar=True, analytical_bool=True, batman_bool=True)
@@ -29,7 +30,7 @@ def phase_fold(time, fluxes, period):
 
 
 def find_mid_transit(times, fluxes):
-    times_output = np.where(fluxes <= 0.995)
+    times_output = np.where(fluxes <= 0.999)
     # print(f"{times_output=}")
     # find midpoint of these
     return np.mean(times[times_output])
@@ -67,38 +68,41 @@ def plot_phase_curve(file_name, xlims:tuple = None, ylims:tuple = None, num_bins
     for i in range(num_folders):
         # get the folder name
         folder_name = f"{file_name}/run_{i}/"
-        input_values = np.load(folder_name + "Input_values.npy")
-        literature_values = np.load(folder_name + "Literature_values.npy")
-        our_values = np.load(folder_name + "our_values.npy")
+        input_values_input = np.load(folder_name + "Input_values.npy")
+        literature_values_input = np.load(folder_name + "Literature_values.npy")
+        our_values_input = np.load(folder_name + "our_values.npy")
         times = np.load(folder_name + "times.npy")
         flux = np.load(folder_name + "flux.npy")
 
-        num_planets = int(len(our_values) - 1)
+        num_planets = int(len(our_values_input) - 1)
 
         for j in range(num_planets):
             planet_index = j + 1
 
-            boolean_map = np.zeros(len(our_values))
+            boolean_map = np.zeros(len(our_values_input))
 
             boolean_map[planet_index] = 1
             boolean_map[0] = 1
 
-
-            input_params = input_values[boolean_map.astype(bool)]
-            literature_params = literature_values[boolean_map.astype(bool)]
-            our_params = our_values[boolean_map.astype(bool)]
+            print(f"{our_values_input=}")
+            print(f"{planet_index=}")
 
 
-            period = our_params[planet_index][2]
+            input_params = input_values_input[boolean_map.astype(bool)]
+            literature_params = literature_values_input[boolean_map.astype(bool)]
+            our_params = our_values_input[boolean_map.astype(bool)]
+
+
+            period = our_params[1][2]
 
 
             # Phase Fold the data
             folded_raw_times, folded_raw_fluxes = phase_fold(times, flux, period)
 
 
-            literature_times, literature_fluxes = generate_flux_and_phase_fold(literature_params, times, literature_params[planet_index][2])
-            our_times, our_fluxes = generate_flux_and_phase_fold(our_params, times, our_params[planet_index][2])
-            input_times, input_fluxes = generate_flux_and_phase_fold(input_params, times, input_params[planet_index][2])   
+            literature_times, literature_fluxes = generate_flux_and_phase_fold(literature_params, times, literature_params[1][2])
+            our_times, our_fluxes = generate_flux_and_phase_fold(our_params, times, our_params[1][2])
+            input_times, input_fluxes = generate_flux_and_phase_fold(input_params, times, input_params[1][2])   
 
             # Bin the data
             if fit_x_shift == False:
@@ -110,7 +114,12 @@ def plot_phase_curve(file_name, xlims:tuple = None, ylims:tuple = None, num_bins
             
 
             # zero the times
-            binned_raw_times = binned_raw_times - find_mid_transit(binned_raw_times, binned_raw_fluxes) + fit_x_shift[0]
+
+            #Zero the raw time from tls output mid time -> Here we get a noise issue which messes things up
+
+            binned_raw_times = binned_raw_times - find_mid_transit(binned_input_times, binned_input_fluxes) + fit_x_shift[0]
+
+            # binned_raw_times = binned_raw_times - find_mid_transit(binned_raw_times, binned_raw_fluxes) + fit_x_shift[0]
 
             binned_literature_times = binned_literature_times - find_mid_transit(binned_literature_times, binned_literature_fluxes) + fit_x_shift[1]
 
@@ -144,6 +153,37 @@ def plot_phase_curve(file_name, xlims:tuple = None, ylims:tuple = None, num_bins
 
 
             plt.savefig(f"{file_name}/run_{i}/planet_{planet_index}_phase_curve.pdf")
+
+            # Now snip out the last transit
+
+            # def run_tls(
+            #     data: np.ndarray,
+            #     times_input: np.ndarray,
+            #     limb_darkening_model: str,
+            #     limb_darkening_coefficients: list,
+            #     plot_bool=False,
+            #     save_loc=None,
+            #     index=None,
+            #     duration_multiplier=4,
+            #     period_min=None,
+            #     period_max=None,
+            # )
+
+            plt.show()
+
+
+            flux, times, output_dict = run_tls(data = flux, 
+                                               times_input = times, 
+                                               limb_darkening_model = "quadratic", 
+                                               limb_darkening_coefficients = [literature_params[0,3],literature_params[0,4]], 
+                                               plot_bool = True,
+                                               duration_multiplier=4,
+                                               period_min = period - 1,
+                                               period_max = period + 1,
+            )          
+            plt.show()
+            plt.plot(times, flux)
+            plt.show()
 
 
 
