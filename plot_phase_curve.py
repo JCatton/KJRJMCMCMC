@@ -201,4 +201,4 @@ if __name__ == "__main__":
     import matplotlib.pyplot as plt
     import lightkurve as lk
 
-    plot_phase_curve("Simulated_for_viva_modeled_after_TOI-1516", xlims=(-0.1, 0.1), ylims=(0.9825, 1.0075), num_bins=2, fit_x_shift=[+0.0033,-0.0,-0,-0])
+    plot_phase_curve("TOI-1130_for_viva", xlims=(-2, 2), ylims=(0.96, 1.0075), num_bins=20, fit_x_shift=[+0.00,-0.0,-0,-0])
