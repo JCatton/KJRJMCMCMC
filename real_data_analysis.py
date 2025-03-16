@@ -198,8 +198,8 @@ def extend_params_for_stellar(planet_params: Params, stellar_params: list[float]
 def estimate_proposal(times: np.ndarray, flux: np.ndarray) -> Proposal:
     return np.atleast_2d(
         [
-            [6*1e-4, 2e-4, 1e-4, 0, 3*1e-4, 0, 0, 0, 0],  # Planet 1
-            [6*1e-4, 2e-4, 1e-4, 0, 3*1e-4, 0, 0, 0, 0],   # Planet 2
+            [6*1e-4, 2e-4, 1e-4, 0, 3*1e-4, 0, 0, 0*2e-4, 0],  # Planet 1
+            [6*1e-4, 2e-4, 1e-4, 0, 3*1e-4, 0, 0, 0*2e-4, 0],   # Planet 2
         ]
     )
 
@@ -393,6 +393,8 @@ def run_mcmc_code(
                 period_min=3.5,
                 period_max=9,
             )
+
+    # initial_params = np.zeros((2,9))
     # np.save("Test-Params/initial_params", initial_params)
 
 
@@ -438,6 +440,8 @@ def run_mcmc_code(
     fixed_params_indicies = np.where(proposal_std == 0)
 
     input_params[fixed_params_indicies] = true_vals[fixed_params_indicies]
+
+    # input_params = true_vals
 
     print(f"{proposal_std=}")   
 
@@ -587,7 +591,7 @@ if __name__ == "__main__":
     sector = None
     author = "SPOC"
     cadence = None
-    indicies_requested = (0, 2)
+    indicies_requested = (0, 1)
     max_number_downloads = 31
     use_regression_model = False
     use_lightcurve_direct = True
@@ -635,7 +639,7 @@ if __name__ == "__main__":
                     np.radians(87.61), # inc
                     np.radians(182.5), # omega
                     0, # big_ohm
-                    2.73763007, # phase_lag
+                    2.728e+00, # phase_lag
                     0, # mass
                 ],
                 [
@@ -646,7 +650,7 @@ if __name__ == "__main__":
                     np.radians(87.49),
                     np.radians(141.11),
                     0,
-                    0.97367272,
+                    9.602e-01,
                     0,
                 ],
             ]
@@ -654,10 +658,10 @@ if __name__ == "__main__":
     )
 
     run_mcmc_code(
-        file="TOI-1130_test_3",
+        file="TOI-1130_for_viva",
         target_search_params=target_search_params,
         target_stellar_params=stellar_params,
-        iteration_num=4_0_00,
+        iteration_num=4_000_000,
         run_number=1,
         analytic_sim=True,
         batman_bool=True,
