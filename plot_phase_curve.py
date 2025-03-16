@@ -154,6 +154,37 @@ def plot_phase_curve(file_name, xlims:tuple = None, ylims:tuple = None, num_bins
 
             plt.savefig(f"{file_name}/run_{i}/planet_{planet_index}_phase_curve.pdf")
 
+            # Now snip out the last transit
+
+            # def run_tls(
+            #     data: np.ndarray,
+            #     times_input: np.ndarray,
+            #     limb_darkening_model: str,
+            #     limb_darkening_coefficients: list,
+            #     plot_bool=False,
+            #     save_loc=None,
+            #     index=None,
+            #     duration_multiplier=4,
+            #     period_min=None,
+            #     period_max=None,
+            # )
+
+            plt.show()
+
+
+            flux, times, output_dict = run_tls(data = flux, 
+                                               times_input = times, 
+                                               limb_darkening_model = "quadratic", 
+                                               limb_darkening_coefficients = [literature_params[0,3],literature_params[0,4]], 
+                                               plot_bool = True,
+                                               duration_multiplier=4,
+                                               period_min = period - 1,
+                                               period_max = period + 1,
+            )          
+            plt.show()
+            plt.plot(times, flux)
+            plt.show()
+
 
 
 
