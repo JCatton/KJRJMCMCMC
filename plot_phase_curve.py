@@ -114,7 +114,12 @@ def plot_phase_curve(file_name, xlims:tuple = None, ylims:tuple = None, num_bins
             
 
             # zero the times
-            binned_raw_times = binned_raw_times - find_mid_transit(binned_raw_times, binned_raw_fluxes) + fit_x_shift[0]
+
+            #Zero the raw time from tls output mid time -> Here we get a noise issue which messes things up
+
+            binned_raw_times = binned_raw_times - find_mid_transit(binned_input_times, binned_input_fluxes) + fit_x_shift[0]
+
+            # binned_raw_times = binned_raw_times - find_mid_transit(binned_raw_times, binned_raw_fluxes) + fit_x_shift[0]
 
             binned_literature_times = binned_literature_times - find_mid_transit(binned_literature_times, binned_literature_fluxes) + fit_x_shift[1]
 
