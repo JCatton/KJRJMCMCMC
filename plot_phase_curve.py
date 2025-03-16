@@ -9,6 +9,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import lightkurve as lk
 
+from TransitAnalysis.TransitDetector import run_tls
 
 def generate_flux_and_phase_fold(params, times, period):
     fluxes = flux_data_from_params(params, times, no_loading_bar=True, analytical_bool=True, batman_bool=True)
