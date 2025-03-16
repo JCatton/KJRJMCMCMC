@@ -198,8 +198,8 @@ def extend_params_for_stellar(planet_params: Params, stellar_params: list[float]
 def estimate_proposal(times: np.ndarray, flux: np.ndarray) -> Proposal:
     return np.atleast_2d(
         [
-            [6*1e-4, 1e-3, 0, 1e-4, 0, 0, 0, 0, 0],  # Planet 1
-            [6*1e-4, 1e-3, 0, 1e-4, 0, 0, 0, 0, 0],   # Planet 2
+            [6*1e-4, 2e-4, 1e-4, 0, 3*1e-4, 0, 0, 0, 0],  # Planet 1
+            [6*1e-4, 2e-4, 1e-4, 0, 3*1e-4, 0, 0, 0, 0],   # Planet 2
         ]
     )
 
@@ -362,6 +362,7 @@ def run_mcmc_code(
     if real_data_bool:
         times, flux = download_data_api(*target_search_params)
     else:   
+        print("Using simulated data")
         times = np.linspace(0, 16, int(20000))
         flux = flux_data_from_params(extend_params_for_stellar(true_vals, target_stellar_params), times, analytical_bool=True, batman_bool=batman_bool)
         flux = add_gaussian_error(flux, 0, 2e-3)
@@ -389,8 +390,8 @@ def run_mcmc_code(
                 flux,
                 stellar_params,
                 signal_detection_efficiency=10,
-                period_min=0.5,
-                period_max=4,
+                period_min=3.5,
+                period_max=9,
             )
     # np.save("Test-Params/initial_params", initial_params)
 
@@ -656,11 +657,11 @@ if __name__ == "__main__":
         file="TOI-1130_test_3",
         target_search_params=target_search_params,
         target_stellar_params=stellar_params,
-        iteration_num=4_000_000,
+        iteration_num=4_0_00,
         run_number=1,
         analytic_sim=True,
         batman_bool=True,
-        real_data_bool=False,
+        real_data_bool=True,
         true_vals = true_vals,
         do_nested_sampling=False,
     )
