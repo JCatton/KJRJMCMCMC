@@ -67,26 +67,29 @@ def plot_phase_curve(file_name, xlims:tuple = None, ylims:tuple = None, num_bins
     for i in range(num_folders):
         # get the folder name
         folder_name = f"{file_name}/run_{i}/"
-        input_values = np.load(folder_name + "Input_values.npy")
-        literature_values = np.load(folder_name + "Literature_values.npy")
-        our_values = np.load(folder_name + "our_values.npy")
+        input_values_input = np.load(folder_name + "Input_values.npy")
+        literature_values_input = np.load(folder_name + "Literature_values.npy")
+        our_values_input = np.load(folder_name + "our_values.npy")
         times = np.load(folder_name + "times.npy")
         flux = np.load(folder_name + "flux.npy")
 
-        num_planets = int(len(our_values) - 1)
+        num_planets = int(len(our_values_input) - 1)
 
         for j in range(num_planets):
             planet_index = j + 1
 
-            boolean_map = np.zeros(len(our_values))
+            boolean_map = np.zeros(len(our_values_input))
 
             boolean_map[planet_index] = 1
             boolean_map[0] = 1
 
+            print(f"{our_values_input=}")
+            print(f"{planet_index=}")
 
-            input_params = input_values[boolean_map.astype(bool)]
-            literature_params = literature_values[boolean_map.astype(bool)]
-            our_params = our_values[boolean_map.astype(bool)]
+
+            input_params = input_values_input[boolean_map.astype(bool)]
+            literature_params = literature_values_input[boolean_map.astype(bool)]
+            our_params = our_values_input[boolean_map.astype(bool)]
 
 
             period = our_params[planet_index][2]
