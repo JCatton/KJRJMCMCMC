@@ -30,7 +30,7 @@ def phase_fold(time, fluxes, period):
 
 
 def find_mid_transit(times, fluxes):
-    times_output = np.where(fluxes <= 0.995)
+    times_output = np.where(fluxes <= 0.999)
     # print(f"{times_output=}")
     # find midpoint of these
     return np.mean(times[times_output])
