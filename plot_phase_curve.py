@@ -39,10 +39,11 @@ def find_mid_transit(times, fluxes):
 def bin_data(times, fluxes, num_bins=10):
     if len(times) < num_bins:  # Avoid indexing beyond array size
         print("Warning: Not enough data points for binning. Returning original arrays.")
-        return times, fluxes
+        return times, fluxes, np.zeros_like(fluxes)  # Return zero errors for consistency
 
     binned_fluxes = []
     binned_times = []
+    binned_errors = []  # Store standard errors
 
     for i in range(0, len(times), num_bins):
         flux_segment = fluxes[i:i + num_bins]
@@ -52,10 +53,20 @@ def bin_data(times, fluxes, num_bins=10):
             print(f"Warning: Empty slice detected at bin {i//num_bins}!")
             continue  # Skip empty bins
 
-        binned_fluxes.append(np.mean(flux_segment))
-        binned_times.append(np.mean(time_segment))
+        # Compute mean for binning
+        mean_flux = np.mean(flux_segment)
+        mean_time = np.mean(time_segment)
 
-    return np.array(binned_times), np.array(binned_fluxes)
+        # Compute standard error (std / sqrt(N))
+        std_flux = np.std(flux_segment)
+        error_flux = std_flux / np.sqrt(len(flux_segment))  # Standard error
+
+        binned_fluxes.append(mean_flux)
+        binned_times.append(mean_time)
+        binned_errors.append(error_flux)  # Append error
+
+    return np.array(binned_times), np.array(binned_fluxes), np.array(binned_errors)
+
 
 
 
@@ -107,10 +118,10 @@ def plot_phase_curve(file_name, xlims:tuple = None, ylims:tuple = None, num_bins
             # Bin the data
             if fit_x_shift == False:
                 fit_x_shift = np.array([0,0,0,0])
-            binned_raw_times, binned_raw_fluxes = bin_data(folded_raw_times, folded_raw_fluxes, num_bins=num_bins) 
-            binned_literature_times, binned_literature_fluxes = bin_data(literature_times, literature_fluxes, num_bins=num_bins) 
-            binned_our_times, binned_our_fluxes = bin_data(our_times, our_fluxes, num_bins=num_bins) 
-            binned_input_times, binned_input_fluxes = bin_data(input_times, input_fluxes, num_bins=num_bins) 
+            binned_raw_times, binned_raw_fluxes, binned_raw_errors = bin_data(folded_raw_times, folded_raw_fluxes, num_bins=num_bins) 
+            binned_literature_times, binned_literature_fluxes, _ = bin_data(literature_times, literature_fluxes, num_bins=num_bins) 
+            binned_our_times, binned_our_fluxes, _ = bin_data(our_times, our_fluxes, num_bins=num_bins) 
+            binned_input_times, binned_input_fluxes, _ = bin_data(input_times, input_fluxes, num_bins=num_bins) 
             
 
             # zero the times
@@ -132,16 +143,56 @@ def plot_phase_curve(file_name, xlims:tuple = None, ylims:tuple = None, num_bins
 
             #title
             ax.set_title(f"Planet {planet_index} Phase Curve")
+
+
+   
+
             # raw data
-            ax.plot(binned_raw_times, binned_raw_fluxes, "x", label="Raw Data", color="black")
+            ax.errorbar(binned_raw_times, 
+                        binned_raw_fluxes, 
+                        yerr=binned_raw_errors,  # Add error bars
+                        fmt="x",                 # Use 'x' markers as before
+                        ms=3,                     # Marker size
+                        label="Raw Data", 
+                        color="#4D4D4D",
+                        alpha=0.5,
+                        capsize=3,                # Add small caps to error bars
+                        elinewidth=1,             # Set error bar line width
+                        markeredgewidth=0.8       # Adjust marker edge thickness
+                        )
 
-            # literature data
-            ax.plot(binned_literature_times, binned_literature_fluxes, label="Literature Data", color="red")
-            # our data
-            ax.plot(binned_our_times, binned_our_fluxes, label="Our Data", color="blue")
+
             # input data
-            ax.plot(binned_input_times, binned_input_fluxes, label="Input Data", color="green")
-
+            ax.plot(binned_input_times, 
+                    binned_input_fluxes,
+                    label="TLS Input Value", 
+                    color="#D62728",
+                    alpha = 1,
+                    lw = 2.5,
+                    ls = "--",
+                    )
+            
+            # our data
+            ax.plot(binned_our_times, 
+                    binned_our_fluxes, 
+                    label="MCMC Fitted Value", 
+                    color="#1F77B4",
+                    alpha = 1,
+                    lw = 2.5,
+                    ls = "-",
+                    )
+            
+            # literature data
+            ax.plot(binned_literature_times, 
+                    binned_literature_fluxes, 
+                    label="Literature Value", 
+                    color="#FF7F0E",
+                    alpha = 1,
+                    lw = 2.5,
+                    ls = "--",
+                    )
+        
+            
 
             ax.set_xlabel("Phase")
             ax.set_ylabel("Relative Flux")
@@ -201,4 +252,4 @@ if __name__ == "__main__":
     import matplotlib.pyplot as plt
     import lightkurve as lk
 
-    plot_phase_curve("Simulated_for_viva_modeled_after_TOI-1516", xlims=(-0.1, 0.1), ylims=(0.9825, 1.0075), num_bins=2, fit_x_shift=[+0.0033,-0.0,-0,-0])
+    plot_phase_curve("TOI-1130_for_viva", xlims=(-0.075, 0.075), ylims=(0.994, 1.0075), num_bins=20, fit_x_shift=[+0.0,-0.0,-0,-0])
