@@ -7,6 +7,8 @@ from real_data_analysis import extend_params_for_stellar
 
 import numpy as np
 import matplotlib.pyplot as plt
+plt.rcParams['text.usetex'] = False
+
 import lightkurve as lk
 
 from TransitAnalysis.TransitDetector import run_tls
