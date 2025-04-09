@@ -9,6 +9,8 @@ import numpy as np
 import asyncio
 import shutil
 from sim.Decorators import TimeMeasure
+import matplotlib.pyplot as plt
+plt.rcParams['text.usetex'] = False
 
 # from sim.ExampleSimulation import stellar_paramss
 
@@ -106,7 +108,7 @@ def estimate_parameters(
     times: np.ndarray,
     flux: np.ndarray,
     stellar_params,
-    signal_detection_efficiency=10,
+    signal_detection_efficiency=6,
     period_min=None,
     period_max=None,
 ) -> Params:
@@ -198,8 +200,8 @@ def extend_params_for_stellar(planet_params: Params, stellar_params: list[float]
 def estimate_proposal(times: np.ndarray, flux: np.ndarray) -> Proposal:
     return np.atleast_2d(
         [
-            [6*1e-4, 2e-4, 1e-4, 0,  3*1e-4, 0, 0, 0*2e-4, 0],  # Planet 1
-            [6*1e-4, 2e-4, 1e-4, 0,  3*1e-4, 0, 0, 0*2e-4, 0],   # Planet 2
+            [1e-3, 3e-4, 8e-5, 0,  0*1e-4, 0, 0, 0*2e-4, 0],  # Planet 1
+            # [6*1e-4, 2e-4, 1e-4, 0,  3*1e-4, 0, 0, 0*2e-4, 0],   # Planet 2
         ]
     )
 
@@ -212,7 +214,7 @@ def estimate_bounds(times: np.ndarray, flux: np.ndarray) -> Bounds:
     return np.atleast_3d(
         [
             [
-                (0.07, 0.4),
+                (0.02, 0.4),
                 (1e-3, 0.5),
                 (0, 1e4),
                 (0, 0.3),
@@ -222,17 +224,17 @@ def estimate_bounds(times: np.ndarray, flux: np.ndarray) -> Bounds:
                 (-6, 6),
                 (0, 6000),
             ],
-            [
-                (0.01, 0.07),
-                (1e-3, 0.5),
-                (0, 1e4),
-                (0, 0.3),
-                (np.radians(70), np.radians(90)),
-                (0, 2*np.pi),
-                (-2*np.pi, 2*np.pi),
-                (-6, 6),
-                (0, 6000),
-            ],
+            # [
+            #     (0.01, 0.07),
+            #     (1e-3, 0.5),
+            #     (0, 1e4),
+            #     (0, 0.3),
+            #     (np.radians(70), np.radians(90)),
+            #     (0, 2*np.pi),
+            #     (-2*np.pi, 2*np.pi),
+            #     (-6, 6),
+            #     (0, 6000),
+            # ],
         ]
     )
 
@@ -390,9 +392,10 @@ def run_mcmc_code(
                 flux,
                 stellar_params,
                 signal_detection_efficiency=8,
-                period_min=3.5,
-                period_max=10,
+                period_min=2,
+                period_max=4,
             )
+
     # initial_params=true_vals
 
     # initial_params = np.zeros((2,9))
@@ -522,25 +525,26 @@ def run_mcmc_code(
             mcmc.nested_sampling()
             do_nested_sampling = False
             return
-        mcmc.rj_mh(iteration_num)
-        marginalised = mcmc.marginalize_by_model()
+        mcmc.metropolis_hastings(iteration_num)
+        # mcmc.rj_mh(iteration_num)
+        # marginalised = mcmc.marginalize_by_model()
 
         mcmc.chain_to_plot_and_estimate(true_vals)
-        mcmc.corner_plot()
+        mcmc.corner_plot(true_vals=true_vals)
 
-        for model in marginalised:
-            print(f"{model=:=^30}")
-            mcmc.chain_to_plot_and_estimate(true_vals=true_vals,
-                                            chain=marginalised[model]["parameters"],
-                                            likelihood_chain=marginalised[model]["likelihoods"],
-                                            planet_number=model)
-            try:
-                mcmc.corner_plot(true_vals=true_vals,
-                                 chain=marginalised[model]["parameters"],
-                                 likelihood_chain=marginalised[model]["likelihoods"],
-                                 planet_number=model)
-            except AssertionError:
-                pass
+        # for model in marginalised:
+        #     print(f"{model=:=^30}")
+        #     mcmc.chain_to_plot_and_estimate(true_vals=true_vals,
+        #                                     chain=marginalised[model]["parameters"],
+        #                                     likelihood_chain=marginalised[model]["likelihoods"],
+        #                                     planet_number=model)
+        #     try:
+        #         mcmc.corner_plot(true_vals=true_vals,
+        #                          chain=marginalised[model]["parameters"],
+        #                          likelihood_chain=marginalised[model]["likelihoods"],
+        #                          planet_number=model)
+        #     except AssertionError:
+        #         pass
         # mcmc.metropolis_hastings(iteration_num)
         # mcmc.gaussian_hmc(iteration_num)
 
@@ -586,7 +590,7 @@ if __name__ == "__main__":
     import matplotlib.pyplot as plt
 
     # main()
-    taget_name = "Toi-1130"
+    taget_name = "Toi-1811"
     exptime = None
     mission = "TESS"
     sector = None
@@ -616,10 +620,10 @@ if __name__ == "__main__":
     # plt.plot(times, flux)
     # plt.show()
 
-    radius_toi_1811 =   0.697 * 696.34e6 / 1.496e11
-    mass_toi_1811 = 	0.745 * 2e30 / 6e24
+    radius_toi_1811 =   0.769 * 696.34e6 / 1.496e11
+    mass_toi_1811 = 	0.817 * 2e30 / 6e24
     limb_darkening_model = 2
-    limb_darkening_coefficients = [0.4, 0.3]
+    limb_darkening_coefficients = [0.417, 0.130]
 
     stellar_params = [
         radius_toi_1811,
@@ -633,36 +637,25 @@ if __name__ == "__main__":
         np.array(
             [
                 [
-                    0.171,  #  +- 0.005 eta
-                    0.0731,    # a
-                    8.3501898, # P
-                    0.0398, # e
-                    np.radians(87.61), # inc
-                    np.radians(182.5), # omega
+                    0.13272,  #  +- 0.005 eta
+                    12.28*radius_toi_1811,    # a
+                    3.7130765, # P
+                    0.0520, # e
+                    np.radians(86.48), # inc
+                    np.radians(21), # omega
                     0, # big_ohm
-                    2.728e+00, # phase_lag
+                    4.506e+00, # phase_lag
                     0, # mass
-                ],
-                [
-                    0.0480,
-                    0.0453,
-                    4.074554,
-                    0.052162,
-                    np.radians(87.49),
-                    np.radians(141.11),
-                    0,
-                    9.602e-01,
-                    0,
                 ],
             ]
         )
     )
 
     run_mcmc_code(
-        file="TOI-1130_for_viva_varying_inc",
+        file="For_Report_TOI-1811_fixed_i",
         target_search_params=target_search_params,
         target_stellar_params=stellar_params,
-        iteration_num=4_000_000,
+        iteration_num=2_000_000,
         run_number=1,
         analytic_sim=True,
         batman_bool=True,
