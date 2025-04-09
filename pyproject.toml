@@ -19,6 +19,7 @@ transitleastsquares = "^1.32"
 lightkurve = "^2.5.0"
 setuptools = "^75.8.0"
 ipykernel = "^6.29.5"
+latex = "^0.7.0"
 
 
 [build-system]

@@ -246,19 +246,19 @@ def initial_param_fuzzer(
 def generate_param_names(initial_parameters: Params) -> np.ndarray:
     depth, _ = initial_parameters.shape
     base_names = [
-        r"$\eta$",
+        r"\eta",
         "a",
         "P",
         "e",
         "i",
-        "omega",
-        "big_ohm",
+        r"\omega",
+        r"\Omega",
         "phase_lag",
         "mass",
     ]
     names = np.array(
         [
-            [name + f"_{obj_num}" for name in base_names]
+            [fr"${name}_{obj_num}$" for name in base_names]
             for obj_num in range(1, depth + 1)
         ]
     )

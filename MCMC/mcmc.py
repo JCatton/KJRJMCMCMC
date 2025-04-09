@@ -5,6 +5,11 @@ from typing import Callable, List, Optional, Tuple
 
 import dill
 import matplotlib.pyplot as plt
+
+plt.rcParams.update({
+    'text.usetex': True,
+})
+
 import numpy as np
 import numba
 import dynesty
@@ -697,8 +702,7 @@ class MCMC:
         fig, axs = plt.subplots(nrows=1, ncols=2)
         if planet_number is not None:
             fig.suptitle(f"Likelihood Iterations for {planet_number} planets")
-        axs[0].set_xlabel("Iteration #")
-        x = np.arange(len(chain))
+        axs[0].set_xlabel(r"Iteration \#")
 
         axs[0].plot(x, likelihoods)
         axs[1].plot(x[self.burn_in_index:], likelihoods[self.burn_in_index:])
@@ -780,7 +784,7 @@ class MCMC:
                 )
                 axs[i, body].set_ylabel(f"{name}")
                 true_val_idx += 1
-        plt.xlabel("Iteration #")
+        plt.xlabel(r"Iteration \#")
         plt.tight_layout()
         if planet_number is not None:
             plt.savefig(self.data_folder / f"chain_plot_plot_for_{planet_number}_planets.pdf", dpi=500)
@@ -807,6 +811,7 @@ class MCMC:
         plt.xlabel("Iteration #")
         chain = chain[self.burn_in_index :]
         x = np.arange(len(chain))
+        plt.xlabel(r"Iteration \#")
 
         true_val_idx = 0
         for body in range(chain.shape[1]):
@@ -902,8 +907,9 @@ class MCMC:
             labels=flattened_param_names,
             truths=flattened_true_vals,
             show_titles=True,
-            title_kwargs={"fontsize": 18},
-            title_fmt=".2e",
+            title_kwargs={"fontsize": 12},
+            label_kwargs={"fontsize": 14},
+            title_fmt=".1e",
         )
         if planet_number is not None:
             plt.savefig(self.data_folder / f"corner_plot_for_{planet_number}_planets.pdf", dpi=500)
