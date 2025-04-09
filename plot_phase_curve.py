@@ -8,7 +8,7 @@ from real_data_analysis import extend_params_for_stellar
 import numpy as np
 import matplotlib.pyplot as plt
 import lightkurve as lk
-
+plt.rcParams['text.usetex'] = False
 from TransitAnalysis.TransitDetector import run_tls
 
 def generate_flux_and_phase_fold(params, times, period):
