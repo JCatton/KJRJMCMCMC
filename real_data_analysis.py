@@ -659,7 +659,7 @@ if __name__ == "__main__":
     )
 
     run_mcmc_code(
-        file="TOI-1130_for_viva_varying_inc",
+        file="For_Report_TOI-1130_varying_i",
         target_search_params=target_search_params,
         target_stellar_params=stellar_params,
         iteration_num=4_000_000,
