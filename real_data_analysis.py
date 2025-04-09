@@ -198,8 +198,8 @@ def extend_params_for_stellar(planet_params: Params, stellar_params: list[float]
 def estimate_proposal(times: np.ndarray, flux: np.ndarray) -> Proposal:
     return np.atleast_2d(
         [
-            [6*1e-4, 2e-4, 1e-4, 0, 3*1e-4, 0, 0, 0*2e-4, 0],  # Planet 1
-            [6*1e-4, 2e-4, 1e-4, 0, 3*1e-4, 0, 0, 0*2e-4, 0],   # Planet 2
+            [6*1e-4, 2e-4, 1e-4, 0,  3*1e-4, 0, 0, 0*2e-4, 0],  # Planet 1
+            [6*1e-4, 2e-4, 1e-4, 0,  3*1e-4, 0, 0, 0*2e-4, 0],   # Planet 2
         ]
     )
 
@@ -216,7 +216,7 @@ def estimate_bounds(times: np.ndarray, flux: np.ndarray) -> Bounds:
                 (1e-3, 0.5),
                 (0, 1e4),
                 (0, 0.3),
-                (np.radians(70), np.radians(110)),
+                (np.radians(70), np.radians(90)),
                 (0, 2*np.pi),
                 (-2*np.pi, 2*np.pi),
                 (-6, 6),
@@ -227,7 +227,7 @@ def estimate_bounds(times: np.ndarray, flux: np.ndarray) -> Bounds:
                 (1e-3, 0.5),
                 (0, 1e4),
                 (0, 0.3),
-                (np.radians(70), np.radians(110)),
+                (np.radians(70), np.radians(90)),
                 (0, 2*np.pi),
                 (-2*np.pi, 2*np.pi),
                 (-6, 6),
@@ -389,10 +389,11 @@ def run_mcmc_code(
                 times,
                 flux,
                 stellar_params,
-                signal_detection_efficiency=10,
+                signal_detection_efficiency=8,
                 period_min=3.5,
-                period_max=9,
+                period_max=10,
             )
+    # initial_params=true_vals
 
     # initial_params = np.zeros((2,9))
     # np.save("Test-Params/initial_params", initial_params)
@@ -615,10 +616,10 @@ if __name__ == "__main__":
     # plt.plot(times, flux)
     # plt.show()
 
-    radius_toi_1811 =   0.687 * 696.34e6 / 1.496e11
-    mass_toi_1811 = 	0.684 * 2e30 / 6e24
+    radius_toi_1811 =   0.697 * 696.34e6 / 1.496e11
+    mass_toi_1811 = 	0.745 * 2e30 / 6e24
     limb_darkening_model = 2
-    limb_darkening_coefficients = [0.50, 0.27]
+    limb_darkening_coefficients = [0.4, 0.3]
 
     stellar_params = [
         radius_toi_1811,
@@ -658,7 +659,7 @@ if __name__ == "__main__":
     )
 
     run_mcmc_code(
-        file="TOI-1130_for_viva",
+        file="TOI-1130_for_viva_varying_inc",
         target_search_params=target_search_params,
         target_stellar_params=stellar_params,
         iteration_num=4_000_000,
