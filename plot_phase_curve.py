@@ -30,7 +30,7 @@ def phase_fold(time, fluxes, period):
 
 
 def find_mid_transit(times, fluxes):
-    times_output = np.where(fluxes <= 0.999)
+    times_output = np.where(fluxes <= 0.99995)
     # print(f"{times_output=}")
     # find midpoint of these
     return np.mean(times[times_output])
@@ -201,4 +201,4 @@ if __name__ == "__main__":
     import matplotlib.pyplot as plt
     import lightkurve as lk
 
-    plot_phase_curve("TOI-1130_for_viva", xlims=(-2, 2), ylims=(0.96, 1.0075), num_bins=20, fit_x_shift=[+0.00,-0.0,-0,-0])
+    plot_phase_curve("For_Report_TOI-704_varied_i_2", xlims=(-0.08, 0.08), ylims=(0.998, 1.0014), num_bins=40, fit_x_shift=[+0.00,-0.0,-0,-0])
