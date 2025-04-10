@@ -200,7 +200,7 @@ def extend_params_for_stellar(planet_params: Params, stellar_params: list[float]
 def estimate_proposal(times: np.ndarray, flux: np.ndarray) -> Proposal:
     return np.atleast_2d(
         [
-            [1e-3, 3e-4, 8e-5, 0,  0*1e-4, 0, 0, 0*2e-4, 0],  # Planet 1
+            [1e-3, 2e-4, 8e-5, 0,  5e-4, 0, 0, 0*2e-4, 0],  # Planet 1
             # [6*1e-4, 2e-4, 1e-4, 0,  3*1e-4, 0, 0, 0*2e-4, 0],   # Planet 2
         ]
     )
@@ -652,7 +652,7 @@ if __name__ == "__main__":
     )
 
     run_mcmc_code(
-        file="For_Report_TOI-1811_fixed_i",
+        file="For_Report_TOI-1811_varied_i",
         target_search_params=target_search_params,
         target_stellar_params=stellar_params,
         iteration_num=2_000_000,
