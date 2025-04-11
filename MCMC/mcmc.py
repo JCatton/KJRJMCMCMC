@@ -703,7 +703,8 @@ class MCMC:
         if planet_number is not None:
             fig.suptitle(f"Likelihood Iterations for {planet_number} planets")
         axs[0].set_xlabel(r"Iteration \#")
-
+        x = np.arange(len(chain))
+        
         axs[0].plot(x, likelihoods)
         axs[1].plot(x[self.burn_in_index:], likelihoods[self.burn_in_index:])
 
