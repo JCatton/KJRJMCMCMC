@@ -37,12 +37,13 @@ def find_mid_transit(times, fluxes):
 
 
 def bin_data(times, fluxes, num_bins=10):
-    if len(times) < num_bins:  # Avoid indexing beyond array size
+    if len(times) < num_bins:
         print("Warning: Not enough data points for binning. Returning original arrays.")
-        return times, fluxes
+        return times, fluxes, np.zeros_like(times)
 
     binned_fluxes = []
     binned_times = []
+    binned_errors = []
 
     for i in range(0, len(times), num_bins):
         flux_segment = fluxes[i:i + num_bins]
@@ -50,12 +51,14 @@ def bin_data(times, fluxes, num_bins=10):
 
         if len(flux_segment) == 0 or len(time_segment) == 0:
             print(f"Warning: Empty slice detected at bin {i//num_bins}!")
-            continue  # Skip empty bins
+            continue
 
         binned_fluxes.append(np.mean(flux_segment))
         binned_times.append(np.mean(time_segment))
+        binned_errors.append(np.std(flux_segment))  # <-- error = standard deviation
 
-    return np.array(binned_times), np.array(binned_fluxes)
+    return np.array(binned_times), np.array(binned_fluxes), np.array(binned_errors)
+
 
 
 
@@ -107,10 +110,10 @@ def plot_phase_curve(file_name, xlims:tuple = None, ylims:tuple = None, num_bins
             # Bin the data
             if fit_x_shift == False:
                 fit_x_shift = np.array([0,0,0,0])
-            binned_raw_times, binned_raw_fluxes = bin_data(folded_raw_times, folded_raw_fluxes, num_bins=num_bins) 
-            binned_literature_times, binned_literature_fluxes = bin_data(literature_times, literature_fluxes, num_bins=num_bins) 
-            binned_our_times, binned_our_fluxes = bin_data(our_times, our_fluxes, num_bins=num_bins) 
-            binned_input_times, binned_input_fluxes = bin_data(input_times, input_fluxes, num_bins=num_bins) 
+            binned_raw_times, binned_raw_fluxes, binned_raw_fluxes_errors = bin_data(folded_raw_times, folded_raw_fluxes, num_bins=num_bins) 
+            binned_literature_times, binned_literature_fluxes, _ = bin_data(literature_times, literature_fluxes, num_bins=num_bins) 
+            binned_our_times, binned_our_fluxes, _ = bin_data(our_times, our_fluxes, num_bins=num_bins) 
+            binned_input_times, binned_input_fluxes, _ = bin_data(input_times, input_fluxes, num_bins=num_bins) 
             
 
             # zero the times
@@ -133,8 +136,8 @@ def plot_phase_curve(file_name, xlims:tuple = None, ylims:tuple = None, num_bins
             #title
             ax.set_title(f"Planet {planet_index} Phase Curve")
             # raw data
-            ax.plot(binned_raw_times, binned_raw_fluxes, "x", label="Raw Data", color="black")
-
+            # ax.plot(binned_raw_times, binned_raw_fluxes, "x", label="Raw Data", color="black")
+            ax.errorbar(binned_raw_times, binned_raw_fluxes, yerr=binned_raw_fluxes_errors, fmt="x", label="Raw Data", color="black", capsize=2)
             # literature data
             ax.plot(binned_literature_times, binned_literature_fluxes, label="Literature Data", color="red")
             # our data
@@ -172,18 +175,18 @@ def plot_phase_curve(file_name, xlims:tuple = None, ylims:tuple = None, num_bins
             plt.show()
 
 
-            flux, times, output_dict = run_tls(data = flux, 
-                                               times_input = times, 
-                                               limb_darkening_model = "quadratic", 
-                                               limb_darkening_coefficients = [literature_params[0,3],literature_params[0,4]], 
-                                               plot_bool = True,
-                                               duration_multiplier=4,
-                                               period_min = period - 1,
-                                               period_max = period + 1,
-            )          
-            plt.show()
-            plt.plot(times, flux)
-            plt.show()
+            # flux, times, output_dict = run_tls(data = flux, 
+            #                                    times_input = times, 
+            #                                    limb_darkening_model = "quadratic", 
+            #                                    limb_darkening_coefficients = [literature_params[0,3],literature_params[0,4]], 
+            #                                    plot_bool = True,
+            #                                    duration_multiplier=4,
+            #                                    period_min = period - 1,
+            #                                    period_max = period + 1,
+            # )          
+            # plt.show()
+            # plt.plot(times, flux)
+            # plt.show()
 
 
 
