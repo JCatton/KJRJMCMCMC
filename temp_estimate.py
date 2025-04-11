@@ -76,6 +76,7 @@ def plot_phase_curve(file_name, stellar_temp):
             print(temp)
 
             plt.hist(temp, bins=100)
+            plt.savefig(folder_name + f"temp_estimate_{j}.pdf")
             plt.show()
             print(temp.mean())
 
@@ -102,4 +103,4 @@ if __name__ == "__main__":
     import matplotlib.pyplot as plt
     import lightkurve as lk
 
-    plot_phase_curve("For_Report_TOI-1130_fixed_i", stellar_temp=4350)
+    plot_phase_curve("For_Report_TOI-704_varied_i_2", stellar_temp=3643)
