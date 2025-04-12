@@ -47,7 +47,8 @@ def download_data(
     #If want to use lightcurve directly
     if use_lightcurve_direct:
         # Search for the light curve
-        search_results = lk.search_lightcurve(target_name, mission = mission, author = author, exptime=exptime)
+        print("Searching for light curve...")
+        search_results = lk.search_lightcurve(target_name, mission = mission, author = author,  exptime = 120)
         print(search_results)
         # Download the light curve
         if indicies_requested == None:

@@ -200,7 +200,7 @@ def extend_params_for_stellar(planet_params: Params, stellar_params: list[float]
 def estimate_proposal(times: np.ndarray, flux: np.ndarray) -> Proposal:
     return np.atleast_2d(
         [
-            [1e-3, 2e-4, 8e-5, 0,  5e-4, 0, 0, 0*2e-4, 0],  # Planet 1
+            [6e-4, 1e-4, 6e-5, 0,  6e-4, 0, 0*2e-4, 0*2e-4, 0],  # Planet 1
             # [6*1e-4, 2e-4, 1e-4, 0,  3*1e-4, 0, 0, 0*2e-4, 0],   # Planet 2
         ]
     )
@@ -214,11 +214,11 @@ def estimate_bounds(times: np.ndarray, flux: np.ndarray) -> Bounds:
     return np.atleast_3d(
         [
             [
-                (0.02, 0.4),
-                (1e-3, 0.5),
+                (0.0005, 0.4),
+                (4.15e-3, 0.5),
                 (0, 1e4),
                 (0, 0.3),
-                (np.radians(70), np.radians(90)),
+                (np.radians(70), 1.576),
                 (0, 2*np.pi),
                 (-2*np.pi, 2*np.pi),
                 (-6, 6),
@@ -392,8 +392,8 @@ def run_mcmc_code(
                 flux,
                 stellar_params,
                 signal_detection_efficiency=8,
-                period_min=2,
-                period_max=4,
+                period_min=1,
+                period_max=3,
             )
 
     # initial_params=true_vals
@@ -492,7 +492,8 @@ def run_mcmc_code(
     )
     plt.legend()
     plt.savefig("inferred_flux_plot_before.pdf", dpi=500)
-    plt.show()
+    # plt.show()
+    plt.close()
 
     # print(f"{input_params.shape=}")
     # print(f"{input_params[0]=}")
@@ -568,7 +569,8 @@ def run_mcmc_code(
         )
         plt.legend()
         plt.savefig(Path(file) / f"run_{i}" / "inferred_flux_plot_after.pdf", dpi=500)
-        plt.show()
+        # plt.show()
+        plt.close()
 
         our_values = mcmc.chain[np.argmax(mcmc.likelihood_chain)]
 
@@ -590,13 +592,13 @@ if __name__ == "__main__":
     import matplotlib.pyplot as plt
 
     # main()
-    taget_name = "Toi-1811"
+    taget_name = "Toi-486"
     exptime = None
     mission = "TESS"
     sector = None
     author = "SPOC"
     cadence = None
-    indicies_requested = (0, 1)
+    indicies_requested = (27, 33)
     max_number_downloads = 31
     use_regression_model = False
     use_lightcurve_direct = True
@@ -620,10 +622,10 @@ if __name__ == "__main__":
     # plt.plot(times, flux)
     # plt.show()
 
-    radius_toi_1811 =   0.769 * 696.34e6 / 1.496e11
-    mass_toi_1811 = 	0.817 * 2e30 / 6e24
+    radius_toi_1811 =   0.4314 * 696.34e6 / 1.496e11
+    mass_toi_1811 = 	0.4193 * 2e30 / 6e24
     limb_darkening_model = 2
-    limb_darkening_coefficients = [0.417, 0.130]
+    limb_darkening_coefficients = [-0.0650, 0.877]
 
     stellar_params = [
         radius_toi_1811,
@@ -637,14 +639,14 @@ if __name__ == "__main__":
         np.array(
             [
                 [
-                    0.13272,  #  +- 0.005 eta
-                    12.28*radius_toi_1811,    # a
-                    3.7130765, # P
-                    0.0520, # e
-                    np.radians(86.48), # inc
-                    np.radians(21), # omega
+                    0.01204,  #  +- 0.005 eta
+                    0.02123,    # a
+                    1.7446999, # P
+                    0.0, # e
+                    np.radians(89.99), # inc
+                    np.radians(90), # omega
                     0, # big_ohm
-                    4.506e+00, # phase_lag
+                    3.17813280e+00,  # phase_lag
                     0, # mass
                 ],
             ]
@@ -652,10 +654,10 @@ if __name__ == "__main__":
     )
 
     run_mcmc_code(
-        file="For_Report_TOI-1811_varied_i",
+        file="For_Report_TOI-486_varied_final_i_2",
         target_search_params=target_search_params,
         target_stellar_params=stellar_params,
-        iteration_num=2_000_000,
+        iteration_num=4_000_000,
         run_number=1,
         analytic_sim=True,
         batman_bool=True,

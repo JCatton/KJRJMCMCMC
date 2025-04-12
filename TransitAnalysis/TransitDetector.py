@@ -124,7 +124,8 @@ def plot_tls_stuff(
     if save_loc is not None:
         plt.savefig(f"{save_loc}/TLS_Model_overlay_{index}.pdf")
     else:
-        plt.show()
+        # plt.show()
+        plt.close()
 
     ax = plt.gca()
     ax.axvline(results.period, alpha=0.4, lw=3)
@@ -141,7 +142,8 @@ def plot_tls_stuff(
     if save_loc is not None:
         plt.savefig(f"{save_loc}/TLS_Power_spectrum_{index}.pdf")
     else:
-        plt.show()
+        # plt.show()
+        plt.close()
     
 
 
@@ -204,10 +206,12 @@ def search_for_transits(
             f"Found a planet with SDE of {current_signal_detection_efficiency} and period of {dictionary_entry["Period"]}"
         )
         results_list.append(dictionary_entry)
+        break
 
     plt.plot(times_input, data)
     plt.title("Data with all transits found by TLS Removed")
-    plt.show()
+    # plt.show()
+    plt.close()
     print(f"Found {len(results_list)} transits")
     print(f"Flux after TLS: {np.mean(data)} This should be close to one")
 
@@ -345,7 +349,8 @@ if __name__ == "__main__":
     )
     plt.plot(times_input, fluxes_true, label="True")
     plt.legend()
-    plt.show()
+    # plt.show()
+    plt.close()
 
     print(f"{results=}")
     print(f"shape of results: {len(results)}")
