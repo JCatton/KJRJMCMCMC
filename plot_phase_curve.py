@@ -204,4 +204,4 @@ if __name__ == "__main__":
     import matplotlib.pyplot as plt
     import lightkurve as lk
 
-    plot_phase_curve("For_Report_TOI-486_fixed_i_3", xlims=(-2, 2), ylims=(0.995, 1.0075), num_bins=80, fit_x_shift=[+0.00,-0.0,-0,-0])
+    plot_phase_curve("For_Report_TOI-486_varied_final_i", xlims=(-0.07, 0.07), ylims=(0.9985, 1.00125), num_bins=80, fit_x_shift=[+0.00,-0.0,-0,-0])

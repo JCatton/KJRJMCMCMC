@@ -654,11 +654,11 @@ if __name__ == "__main__":
     )
 
     run_mcmc_code(
-        file="For_Report_TOI-486_varied_final_i_2",
+        file="For_Report_TOI-486_varied_final_i_3",
         target_search_params=target_search_params,
         target_stellar_params=stellar_params,
         iteration_num=4_000_000,
-        run_number=1,
+        run_number=3,
         analytic_sim=True,
         batman_bool=True,
         real_data_bool=True,
