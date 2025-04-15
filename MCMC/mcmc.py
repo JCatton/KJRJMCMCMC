@@ -670,7 +670,7 @@ class MCMC:
         if proposal_std is None:
             proposal_std = np.copy(self.proposal_std)
 
-
+        x = np.arange(len(chain))
 
 
 
