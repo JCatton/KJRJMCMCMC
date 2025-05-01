@@ -198,8 +198,8 @@ def extend_params_for_stellar(planet_params: Params, stellar_params: list[float]
 def estimate_proposal(times: np.ndarray, flux: np.ndarray) -> Proposal:
     return np.atleast_2d(
         [
-            [6*1e-4, 2e-4, 1e-4, 0,  3*1e-4, 0, 0, 0*2e-4, 0],  # Planet 1
-            [6*1e-4, 2e-4, 1e-4, 0,  3*1e-4, 0, 0, 0*2e-4, 0],   # Planet 2
+            [1.2*3*1e-4, 1.2*1e-4, 1e-4, 0,  1.2*3*1e-4, 0, 0, 0*2e-4, 0],  # Planet 1
+            [1.2*3*1e-4, 1.2*1e-4, 1e-4, 0,  1.2*3*1e-4, 0, 0, 0*2e-4, 0],   # Planet 2
         ]
     )
 
@@ -363,9 +363,9 @@ def run_mcmc_code(
         times, flux = download_data_api(*target_search_params)
     else:   
         print("Using simulated data")
-        times = np.linspace(0, 16, int(20000))
+        times = np.linspace(0, 32, int(7000))
         flux = flux_data_from_params(extend_params_for_stellar(true_vals, target_stellar_params), times, analytical_bool=True, batman_bool=batman_bool)
-        flux = add_gaussian_error(flux, 0, 2e-3)
+        flux = add_gaussian_error(flux, 0, 9e-4)
         # bin the flux
         # flux = np.mean(flux.reshape(-1, 100), axis=1)
         # times = np.mean(times.reshape(-1, 100), axis=1)
@@ -381,19 +381,22 @@ def run_mcmc_code(
     # times = np.load("Test-Params/times.npy")
     # flux = np.load("Test-Params/flux.npy")
 
+    # plt.plot(times, flux)
+    # plt.show()
+
 
 
     # stellar_params = get_stellar_params(file, target_name) # Todo -> Currently just give the regular stellar params
     stellar_params = target_stellar_params  # [radius, mas, limb_darkening_model, limb_darkening_coefficients]
-    initial_params = estimate_parameters(
-                times,
-                flux,
-                stellar_params,
-                signal_detection_efficiency=8,
-                period_min=3.5,
-                period_max=10,
-            )
-    # initial_params=true_vals
+    # initial_params = estimate_parameters(
+    #             times,
+    #             flux,
+    #             stellar_params,
+    #             signal_detection_efficiency=8,
+    #             period_min=3.5,
+    #             period_max=10,
+    #         )
+    initial_params=true_vals
 
     # initial_params = np.zeros((2,9))
     # np.save("Test-Params/initial_params", initial_params)
@@ -659,14 +662,14 @@ if __name__ == "__main__":
     )
 
     run_mcmc_code(
-        file="For_Report_TOI-1130_varying_i",
+        file="For_Report_TOI-1130_varying_i_simulated",
         target_search_params=target_search_params,
         target_stellar_params=stellar_params,
-        iteration_num=4_000_000,
+        iteration_num=4_0_000,
         run_number=1,
         analytic_sim=True,
         batman_bool=True,
-        real_data_bool=True,
+        real_data_bool=False,
         true_vals = true_vals,
         do_nested_sampling=False,
     )
